@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   randomized-stress:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, hetzner, shared-ci]
     timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +32,7 @@ jobs:
         run: uv run pytest -q -m stress --count=3
 
   mutation:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, hetzner, shared-ci]
     timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
