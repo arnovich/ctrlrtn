@@ -685,10 +685,9 @@ def _recorder_failure_probe(upstream_url: str) -> bool:
 def _worktree_clean() -> bool | None:
     """Whether the checkout had no uncommitted changes.
 
-    Schema version 2's first sample recorded a ``router_revision`` that could
-    not have produced it, because the run happened in a dirty tree and
-    ``_git_revision`` reports a bare ``rev-parse HEAD``. Provenance that can be
-    wrong is worse than absent.
+    ``_git_revision`` reports a bare ``rev-parse HEAD``, so a run from a dirty
+    tree would record a revision that did not produce it. Provenance that can
+    be wrong is worse than absent.
     """
     try:
         result = subprocess.run(
