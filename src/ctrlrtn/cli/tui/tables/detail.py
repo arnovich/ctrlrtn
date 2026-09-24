@@ -2,43 +2,21 @@
 
 from __future__ import annotations
 
-import time
-
 from rich.control import strip_control_codes
-from rich.text import Text
 from textual.widgets import (
     DataTable,
-    Label,
-    Sparkline,
     Static,
 )
 
-from ctrlrtn.analysis.report import (
-    _fmt_cost,
-    _fmt_outcome,
-)
-from ctrlrtn.cli.tui.formatting import (
-    graph_axis,
-    graph_label,
-    page_heading,
-)
 from ctrlrtn.cli.tui.models import (
-    _PAGE_SIZE,
-    _PAGED_TABLES,
-    _PANE_MAX_ROWS,
-    _SCOPED_TABLE_HEADINGS,
-    _SIDEBAR_PANES,
     _SIDEBAR_TABLES,
 )
 from ctrlrtn.cli.tui.state import (
     call_detail,
     experiment_detail,
     job_detail,
-    load_state,
     model_detail,
-    routing_status,
     shadow_detail,
-    shadow_status,
     task_detail,
     usecase_detail,
 )
@@ -53,7 +31,6 @@ from ctrlrtn.workflow.discovery import (
 from ctrlrtn.workflow.discovery_job import (
     WorkflowDiscoveryJobError,
     projections_from_workflow_discovery_artifact,
-    report_from_workflow_discovery_artifact,
 )
 from ctrlrtn.workflow.discovery_projection import (
     render_discovered_family_projection,

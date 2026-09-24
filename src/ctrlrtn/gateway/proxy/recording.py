@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, AsyncIterator
 import httpx
 
 from ctrlrtn.gateway.proxy.headers import (
-    _forward_response_headers,
     _recordable_headers,
 )
 from ctrlrtn.recorder.trace import Trace
