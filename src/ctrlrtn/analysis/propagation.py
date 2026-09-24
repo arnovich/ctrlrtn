@@ -1,4 +1,4 @@
-"""Header-propagation gate (docs/history/eval-design.md §7, gates 1 & 2).
+"""Header-propagation gate (docs/evaluation.md).
 
 Whole-task analysis — the future orchestrator live A/B, and clustering for the
 editor's paired replay — depends on the app stamping the *same* ``x-ctrlrtn-task``

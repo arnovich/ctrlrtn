@@ -1,4 +1,4 @@
-"""CLI composition root and stable compatibility exports."""
+"""CLI composition root."""
 
 from __future__ import annotations
 
@@ -58,12 +58,12 @@ def _write_json_artifact(path: str, document: dict, label: str) -> None:
 
 
 def _configure_logging(level: str) -> int:
-    """Compatibility shim for integrations importing the former root helper."""
+    """Configure logging with the CLI's failure handler bound."""
     return configure_logging(level, _fail)
 
 
 def _console(args) -> None:
-    """Compatibility shim for direct callers of the former root handler."""
+    """Run the console with settings and logging resolved the CLI's way."""
     RuntimeCommands(
         load_settings, _fail, build_app, _configure_logging
     )._console(args)

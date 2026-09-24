@@ -182,9 +182,8 @@ class SqliteConnection(SqliteCapability):
                 schema.initialize(self._conn)
                 self._enable_wal()
         except BaseException:
-            # A failure here used to leave the advisory lock held with no
-            # object owning it, so a later compaction was refused for a writer
-            # that did not exist.
+            # Release the advisory lock too: left held with no owner, a later
+            # compaction would be refused for a writer that does not exist.
             self._conn.close()
             self._release_maintenance_lock()
             raise

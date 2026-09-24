@@ -1,8 +1,8 @@
 """Git-backed desired state for routes, experiments, and workflows.
 
-Documents remain inert until explicit activation. This facade preserves the
-original public import path while parsing, rendering, and Git provenance remain
-separate from persistence and activation.
+Documents remain inert until explicit activation. Parsing, rendering, and
+Git provenance live in separate modules from persistence and activation;
+this package re-exports their public names.
 """
 
 from ctrlrtn.control_config.models import (

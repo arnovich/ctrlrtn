@@ -1,7 +1,5 @@
 """Stable SQLite store facade composed from capability-focused modules."""
 
-from ctrlrtn.recorder.models import UNKEYED, UNTASKED
-
 from .connection import SqliteConnection
 from .control import ControlSqliteMixin
 from .jobs import JobSqliteMixin
@@ -16,11 +14,6 @@ from .results import (
 )
 from .traces import TraceSqliteMixin
 from .workflow import WorkflowSqliteMixin
-
-# Compatibility aliases for existing callers; new code should use the public
-# sentinel names from recorder.models.
-_UNKEYED = UNKEYED
-_UNTASKED = UNTASKED
 
 
 class SqliteTraceStore(
