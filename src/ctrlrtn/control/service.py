@@ -1,7 +1,7 @@
 """Shared control-plane planning and application services.
 
 Operator interfaces own input and presentation.  This module owns validation,
-safety notices, and the exact state transition they confirm.
+hazard notices, and the exact state transition they confirm.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ class ControlRepository(Protocol):
 
 @dataclass(frozen=True)
 class ControlNotice:
-    """A safety notice attached to a plan: a stable ``code`` and text for the
+    """A hazard notice attached to a plan: a stable ``code`` and text for the
     operator. Advisory; it never blocks the change."""
 
     code: str

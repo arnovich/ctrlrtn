@@ -52,7 +52,7 @@ class TableRefreshMixin:
                 table_window=self._table_window,
                 pages=self._page,
             )
-        except Exception as exc:  # noqa: BLE001 — surfaced, not swallowed
+        except Exception as exc:
             # Everything on screen is now older than it looks: say so in the
             # header as well as the detail pane, and leave the last good
             # timestamp standing as the age of what is still displayed.

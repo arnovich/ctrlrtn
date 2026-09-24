@@ -12,7 +12,7 @@ from ctrlrtn.recorder.models import UNTASKED as _UNTASKED
 from ctrlrtn.recorder.models import SessionSummary, TaskSummary
 from ctrlrtn.workflow.identity import TERMINAL_STATUSES
 
-from ..connection import SqliteCapability
+from ..capability import SqliteCapability
 from ..queries import (
     _EXPERIMENT_TASK_ROWS,
     _SESSIONS,

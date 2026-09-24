@@ -1,4 +1,4 @@
-"""Stable import facade for the decomposed Textual console."""
+"""Import path for the Textual console and its building blocks."""
 
 from ctrlrtn.cli.tui.app import ConsoleApp, run_console
 from ctrlrtn.cli.tui.formatting import (

@@ -34,10 +34,10 @@ class TraceStore(TraceRepository, Protocol):
         history; ``baseline_only`` leaves candidate-arm calls out."""
         ...
 
-    def use_case_models(self) -> dict[str, str | None]:
+    def use_case_models(self) -> dict[str, str]:
         """The model most recently seen per use-case key (from its latest
-        call), ``None`` where it could not be extracted; keyed like
-        ``rankings``."""
+        call); use-cases whose model could not be extracted are omitted.
+        Keyed like ``rankings``."""
         ...
 
     def tasks(self, limit: int = 50) -> list[TaskSummary]:
@@ -75,7 +75,8 @@ class TraceStore(TraceRepository, Protocol):
 
     def terminal_counts_since(self, ts: float) -> dict[str, int]:
         """Router-terminated calls since ``ts`` counted by ``terminal_reason``
-        (budget rejections, divergence ceilings, shadow failures)."""
+        (for example budget rejections, divergence ceilings and provider
+        mismatches)."""
         ...
 
     def fallback_calls_since(self, ts: float) -> int:

@@ -1,12 +1,12 @@
 """Anthropic-backed replay and judge functions for a live eval run.
 
 These are the only network-touching pieces of the replay path, so they need
-``ANTHROPIC_API_KEY`` and run from a real terminal, not the sandbox. The body
+``ANTHROPIC_API_KEY``. The body
 construction and response parsing are pure (``swap_model`` /
 ``extract_output_text``) and unit-tested here with a mock transport; the live
 smoke test against the real API is the operator's.
 
-Scope/limitations (v0): same-provider Anthropic Messages only. A recorded
+Limits: same-provider Anthropic Messages only. A recorded
 request's ``anthropic-beta`` header is not re-emitted, so a beta-gated use-case
 (context management, MCP servers, Files) will 400 — the failure is surfaced in
 the report, not silent (see ``ReplayReport.failures``). No retry/backoff: a

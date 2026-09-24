@@ -72,7 +72,7 @@ def _load_deblind_key(key_path: str, fail: Fail = _exit_failure) -> dict:
     return keys
 
 
-def _load_labels(path: str, fail: Fail = _exit_failure) -> list[LabeledPairing]:
+def load_labels(path: str, fail: Fail = _exit_failure) -> list[LabeledPairing]:
     """Load human scores and safely de-blind their paired model outputs."""
     keys = _load_deblind_key(path + ".key", fail)
     try:

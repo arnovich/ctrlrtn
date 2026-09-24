@@ -103,6 +103,10 @@ class WorkflowFamilyAssignment:
     ambiguous: bool
     reason: str | None = None
 
+    def __post_init__(self) -> None:
+        if self.status == "assigned" and not self.family_id:
+            raise ValueError("an assigned task must name its family")
+
 
 @dataclass(frozen=True)
 class WorkflowDiscoveryReport:

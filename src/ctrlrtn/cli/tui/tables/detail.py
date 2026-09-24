@@ -103,7 +103,7 @@ class TableDetailMixin:
     def _render_detail(self) -> None:
         try:
             text = self._detail_text()
-        except Exception as exc:  # noqa: BLE001 — a bad row must not crash us
+        except Exception as exc:
             text = f"could not render detail: {exc}"
         self._show(text)
 

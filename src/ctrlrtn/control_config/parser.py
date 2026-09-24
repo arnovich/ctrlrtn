@@ -27,6 +27,14 @@ def _mapping(value: object, label: str) -> dict:
     return value
 
 
+def _required(fields: dict, key: str, message: str) -> str:
+    """Return a present field so the parser fails before the model would."""
+    value = fields.get(key)
+    if value is None:
+        raise ControlConfigError(message)
+    return value
+
+
 def _fields(raw: object, label: str, allowed: set[str]) -> dict:
     if not isinstance(raw, dict):
         raise ControlConfigError(f"{label} must be a mapping")
@@ -77,11 +85,11 @@ def load_control_config(path: str) -> ControlConfig:
             f"route {use_case!r}",
             {"model", "provider", "previous_model", "note"},
         )
-        model = fields.get("model")
-        if model is None:
-            raise ControlConfigError(
-                f"invalid route {use_case!r}: model must be non-empty"
-            )
+        model = _required(
+            fields,
+            "model",
+            f"invalid route {use_case!r}: model must be non-empty",
+        )
         try:
             routes.append(
                 Route(
@@ -125,11 +133,11 @@ def load_control_config(path: str) -> ControlConfig:
             raise ControlConfigError(
                 f"experiment {use_case!r} requires a stable non-empty id"
             )
-        candidate_model = fields.get("candidate_model")
-        if candidate_model is None:
-            raise ControlConfigError(
-                f"invalid experiment {use_case!r}: candidate_model is required"
-            )
+        candidate_model = _required(
+            fields,
+            "candidate_model",
+            f"invalid experiment {use_case!r}: candidate_model is required",
+        )
         try:
             experiments.append(
                 Experiment(
@@ -308,12 +316,11 @@ def load_control_config(path: str) -> ControlConfig:
                         f"duplicate workflow route {key!r}"
                     )
                 seen.add(key)
-                model = definition.get("model")
-                if model is None:
-                    raise ControlConfigError(
-                        f"invalid workflow route {key!r}: model must be "
-                        "non-empty"
-                    )
+                model = _required(
+                    definition,
+                    "model",
+                    f"invalid workflow route {key!r}: model must be non-empty",
+                )
                 try:
                     workflow_routes.append(
                         WorkflowRoute(

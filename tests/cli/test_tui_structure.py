@@ -4,30 +4,30 @@ import pytest
 
 pytest.importorskip("textual")
 
-from ctrlrtn.cli.tui.control_actions import ControlActions  # noqa: E402
-from ctrlrtn.cli.tui.control_actions.experiments import (  # noqa: E402
+from ctrlrtn.cli.tui.control_actions import ControlActions
+from ctrlrtn.cli.tui.control_actions.experiments import (
     LiveExperimentControlActions,
 )
-from ctrlrtn.cli.tui.control_actions.git_config import (  # noqa: E402
+from ctrlrtn.cli.tui.control_actions.git_config import (
     GitConfigControlActions,
 )
-from ctrlrtn.cli.tui.control_actions.routes import (  # noqa: E402
+from ctrlrtn.cli.tui.control_actions.routes import (
     RouteControlActions,
 )
-from ctrlrtn.cli.tui.control_actions.selection import (  # noqa: E402
+from ctrlrtn.cli.tui.control_actions.selection import (
     ControlSelectionMixin,
 )
-from ctrlrtn.cli.tui.control_actions.shadows import (  # noqa: E402
+from ctrlrtn.cli.tui.control_actions.shadows import (
     ShadowControlActions,
 )
-from ctrlrtn.cli.tui.forms import (  # noqa: E402
+from ctrlrtn.cli.tui.forms import (
     ConfirmScreen,
     WorkflowIdentifyScreen,
 )
-from ctrlrtn.cli.tui.tables import ConsoleTables  # noqa: E402
-from ctrlrtn.cli.tui.tables.detail import TableDetailMixin  # noqa: E402
-from ctrlrtn.cli.tui.tables.fill import TableFillMixin  # noqa: E402
-from ctrlrtn.cli.tui.tables.refresh import TableRefreshMixin  # noqa: E402
+from ctrlrtn.cli.tui.tables import ConsoleTables
+from ctrlrtn.cli.tui.tables.detail import TableDetailMixin
+from ctrlrtn.cli.tui.tables.fill import TableFillMixin
+from ctrlrtn.cli.tui.tables.refresh import TableRefreshMixin
 
 
 def test_table_facade_composes_refresh_fill_and_detail_capabilities():

@@ -9,10 +9,9 @@ labels: [benchmark, measurement, tooling]
 
 ## Context
 
-Schema version 2 (`97ba2ba`) fixed three defects that made the harness measure
+Schema version 2 of the harness fixed three defects that made the harness measure
 itself: no `TCP_NODELAY` on its listeners, every server sharing one interpreter,
-and `tracemalloc` inside the timed region. A four-role panel review of that
-commit confirmed the fixes but found that the corrected numbers are still soft,
+and `tracemalloc` inside the timed region. Review of that change confirmed the fixes but found that the corrected numbers are still soft,
 for reasons the harness now documents in `docs/router-operational-benchmark.md`
 under "Interpretation limits" but does not address.
 

@@ -12,6 +12,7 @@ class ServingDecision(Protocol):
     Every member is read-only: the concrete decisions are frozen dataclasses,
     and each may narrow a member's type (a route has no experiment, so its
     ``experiment_id`` is always ``None``; an A/B arm's is always a ``str``).
+    ``isinstance`` against it checks only that the members are present.
     """
 
     @property
