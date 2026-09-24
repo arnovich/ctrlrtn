@@ -10,10 +10,11 @@ from ctrlrtn.workflow.tool_operation import (
     ToolOperationIdentity,
 )
 
+from ..connection import SqliteCapability
 from ..queries import _INSERT_TOOL_EVENT, _INSERT_WORKFLOW_EVENT
 
 
-class WorkflowEventSqliteMixin:
+class WorkflowEventSqliteMixin(SqliteCapability):
     """Persist and project workflow and tool-operation observations."""
 
     def _insert_tool_operation_event(self, event: ToolOperationEvent) -> None:

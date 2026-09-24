@@ -247,12 +247,14 @@ def _parallel_candidates(
     for predecessors, names in groups.items():
         if len(names) < 2:
             continue
-        eligible = [
+        candidates = [
             rows.get((definition.workflow, definition.workflow_version, name))
             for name in names
         ]
         eligible = [
-            row for row in eligible if row is not None and row.runs >= _MIN_RUNS
+            row
+            for row in candidates
+            if row is not None and row.runs >= _MIN_RUNS
         ]
         if len(eligible) < 2 or any(
             row.avg_run_duration_ms is None for row in eligible
@@ -292,9 +294,9 @@ def _fusion_candidates(
 ) -> list[WorkflowRecommendation]:
     successors: dict[str, list[str]] = {}
     steps = {step.name: step for step in definition.steps}
-    for target in definition.steps:
-        for source in target.predecessors:
-            successors.setdefault(source, []).append(target.name)
+    for successor in definition.steps:
+        for source in successor.predecessors:
+            successors.setdefault(source, []).append(successor.name)
     result = []
     for source, targets in successors.items():
         if len(targets) != 1:

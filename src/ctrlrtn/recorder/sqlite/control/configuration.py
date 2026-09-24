@@ -14,6 +14,7 @@ from ctrlrtn.control_config import (
 from ctrlrtn.policy.experiment import RUNNING, STOPPED
 from ctrlrtn.policy.route import Route, WorkflowRoute
 
+from ..connection import SqliteCapability
 from ..queries import (
     _INSERT_EXPERIMENT,
     _SELECT_WORKFLOW_ROUTES,
@@ -26,7 +27,7 @@ from ..queries import (
 )
 
 
-class ConfigurationControlSqliteMixin:
+class ConfigurationControlSqliteMixin(SqliteCapability):
     """Persist routes, workflow definitions, and atomic control revisions."""
 
     def set_route(self, route: Route) -> None:
@@ -159,9 +160,9 @@ class ConfigurationControlSqliteMixin:
                             (STOPPED, current.experiment_id, RUNNING),
                         )
                 for use_case, desired in desired_experiments.items():
-                    current = current_experiments.get(use_case)
-                    if current is not None and _same_experiment(
-                        current, desired
+                    running = current_experiments.get(use_case)
+                    if running is not None and _same_experiment(
+                        running, desired
                     ):
                         continue
                     self._conn.execute(
@@ -195,19 +196,21 @@ class ConfigurationControlSqliteMixin:
                     self._conn.execute(
                         "DELETE FROM routes WHERE use_case_key = ?", (use_case,)
                     )
-                for use_case, desired in desired_routes.items():
-                    current = current_routes.get(use_case)
-                    if current is not None and _same_route(current, desired):
+                for use_case, desired_route in desired_routes.items():
+                    current_route = current_routes.get(use_case)
+                    if current_route is not None and _same_route(
+                        current_route, desired_route
+                    ):
                         continue
                     self._conn.execute(
                         _UPSERT_ROUTE,
                         (
-                            desired.use_case_key,
-                            desired.model,
-                            desired.previous_model,
-                            desired.note,
+                            desired_route.use_case_key,
+                            desired_route.model,
+                            desired_route.previous_model,
+                            desired_route.note,
                             activated,
-                            desired.provider,
+                            desired_route.provider,
                         ),
                     )
 
@@ -228,13 +231,17 @@ class ConfigurationControlSqliteMixin:
                            WHERE workflow = ? AND workflow_version = ? AND step = ?""",
                         (key[0], key[1], key[2] or ""),
                     )
-                for key, desired in desired_workflow_routes.items():
-                    current = current_workflow_routes.get(key)
-                    same = current is not None and (
-                        current[3],
-                        current[4],
-                        current[5],
-                    ) == (desired.model, desired.provider, desired.note)
+                for key, workflow_route in desired_workflow_routes.items():
+                    current_row = current_workflow_routes.get(key)
+                    same = current_row is not None and (
+                        current_row[3],
+                        current_row[4],
+                        current_row[5],
+                    ) == (
+                        workflow_route.model,
+                        workflow_route.provider,
+                        workflow_route.note,
+                    )
                     if same:
                         continue
                     self._conn.execute(
@@ -243,12 +250,12 @@ class ConfigurationControlSqliteMixin:
                                provider, note, ts
                            ) VALUES (?, ?, ?, ?, ?, ?, ?)""",
                         (
-                            desired.workflow,
-                            desired.workflow_version,
-                            desired.step or "",
-                            desired.model,
-                            desired.provider,
-                            desired.note,
+                            workflow_route.workflow,
+                            workflow_route.workflow_version,
+                            workflow_route.step or "",
+                            workflow_route.model,
+                            workflow_route.provider,
+                            workflow_route.note,
                             activated,
                         ),
                     )

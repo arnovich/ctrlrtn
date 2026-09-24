@@ -53,6 +53,13 @@ class FallbackDecision:
     is_budget_fallback: bool = True
 
 
+def _required_str(replay: Mapping[str, object], key: str) -> str:
+    value = replay.get(key)
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"fallback evidence {key} must be a non-empty string")
+    return value
+
+
 def approved_fallback_from_replay(
     replay: Mapping[str, object], *, provider: str | None = None
 ) -> ApprovedFallback:
@@ -63,13 +70,9 @@ def approved_fallback_from_replay(
         raise ValueError(
             "step-scoped replay evidence cannot approve a use-case fallback"
         )
-    required = ("use_case", "candidate_model", "baseline_model")
-    for key in required:
-        value = replay.get(key)
-        if not isinstance(value, str) or not value:
-            raise ValueError(
-                f"fallback evidence {key} must be a non-empty string"
-            )
+    use_case = _required_str(replay, "use_case")
+    candidate_model = _required_str(replay, "candidate_model")
+    baseline_model = _required_str(replay, "baseline_model")
     created = replay.get("created")
     if (
         isinstance(created, bool)
@@ -78,9 +81,9 @@ def approved_fallback_from_replay(
     ):
         raise ValueError("fallback evidence created must be finite")
     return ApprovedFallback(
-        use_case_key=replay["use_case"],
-        model=replay["candidate_model"],
-        baseline_model=replay["baseline_model"],
+        use_case_key=use_case,
+        model=candidate_model,
+        baseline_model=baseline_model,
         evidence_created=float(created),
         provider=provider,
     )

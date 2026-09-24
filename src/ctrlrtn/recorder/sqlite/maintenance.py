@@ -9,10 +9,11 @@ import time
 
 from ctrlrtn.recorder.redaction import redact_headers, redact_query
 
+from .connection import SqliteCapability
 from .results import DatabaseCompaction, TracePayloadPrune, WorkflowTaskErasure
 
 
-class MaintenanceSqliteMixin:
+class MaintenanceSqliteMixin(SqliteCapability):
     """Perform explicit maintenance operations on an owned connection."""
 
     def scrub_credential_headers(self) -> int:

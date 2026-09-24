@@ -22,10 +22,14 @@ def _as_bool(value: object) -> bool:
 
 
 def _as_int(value: object) -> int:
+    if not isinstance(value, (str, int, float)):
+        raise ConfigError(f"expected a number, got {type(value).__name__}")
     return int(value)
 
 
 def _as_float(value: object) -> float:
+    if not isinstance(value, (str, int, float)):
+        raise ConfigError(f"expected a number, got {type(value).__name__}")
     return float(value)
 
 

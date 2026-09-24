@@ -7,6 +7,7 @@ import threading
 import time
 import uuid
 from collections.abc import Iterator
+from contextvars import Token
 
 from ctrlrtn.sdk.context import (
     _route,
@@ -140,18 +141,18 @@ def edition(
         raise ValueError(
             "workflow and workflow_version must be provided together"
         )
-    if workflow is not None:
+    workflow_scope: tuple[str, str] | None = None
+    if workflow is not None and workflow_version is not None:
         WorkflowIdentity(
             tid, workflow, workflow_version, "step", uuid.uuid4().hex
         )
+        workflow_scope = (workflow, workflow_version)
     handle = Edition(tid, report_to, workflow, workflow_version)
     with _active_lock:
         _active_editions += 1
     task_token = _task.set(tid)
     route_token = _route.set(default_route)
-    workflow_token = _workflow.set(
-        (workflow, workflow_version) if workflow is not None else None
-    )
+    workflow_token = _workflow.set(workflow_scope)
     failed = False
     try:
         yield handle
@@ -176,7 +177,7 @@ class Step:
         self.identity = identity
         self.step_run_id = identity.step_run_id
         self._report_to = report_to
-        self._token = None
+        self._token: Token[WorkflowIdentity | None] | None = None
         self._terminal = False
 
     def _emit(
@@ -243,14 +244,13 @@ class Step:
         self._emit(status, success=success, score=score, error_code=error_code)
         self._terminal = True
 
-    def __exit__(self, exc_type, exc, traceback) -> bool:
+    def __exit__(self, exc_type, exc, traceback) -> None:
         try:
             if not self._terminal:
                 self._emit("failed" if exc_type else "completed")
         finally:
             if self._token is not None:
                 _step_identity.reset(self._token)
-        return False
 
 
 class ToolOperation:
@@ -305,11 +305,10 @@ class ToolOperation:
         )
         self._terminal = True
 
-    def __exit__(self, exc_type, exc, traceback) -> bool:
+    def __exit__(self, exc_type, exc, traceback) -> None:
         if not self._terminal:
             self.report(
                 status="failed" if exc_type else "completed",
                 success=exc_type is None,
                 error_code=(type(exc).__name__ if exc is not None else None),
             )
-        return False

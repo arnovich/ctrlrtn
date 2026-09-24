@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import httpx
 
@@ -26,9 +26,28 @@ _HOP_BY_HOP = frozenset(
 )
 
 
-class _RawHeaders(Protocol):
+class _StarletteHeaders(Protocol):
+    """Starlette's request ``Headers``: raw fields plus ``getlist``."""
+
     @property
     def raw(self) -> list[tuple[bytes, bytes]]: ...
+
+    def getlist(self, key: str) -> list[str]: ...
+
+
+@runtime_checkable
+class _HttpxHeaders(Protocol):
+    """httpx ``Headers``: raw fields plus ``get_list``."""
+
+    @property
+    def raw(self) -> list[tuple[bytes, bytes]]: ...
+
+    def get_list(self, key: str) -> list[str]: ...
+
+
+# Request headers arrive from Starlette and response headers from httpx; the
+# two spell the repeated-value accessor differently.
+_RawHeaders = _StarletteHeaders | _HttpxHeaders
 
 
 # Credential redaction lives in ctrlrtn.recorder.redaction: applied at
@@ -38,9 +57,8 @@ _recordable_headers = redact_headers
 
 
 def _values(headers: _RawHeaders, name: str) -> list[str]:
-    get_list = getattr(headers, "get_list", None)
-    if get_list is not None:
-        return get_list(name)
+    if isinstance(headers, _HttpxHeaders):
+        return headers.get_list(name)
     return headers.getlist(name)
 
 

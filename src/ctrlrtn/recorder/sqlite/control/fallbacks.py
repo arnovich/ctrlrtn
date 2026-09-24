@@ -7,6 +7,7 @@ import sqlite3
 from ctrlrtn.policy.fallback import ApprovedFallback
 from ctrlrtn.recorder.models import UNKEYED as _UNKEYED
 
+from ..connection import SqliteCapability
 from ..queries import (
     _SELECT_FALLBACKS,
     _UPSERT_FALLBACK,
@@ -17,7 +18,7 @@ from ..queries import (
 )
 
 
-class FallbackControlSqliteMixin:
+class FallbackControlSqliteMixin(SqliteCapability):
     """Persist approved fallbacks and their usage projections."""
 
     def set_fallback(self, fallback: ApprovedFallback) -> None:

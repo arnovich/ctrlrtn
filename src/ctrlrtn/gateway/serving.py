@@ -185,7 +185,7 @@ class ExperimentRouter:
         if experiment is None:
             # Exact explicit identity is required: partial or malformed headers
             # never authorize a workflow-scoped routing decision.
-            route = None
+            route: Route | WorkflowRoute | None = None
             scope = "use_case"
             rule_key = use_case or "(unkeyed)"
             if identity is not None:

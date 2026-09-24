@@ -7,10 +7,11 @@ import time
 
 from ctrlrtn.workflow.inference import InferredWorkflowEdge
 
+from ..connection import SqliteCapability
 from ..results import WorkflowDiscoveryInputDiagnostics
 
 
-class WorkflowAnalysisSqliteMixin:
+class WorkflowAnalysisSqliteMixin(SqliteCapability):
     """Persist workflow inference and discovery inputs and outputs."""
 
     def workflow_inference_inputs(
