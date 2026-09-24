@@ -74,7 +74,7 @@ class RequestReportingSqliteMixin:
             cursor = self._conn.execute(query, tuple(params))
             names = [column[0] for column in cursor.description]
             rows = cursor.fetchall()
-        return [dict(zip(names, row)) for row in reversed(rows)]
+        return [dict(zip(names, row, strict=True)) for row in reversed(rows)]
 
     def requests_for_use_case(
         self,

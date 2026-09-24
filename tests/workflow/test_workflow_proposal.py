@@ -1,7 +1,7 @@
 """Discovered families create immutable, inert identification proposals."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -44,7 +44,7 @@ def test_proposal_maps_observed_labels_to_reviewable_control_fragment(tmp_path):
         _family(),
         "newsroom",
         "git:abc123",
-        created_at=datetime(2026, 8, 5, tzinfo=timezone.utc),
+        created_at=datetime(2026, 8, 5, tzinfo=UTC),
     )
     steps = proposal["proposed_control_fragment"]["workflows"]["newsroom"][
         "git:abc123"

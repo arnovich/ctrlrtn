@@ -48,7 +48,7 @@ def _exit_failure(message: str) -> NoReturn:
 def _load_deblind_key(key_path: str, fail: Fail = _exit_failure) -> dict:
     """Load the sidecar ``{id: candidate_is_a}`` de-blind map."""
     try:
-        with open(key_path, "r", encoding="utf-8") as handle:
+        with open(key_path, encoding="utf-8") as handle:
             raw_lines = handle.readlines()
     except OSError:
         fail(
@@ -76,7 +76,7 @@ def _load_labels(path: str, fail: Fail = _exit_failure) -> list[LabeledPairing]:
     """Load human scores and safely de-blind their paired model outputs."""
     keys = _load_deblind_key(path + ".key", fail)
     try:
-        with open(path, "r", encoding="utf-8") as handle:
+        with open(path, encoding="utf-8") as handle:
             raw_lines = handle.readlines()
     except OSError as exc:
         fail(f"cannot read labels file {path}: {exc}")

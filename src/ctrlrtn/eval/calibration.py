@@ -134,7 +134,9 @@ def calibrate(
 
     bias_limit = (margin / 2.0) if margin is not None else _MAX_BIAS
     directional = [
-        (jd, hd) for jd, hd in zip(judge_diffs, human_diffs) if hd != 0
+        (jd, hd)
+        for jd, hd in zip(judge_diffs, human_diffs, strict=True)
+        if hd != 0
     ]
     n_directional = len(directional)
     agreements = sum(1 for jd, hd in directional if _same_sign(jd, hd))
@@ -147,7 +149,7 @@ def calibrate(
             f"judge under-rates the candidate (bias {bias:+.2f} at parity); "
             "conservative, but it may block good downgrades"
         )
-    if len({hd for hd in human_diffs}) < 2:
+    if len(set(human_diffs)) < 2:
         warnings.append(
             "human labels have no spread; the compression (slope) check is "
             "unreliable"
@@ -239,7 +241,7 @@ def _regression(xs: list[float], ys: list[float]) -> tuple[float, float]:
     var_x = sum((x - mx) ** 2 for x in xs)
     if var_x == 0:
         return 1.0, my - mx
-    cov = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
+    cov = sum((x - mx) * (y - my) for x, y in zip(xs, ys, strict=True))
     slope = cov / var_x
     return slope, my - slope * mx
 
@@ -269,7 +271,7 @@ def _ranks(values: list[float]) -> list[float]:
 
 def _pearson(xs: list[float], ys: list[float]) -> float:
     mx, my = _mean(xs), _mean(ys)
-    cov = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
+    cov = sum((x - mx) * (y - my) for x, y in zip(xs, ys, strict=True))
     var_x = sum((x - mx) ** 2 for x in xs)
     var_y = sum((y - my) ** 2 for y in ys)
     denom = (var_x * var_y) ** 0.5

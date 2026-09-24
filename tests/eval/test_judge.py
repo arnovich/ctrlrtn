@@ -81,20 +81,26 @@ def test_odd_or_low_replicates_rejected(bad):
 
 
 def test_scores_parsed_from_prose_wrapped_json():
-    judge = lambda p: 'Sure! Here you go: {"score_a": 7, "score_b": 3} done.'
+    def judge(p):
+        return 'Sure! Here you go: {"score_a": 7, "score_b": 3} done.'
+
     score = judge_pairing(judge, _pairing(), replicates=2)
     assert score.baseline == pytest.approx(5.0)  # 7 and 3 averaged over swap
     assert score.candidate == pytest.approx(5.0)
 
 
 def test_prose_with_leading_braces_still_parses():
-    judge = lambda p: 'use \\frac{a}{b}, then {"score_a": 6, "score_b": 4}'
+    def judge(p):
+        return 'use \\frac{a}{b}, then {"score_a": 6, "score_b": 4}'
+
     score = judge_pairing(judge, _pairing(), replicates=2)
     assert score.baseline == pytest.approx(5.0)
 
 
 def test_picks_object_with_both_score_keys():
-    judge = lambda p: '{"note": "thinking"} {"score_a": 6, "score_b": 4}'
+    def judge(p):
+        return '{"note": "thinking"} {"score_a": 6, "score_b": 4}'
+
     score = judge_pairing(judge, _pairing(), replicates=2)
     assert score.baseline == pytest.approx(5.0)
 

@@ -25,7 +25,7 @@ class GraphWindow:
     def seconds(self) -> int | None:
         return None if self.is_all else self.bucket_seconds * self.buckets
 
-    def resolve(self, earliest: float | None, now: float) -> "GraphWindow":
+    def resolve(self, earliest: float | None, now: float) -> GraphWindow:
         if not self.is_all:
             return self
         span = now - earliest if earliest is not None else 0.0

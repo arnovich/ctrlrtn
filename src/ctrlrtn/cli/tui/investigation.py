@@ -239,17 +239,19 @@ class InvestigationScreen(ModalScreen[None]):
         yield Static(self.context.title, id="investigation-title", markup=False)
         yield Static("", id="investigation-scope", markup=False)
         with TabbedContent(id="investigation-tabs"):
-            with TabPane("1 Overview", id="overview-tab"):
-                with VerticalScroll(id="overview-content"):
-                    yield Label(
-                        "What ran, what it cost, and what we learned",
-                        classes="investigation-heading",
-                    )
-                    with Horizontal(id="overview-metrics"):
-                        yield Static("", id="overview-cost", markup=False)
-                        yield Static("", id="overview-outcomes", markup=False)
-                    yield Static("", id="overview-decision", markup=False)
-                    yield Static("", id="overview-next", markup=False)
+            with (
+                TabPane("1 Overview", id="overview-tab"),
+                VerticalScroll(id="overview-content"),
+            ):
+                yield Label(
+                    "What ran, what it cost, and what we learned",
+                    classes="investigation-heading",
+                )
+                with Horizontal(id="overview-metrics"):
+                    yield Static("", id="overview-cost", markup=False)
+                    yield Static("", id="overview-outcomes", markup=False)
+                yield Static("", id="overview-decision", markup=False)
+                yield Static("", id="overview-next", markup=False)
             with TabPane("2 Roles", id="roles-tab"):
                 yield Label(
                     "Where does the money go?", classes="investigation-heading"

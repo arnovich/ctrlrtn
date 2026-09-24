@@ -59,7 +59,7 @@ def test_agreeing_judge_is_aligned():
     assert report.verdict == ALIGNED
     assert report.agreement_rate == 1.0  # same winner every directional pair
     assert report.agreement_lb > 0.5  # and distinguishable from a coin flip
-    assert 0.5 <= report.slope  # not compressing
+    assert report.slope >= 0.5  # not compressing
     assert abs(report.bias) <= report.bias_limit
     assert report.correlation > 0.0
 

@@ -5,8 +5,8 @@ from __future__ import annotations
 import math
 import time
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Mapping
 
 from ctrlrtn.workflow.identity import (
     WorkflowIdentity,
@@ -119,7 +119,7 @@ class ToolOperationEvent:
         }
 
     @classmethod
-    def from_payload(cls, value: Mapping) -> "ToolOperationEvent":
+    def from_payload(cls, value: Mapping) -> ToolOperationEvent:
         if not isinstance(value, Mapping):
             raise WorkflowIdentityError("tool event must be an object")
         workflow_keys = set(WorkflowIdentity.__dataclass_fields__)

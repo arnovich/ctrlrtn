@@ -7,8 +7,9 @@ safety notices, and the exact state transition they confirm.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Protocol
+from typing import Protocol
 
 from ctrlrtn.policy.experiment import Experiment
 from ctrlrtn.policy.route import Route

@@ -33,21 +33,21 @@ def summarize(rows: list[dict]) -> dict:
     """Count tasks once and preserve missing cost and outcome coverage."""
     tasks = {row["task_id"]: row for row in rows if row["task_id"] is not None}
     states = [completion(row) for row in tasks.values()]
-    return dict(
-        calls=len(rows),
-        known_cost=sum(row["cost_usd"] or 0 for row in rows),
-        unknown_cost=sum(row["cost_usd"] is None for row in rows),
-        errors=sum(not 200 <= row["status_code"] < 300 for row in rows),
-        tasks=len(tasks),
-        untasked=sum(row["task_id"] is None for row in rows),
-        completed=states.count("Completed"),
-        failed=states.count("Failed"),
-        missing=states.count("Not reported"),
-        conflicting=states.count("Conflicting reports"),
-        duplicate_reports=sum(
+    return {
+        "calls": len(rows),
+        "known_cost": sum(row["cost_usd"] or 0 for row in rows),
+        "unknown_cost": sum(row["cost_usd"] is None for row in rows),
+        "errors": sum(not 200 <= row["status_code"] < 300 for row in rows),
+        "tasks": len(tasks),
+        "untasked": sum(row["task_id"] is None for row in rows),
+        "completed": states.count("Completed"),
+        "failed": states.count("Failed"),
+        "missing": states.count("Not reported"),
+        "conflicting": states.count("Conflicting reports"),
+        "duplicate_reports": sum(
             row["outcome_reports"] > 1 for row in tasks.values()
         ),
-    )
+    }
 
 
 @dataclass(frozen=True)
@@ -97,33 +97,37 @@ class ReplayEvidence:
                     "elapsed_seconds", record.get("latency_seconds")
                 )
                 rows.append(
-                    dict(
-                        id=None,
-                        task_id=None,
-                        edition=pair["result"]["edition"],
-                        ts=None,
-                        use_case_key=self.role,
-                        model=record.get("model", record.get("served_model")),
-                        status_code=record.get("status_code"),
-                        cost_usd=record.get("cost_usd"),
-                        latency_ms=None if seconds is None else seconds * 1000,
-                        input_tokens=record.get("input_tokens"),
-                        output_tokens=record.get("output_tokens"),
-                        terminal_reason=None,
-                        stop_reason=record.get("stop_reason"),
-                        call_label=f"{name} {number}",
-                        tools=record.get(
+                    {
+                        "id": None,
+                        "task_id": None,
+                        "edition": pair["result"]["edition"],
+                        "ts": None,
+                        "use_case_key": self.role,
+                        "model": record.get(
+                            "model", record.get("served_model")
+                        ),
+                        "status_code": record.get("status_code"),
+                        "cost_usd": record.get("cost_usd"),
+                        "latency_ms": (
+                            None if seconds is None else seconds * 1000
+                        ),
+                        "input_tokens": record.get("input_tokens"),
+                        "output_tokens": record.get("output_tokens"),
+                        "terminal_reason": None,
+                        "stop_reason": record.get("stop_reason"),
+                        "call_label": f"{name} {number}",
+                        "tools": record.get(
                             "tools", record.get("emitted_tools", [])
                         ),
-                        tool_outcome=step.get(
+                        "tool_outcome": step.get(
                             "outcome", "Not executed · replay stopped"
                         ),
-                        tool_error=step.get("is_error"),
-                        evidence_reference=record.get(
+                        "tool_error": step.get("is_error"),
+                        "evidence_reference": record.get(
                             "evidence_reference",
                             f"reconciliation.json / {pair.get('pair', index)} / {arm}",
                         ),
-                    )
+                    }
                 )
         return rows
 
@@ -144,13 +148,13 @@ class ReplayEvidence:
         steps = call.get("steps")
         if steps is None:
             steps = [
-                dict(
-                    tool=", ".join(call.get("emitted_tools", []))
+                {
+                    "tool": ", ".join(call.get("emitted_tools", []))
                     or "No tool requested",
-                    cost_usd=call.get("cost_usd"),
-                    outcome="Not executed · replay stopped",
-                    is_error=False,
-                )
+                    "cost_usd": call.get("cost_usd"),
+                    "outcome": "Not executed · replay stopped",
+                    "is_error": False,
+                }
             ]
         recovered = False
         for number, step in enumerate(steps, 1):

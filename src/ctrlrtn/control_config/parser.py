@@ -40,7 +40,7 @@ def _fields(raw: object, label: str, allowed: set[str]) -> dict:
 
 def load_control_config(path: str) -> ControlConfig:
     try:
-        with open(path, "r", encoding="utf-8") as handle:
+        with open(path, encoding="utf-8") as handle:
             raw_bytes = handle.read()
     except FileNotFoundError:
         raise ControlConfigError(f"routing config not found: {path}") from None

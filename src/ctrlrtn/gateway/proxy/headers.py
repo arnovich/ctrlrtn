@@ -41,7 +41,7 @@ def _values(headers: _RawHeaders, name: str) -> list[str]:
     get_list = getattr(headers, "get_list", None)
     if get_list is not None:
         return get_list(name)
-    return getattr(headers, "getlist")(name)
+    return headers.getlist(name)
 
 
 def _hop_by_hop(headers: _RawHeaders) -> set[str]:

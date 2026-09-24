@@ -169,7 +169,10 @@ def _usage_from_sse(body: bytes) -> Usage:
 
 def _merge_usage(base: Usage, new: Usage) -> Usage:
     """Later non-None fields win (e.g. message_delta's final output tokens)."""
-    pick = lambda a, b: b if b is not None else a
+
+    def pick(a, b):
+        return b if b is not None else a
+
     return Usage(
         input_tokens=pick(base.input_tokens, new.input_tokens),
         output_tokens=pick(base.output_tokens, new.output_tokens),

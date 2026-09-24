@@ -123,17 +123,17 @@ def test_enrich_honors_the_recorded_provider_pricing_policy():
     body = json.dumps(
         {"usage": {"prompt_tokens": 1_000_000, "completion_tokens": 0}}
     ).encode()
-    common = dict(
-        method="POST",
-        path="/v1/chat/completions",
-        query="",
-        request_headers={},
-        request_body=b'{"model":"gpt-4o"}',
-        status_code=200,
-        response_headers={},
-        response_body=body,
-        latency_ms=1.0,
-    )
+    common = {
+        "method": "POST",
+        "path": "/v1/chat/completions",
+        "query": "",
+        "request_headers": {},
+        "request_body": b'{"model":"gpt-4o"}',
+        "status_code": 200,
+        "response_headers": {},
+        "response_body": body,
+        "latency_ms": 1.0,
+    }
     paid = Trace(provider="openai", **common)
     free = Trace(provider="ollama", provider_free=True, **common)
 

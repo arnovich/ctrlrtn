@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Callable, Mapping, Protocol
+from typing import Protocol
 
 from ctrlrtn.workflow.tool_operation import ToolOperationIdentity
 

@@ -75,7 +75,9 @@ line-length = 80
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E4", "E9", "F811", "F821", "F822", "F823"]
+select = ["E", "F", "W", "B", "UP", "SIM", "C4"]
+# black owns line length; E501 would only flag strings and comments.
+ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
