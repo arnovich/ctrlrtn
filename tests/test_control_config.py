@@ -116,6 +116,7 @@ def test_load_control_config_validates_and_builds_domain_objects(tmp_path):
             "version: 1\nworkflow_routes:\n  pipeline:\n    v1:\n      steps:\n"
             "        draft:\n          note: x\nworkflows:\n  pipeline:\n"
             "    v1:\n      steps:\n        draft: {}\n",
+            r"invalid workflow route \('pipeline', 'v1', 'draft'\): "
             "model must be non-empty",
         ),
         (

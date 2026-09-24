@@ -35,7 +35,7 @@ from ctrlrtn.eval.tripwire import (
 )
 from ctrlrtn.recorder.sqlite.store import SqliteTraceStore
 
-from .loading import _load_labels
+from .loading import load_labels
 
 DatabasePath = Callable[[], str]
 Fail = Callable[[str], NoReturn]
@@ -61,7 +61,7 @@ class CalibrationCommands:
             self._fail("--replicates must be an even number >= 2.")
         if args.margin is not None and args.margin <= 0:
             self._fail("--margin must be > 0.")
-        labeled = _load_labels(args.labels_file, self._fail)
+        labeled = load_labels(args.labels_file, self._fail)
         if not labeled:
             self._fail(f"No labelled pairings in {args.labels_file}.")
         api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -138,7 +138,7 @@ class CalibrationCommands:
                 try:
                     baseline_output = replay(body, baseline)
                     candidate_output = replay(body, args.candidate)
-                except Exception as exc:  # noqa: BLE001 - isolate one input
+                except Exception as exc:
                     failed += 1
                     print(
                         f"  ! replay failed on one input: {exc}",

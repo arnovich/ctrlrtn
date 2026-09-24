@@ -7,7 +7,7 @@ import re
 
 import pytest
 
-from ctrlrtn.cli.evaluation.loading import _load_labels
+from ctrlrtn.cli.evaluation.loading import load_labels
 from ctrlrtn.eval.calibration import (
     ALIGNED,
     INSUFFICIENT,
@@ -236,7 +236,7 @@ def test_load_labels_deblinds_both_orderings(tmp_path):
             },
         ],
     )
-    labeled = _load_labels(path)
+    labeled = load_labels(path)
     assert len(labeled) == 2
     # row 0: candidate shown as A -> its human score is score_a.
     assert labeled[0].pairing.candidate_output == "cand"
@@ -265,7 +265,7 @@ def test_load_labels_rejects_out_of_range_score(tmp_path):
         ],
     )
     with pytest.raises(SystemExit):
-        _load_labels(path)
+        load_labels(path)
 
 
 def test_load_labels_requires_the_sidecar_key(tmp_path):
@@ -284,7 +284,7 @@ def test_load_labels_requires_the_sidecar_key(tmp_path):
     )
     key.unlink()  # lose the de-blind key -> can't un-blind, must fail loudly
     with pytest.raises(SystemExit):
-        _load_labels(path)
+        load_labels(path)
 
 
 def test_load_labels_rejects_stringified_bool_in_key(tmp_path):
@@ -304,7 +304,7 @@ def test_load_labels_rejects_stringified_bool_in_key(tmp_path):
     # A stringified "false" would coerce to True and invert the de-blind.
     key.write_text(json.dumps({"id": 0, "candidate_is_a": "false"}) + "\n")
     with pytest.raises(SystemExit):
-        _load_labels(path)
+        load_labels(path)
 
 
 def test_render_calibration_smoke():
@@ -424,6 +424,6 @@ def test_calibration_set_streams_and_survives_failures(tmp_path, monkeypatch):
     for r in labels:
         r["score_a"], r["score_b"] = 7.0, 8.0
     out.write_text("\n".join(json.dumps(r) for r in labels) + "\n")
-    loaded = _load_labels(str(out))
+    loaded = load_labels(str(out))
     assert len(loaded) == 2
     assert all(lp.pairing.candidate_output == "SCORE_7.0" for lp in loaded)

@@ -3,7 +3,7 @@
 from .calibration import CalibrationCommands
 from .campaign import CampaignReportCommands
 from .core import EvaluationCommandContext
-from .loading import _exit_failure, _load_deblind_key, _load_labels
+from .loading import load_labels
 from .replay import ReplayEvaluationCommands
 from .status import EvaluationStatusCommands
 
@@ -20,7 +20,5 @@ class EvaluationCommands(
 
 __all__ = [
     "EvaluationCommands",
-    "_exit_failure",
-    "_load_deblind_key",
-    "_load_labels",
+    "load_labels",
 ]

@@ -16,7 +16,7 @@ What this does *not* fix: a judge may still re-identify an arm from the output's
 **style** (characteristic phrasing/formatting) and carry *differential bias by
 arm*. A/B label-blinding can't remove that; it is a residual left to the live
 calibration step (judge reliability + a human-labelled calibration set — see
-``docs/evaluation.md`` §6). Replicates reduce per-pairing judge noise; that
+``docs/evaluation.md``). Replicates reduce per-pairing judge noise; that
 noise is then absorbed into the between-pairing spread the paired NI test
 already uses (``ni``), so it need not be propagated separately.
 

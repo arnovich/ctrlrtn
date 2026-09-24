@@ -46,7 +46,7 @@ def _open_after_barrier(barrier, path, errors) -> None:
     try:
         barrier.wait(timeout=5)
         SqliteTraceStore(path).close()
-    except BaseException as exc:  # noqa: BLE001 - asserted by the caller
+    except BaseException as exc:
         errors.append(exc)
 
 
@@ -102,7 +102,7 @@ def test_competing_workers_complete_every_job_exactly_once(tmp_path):
             )
             while worker.run_once():
                 pass
-        except BaseException as exc:  # noqa: BLE001 - asserted below
+        except BaseException as exc:
             errors.append(exc)
         finally:
             store.close()

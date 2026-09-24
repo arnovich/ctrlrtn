@@ -14,7 +14,7 @@ from ctrlrtn.jobs.context import JobCancelled, JobContext, JobHandler
 class Worker:
     """Claims and runs one durable job at a time.
 
-    Handlers are injected so the queue is independent of replay/training job
+    Handlers are injected so the queue is independent of the job
     implementations. A missing handler fails visibly instead of leaving a job
     stuck in ``running``.
     """
@@ -70,7 +70,7 @@ class Worker:
             result = handler(context, job.config)
         except JobCancelled:
             self.store.cancel_claimed_job(job.job_id, self.worker_id)
-        except Exception as exc:  # noqa: BLE001 - persisted worker boundary
+        except Exception as exc:
             self.store.fail_job(job.job_id, self.worker_id, str(exc))
         else:
             try:

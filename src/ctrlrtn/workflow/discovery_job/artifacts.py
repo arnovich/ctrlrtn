@@ -163,7 +163,7 @@ def render_workflow_discovery_selection(selection: dict) -> str:
     return "\n".join(
         [
             "selection diagnostics:",
-            f"  strategy: {selection.get('selection_strategy', 'legacy/unknown')}",
+            f"  strategy: {selection.get('selection_strategy', 'unknown')}",
             f"  explicit tasks: {selected_tasks}/{available_tasks} ({coverage:.1%}) selected · "
             f"{selection.get('truncated_explicit_tasks', 0)} truncated · "
             f"{selection.get('excluded_by_scope_tasks', 0)} scope-excluded · "

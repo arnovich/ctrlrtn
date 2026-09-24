@@ -305,7 +305,7 @@ class ToolOperation:
         self,
         *,
         status: str = "completed",
-        success: bool = True,
+        success: bool | None = None,
         error_code: str | None = None,
         latency_ms: float | None = None,
         cost_usd: float | None = None,
@@ -313,6 +313,7 @@ class ToolOperation:
         """Emit the tool attempt's terminal event explicitly. ``status`` must
         be ``completed``, ``failed`` or ``cancelled``, and an attempt has
         exactly one terminal event (``RuntimeError`` on a second call).
+        ``success`` defaults to whether ``status`` is ``completed``;
         ``latency_ms`` defaults to the time since ``__enter__``. Without a
         call, leaving the block reports ``completed``, or ``failed`` with the
         exception type as ``error_code`` if one is propagating."""
@@ -320,6 +321,8 @@ class ToolOperation:
             raise RuntimeError("tool attempt already has a terminal event")
         if status not in {"completed", "failed", "cancelled"}:
             raise ValueError("tool report status must be terminal")
+        if success is None:
+            success = status == "completed"
         measured = (time.monotonic() - self._started) * 1000
         self._emit(
             status,

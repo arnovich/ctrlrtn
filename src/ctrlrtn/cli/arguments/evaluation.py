@@ -119,7 +119,7 @@ def register_evaluations(sub, commands) -> None:
         "--only",
         nargs="*",
         default=[],
-        help="limit the report to these use-cases (e.g. exclude legacy fp: "
+        help="limit the report to these use-cases (e.g. exclude fingerprint-keyed fp: "
         "keys); totals are then scoped to the listed roles",
     )
     campaign_report.add_argument(

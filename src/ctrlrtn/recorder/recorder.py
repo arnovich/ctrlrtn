@@ -103,7 +103,7 @@ class Recorder:
 
     async def enqueue_important(self, trace: Trace) -> bool:
         """Enqueue a candidate-arm trace that should not be dropped (a lost
-        candidate call is an MNAR confounder that biases the experiment),
+        candidate call is a missing-not-at-random confounder that biases the experiment),
         applying BOUNDED backpressure instead of dropping on full.
 
         Call this ONLY off the client's response path (the post-stream finally),

@@ -8,7 +8,7 @@ from ctrlrtn.workflow.metrics import (
     build_workflow_step_metrics,
 )
 
-from ..connection import SqliteCapability
+from ..capability import SqliteCapability
 
 
 class WorkflowReportingSqliteMixin(SqliteCapability):

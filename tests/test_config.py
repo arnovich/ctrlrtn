@@ -504,7 +504,9 @@ def test_number_settings_reject_values_that_are_not_numbers(
 ):
     # YAML parses an unquoted date into a date object, a plausible typo.
     _config(tmp_path, monkeypatch, "port: 2026-01-01\n")
-    with pytest.raises(ConfigError, match="expected a number, got date"):
+    with pytest.raises(
+        ConfigError, match=r"config port=.* expected a number, got date"
+    ):
         load_settings()
     _config(tmp_path, monkeypatch, "timeout: 2026-01-01\n")
     with pytest.raises(ConfigError, match="expected a number, got date"):

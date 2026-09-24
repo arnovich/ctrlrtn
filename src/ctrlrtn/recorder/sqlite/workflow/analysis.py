@@ -7,7 +7,7 @@ import time
 
 from ctrlrtn.workflow.inference import InferredWorkflowEdge
 
-from ..connection import SqliteCapability
+from ..capability import SqliteCapability
 from ..results import WorkflowDiscoveryInputDiagnostics
 
 

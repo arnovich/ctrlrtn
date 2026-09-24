@@ -10,7 +10,7 @@ from ctrlrtn.workflow.tool_operation import (
     ToolOperationIdentity,
 )
 
-from ..connection import SqliteCapability
+from ..capability import SqliteCapability
 from ..queries import _INSERT_TOOL_EVENT, _INSERT_WORKFLOW_EVENT
 
 

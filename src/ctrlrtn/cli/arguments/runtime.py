@@ -28,7 +28,8 @@ def register_processes(sub, runtime, operations) -> None:
 
     console = sub.add_parser(
         "console",
-        help="live read-only TUI monitor (needs the 'tui' extra)",
+        help="live TUI: monitor traffic and run confirmed control actions "
+        "(needs the 'tui' extra)",
     )
     console.add_argument(
         "--refresh",

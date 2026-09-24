@@ -9,7 +9,7 @@ from ctrlrtn.policy.scope import ExperimentScope
 from ctrlrtn.recorder.models import UNKEYED as _UNKEYED
 from ctrlrtn.recorder.models import ModelRanking
 
-from ..connection import SqliteCapability
+from ..capability import SqliteCapability
 from ..queries import (
     _BUCKET_SERIES,
     _GET,

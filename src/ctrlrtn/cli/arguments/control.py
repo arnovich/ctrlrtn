@@ -54,7 +54,7 @@ def register(sub, controls, evaluation) -> None:
         type=float,
         default=DEFAULT_MAX_COST_USD_PER_TASK,
         dest="max_cost",
-        help="per-task $ ceiling (recorded for a later guard; not yet enforced)",
+        help="per-task $ ceiling recorded with the experiment (not enforced)",
     )
     exp_start.add_argument(
         "--id", default=None, help="experiment id (default: auto exp:<uuid>)"
