@@ -18,7 +18,7 @@ from ctrlrtn.eval.live import (
     anthropic_judge_fn,
     anthropic_replay_fn,
 )
-from ctrlrtn.eval.replay import ReplaySample, run_replay
+from ctrlrtn.eval.replay import ReplaySample, require_replayable, run_replay
 from ctrlrtn.jobs.models import Job
 
 KIND = "replay_eval"
@@ -118,6 +118,7 @@ def prepare_replay_job(
         raise ValueError(
             f"no replayable successful calls for use-case {use_case!r}"
         )
+    require_replayable(rows, use_case)
     baseline = baseline_model or store.use_case_models().get(use_case)
     if not baseline:
         raise ValueError("could not infer the baseline model")

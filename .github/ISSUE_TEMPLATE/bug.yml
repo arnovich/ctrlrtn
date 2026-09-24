@@ -1,0 +1,26 @@
+name: Bug report
+description: Something behaves differently from what the documentation says.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: ctrlrtn version
+      description: Output of `ctrlrtn --version`, and the Python version.
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: The command or request, the output, and the page or line of the documentation it contradicts.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Nothing private is attached
+      description: The proxy records full prompts and responses and forwards API keys. Paste neither.
+      options:
+        - label: I have not pasted recorded traces, prompts, responses or API keys.
+          required: true

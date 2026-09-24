@@ -442,3 +442,21 @@ def test_extract_input_summary_includes_tool_results():
     assert "[tool result]" in summary
     assert "AAPL closed at 212.44" in summary  # string content
     assert "volume 48.2M" in summary  # nested content list
+
+
+def test_require_replayable_names_every_foreign_path():
+    from ctrlrtn.eval.replay import require_replayable
+
+    rows = [
+        {"path": "/v1/messages"},
+        {"path": "/ollama/v1/chat/completions"},
+        {"path": "/v1/chat/completions"},
+        {"path": "/v1/chat/completions"},
+    ]
+    with pytest.raises(ValueError) as excinfo:
+        require_replayable(rows, "tag:editor")
+    message = str(excinfo.value)
+    assert "Anthropic Messages API only" in message
+    assert "/ollama/v1/chat/completions, /v1/chat/completions" in message
+
+    require_replayable([{"path": "/v1/messages"}], "tag:editor")  # no raise

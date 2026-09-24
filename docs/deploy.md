@@ -54,7 +54,7 @@ network presence, and the app's API key never leaves the box.
 ```bash
 # on the server, as root. Read it first; it is short.
 git clone https://github.com/arnovich/ctrlrtn /tmp/ctrlrtn \
-  && sudo /tmp/ctrlrtn/deploy/install.sh
+  && sudo /tmp/ctrlrtn/deploy/install.sh --ref v0.1.0   # or a later tag
 ```
 
 `deploy/install.sh` runs as root and is **idempotent**. It creates a

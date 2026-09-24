@@ -25,11 +25,12 @@ def _seed(
     workflow_version=None,
     step=None,
     task_id="task:1",
+    path="/v1/messages",
 ):
     store._insert(
         Trace(
             method="POST",
-            path="/v1/messages",
+            path=path,
             query="",
             request_headers={},
             request_body=json.dumps(
@@ -376,3 +377,25 @@ def test_jobs_export_writes_completed_evidence(tmp_path, monkeypatch):
 
     main(["jobs", "export", "job:a", str(out)])
     assert json.loads(out.read_text()) == {"verdict": "NON_INFERIOR"}
+
+
+def test_background_replay_refuses_calls_recorded_on_another_api(tmp_path):
+    """The replay speaks the Anthropic Messages API; a use-case recorded on
+    OpenAI chat must be refused before anything is queued or spent."""
+    store = SqliteTraceStore(str(tmp_path / "jobs.db"))
+    _seed(store, task_id="task:1")
+    _seed(store, task_id="task:2", path="/v1/chat/completions")
+
+    with pytest.raises(ValueError, match="/v1/chat/completions"):
+        replay_job.prepare_replay_job(
+            store,
+            use_case="tag:editor",
+            candidate_model="candidate",
+            baseline_model="base",
+            judge_model="judge",
+            margin=0.05,
+            limit=10,
+            replicates=2,
+            max_tokens=None,
+        )
+    assert store.jobs() == []

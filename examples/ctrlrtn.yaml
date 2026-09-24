@@ -1,0 +1,32 @@
+# ctrlrtn.yaml: every setting, with its default. The proxy reads this file
+# from CTRLRTN_CONFIG, else ./ctrlrtn.yaml; environment variables named
+# CTRLRTN_<KEY> override it. See docs/configure.md.
+
+db_path: ctrlrtn.db          # absolute in production; serve and the CLI must agree
+host: 127.0.0.1              # 0.0.0.0 only inside a container or behind a firewall
+port: 4000
+log_requests: false          # one line per recorded call
+log_level: info              # debug, info, warning, error, critical
+timeout: 600                 # seconds per upstream request
+inject_cache: false          # Anthropic prompt-cache breakpoint on every call
+retention_days: 30           # optional; omit for manual prune only
+control_hosts: []            # extra Host names the control plane accepts
+
+# Upstreams. The built-in Anthropic and OpenAI routes need no configuration.
+# anthropic_upstream: https://api.anthropic.com
+# openai_upstream: https://api.openai.com
+providers:
+  ollama:                    # mounted at /ollama; clients use http://127.0.0.1:4000/ollama/v1
+    base_url: http://localhost:11434
+    api: openai
+    free: true
+  # ollama_cloud:
+  #   base_url: https://ollama.com
+  #   api: openai
+  #   credential: { env: OLLAMA_API_KEY }   # from /etc/ctrlrtn/env under systemd
+
+# Spend ceilings. Absent means unlimited. See docs/configure.md "Spend ceilings".
+# budgets:
+#   global: { daily_usd: 50 }
+#   use_cases: { "tag:editor": { daily_usd: 5 } }
+#   session: { limit_usd: 2 }

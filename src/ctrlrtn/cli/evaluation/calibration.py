@@ -24,6 +24,7 @@ from ctrlrtn.eval.calibration import (
 from ctrlrtn.eval.live import JUDGE_TIMEOUT, REPLAY_TIMEOUT
 from ctrlrtn.eval.replay import (
     extract_input_summary,
+    require_replayable,
 )
 from ctrlrtn.eval.tripwire import (
     GROSS_REGRESSION,
@@ -97,6 +98,10 @@ class CalibrationCommands:
                     f"{args.use_case} — failed calls are not replay inputs. "
                     "Run `ctrlrtn usecases` to list keys."
                 )
+            try:
+                require_replayable(rows, args.use_case)
+            except ValueError as exc:
+                self._fail(f"{exc}.")
             baseline = args.baseline or store.use_case_models().get(
                 args.use_case
             )
