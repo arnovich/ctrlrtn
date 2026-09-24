@@ -178,6 +178,11 @@ def utc_day_start(now: float | None = None) -> float:
 
 @dataclass(frozen=True)
 class BudgetDecision:
+    """The budget gate's answer for one request. When refused, ``error_type``
+    names the synthetic error and ``scope``, ``spent_usd`` and ``limit_usd``
+    say which ceiling was hit. When allowed with reservations enabled,
+    ``reservation_id`` holds ``reserved_usd`` until ``observe`` settles it."""
+
     allowed: bool
     error_type: str | None = None
     scope: str | None = None

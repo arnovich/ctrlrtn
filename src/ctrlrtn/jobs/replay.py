@@ -26,6 +26,10 @@ KIND = "replay_eval"
 
 @dataclass(frozen=True)
 class ReplayJobPlan:
+    """A validated replay evaluation frozen before any spend: the ``Job`` to
+    queue, the exact rows it will replay, and the unit and call counts an
+    operator confirms against."""
+
     job: Job
     rows: list[dict]
     units: int

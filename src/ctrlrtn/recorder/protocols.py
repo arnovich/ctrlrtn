@@ -29,29 +29,59 @@ from ctrlrtn.recorder.repositories import (
 class TraceStore(TraceRepository, Protocol):
     """Durable trace writes plus the aggregate reads budget and CLI need."""
 
-    def rankings(
-        self, *, baseline_only: bool = False
-    ) -> list[UseCaseRanking]: ...
+    def rankings(self, *, baseline_only: bool = False) -> list[UseCaseRanking]:
+        """Calls, tokens, latency and spend per use-case over all recorded
+        history; ``baseline_only`` leaves candidate-arm calls out."""
+        ...
 
-    def use_case_models(self) -> dict[str, str | None]: ...
+    def use_case_models(self) -> dict[str, str | None]:
+        """The model most recently seen per use-case key (from its latest
+        call), ``None`` where it could not be extracted; keyed like
+        ``rankings``."""
+        ...
 
-    def tasks(self, limit: int = 50) -> list[TaskSummary]: ...
+    def tasks(self, limit: int = 50) -> list[TaskSummary]:
+        """The ``limit`` costliest tasks, each with its latest reported
+        outcome attached."""
+        ...
 
-    def sessions(self, limit: int = 50) -> list[SessionSummary]: ...
+    def sessions(self, limit: int = 50) -> list[SessionSummary]:
+        """The ``limit`` costliest operator sessions, with how many of their
+        calls had no known cost."""
+        ...
 
-    def spend_since(self, ts: float) -> float: ...
+    def spend_since(self, ts: float) -> float:
+        """Total known USD cost of calls recorded at or after ``ts`` (Unix
+        time); unpriced calls contribute nothing."""
+        ...
 
     def spend_breakdown_since(
         self, ts: float
-    ) -> tuple[float, dict[str, float]]: ...
+    ) -> tuple[float, dict[str, float]]:
+        """``(total, by_use_case)`` known USD cost since ``ts``. Seeds the
+        budget gate's daily snapshot at startup; never read per request."""
+        ...
 
-    def session_spend_state(self) -> tuple[dict[str, float], set[str]]: ...
+    def session_spend_state(self) -> tuple[dict[str, float], set[str]]:
+        """Lifetime known cost per session id, plus the sessions that had a
+        billable call with no known cost. Seeds the budget gate's session
+        state at startup; never read per request."""
+        ...
 
-    def unpriced_calls_since(self, ts: float) -> int: ...
+    def unpriced_calls_since(self, ts: float) -> int:
+        """Calls since ``ts`` that reached a paid provider on a model with no
+        price, so their cost is unknown to spend totals and the budget."""
+        ...
 
-    def terminal_counts_since(self, ts: float) -> dict[str, int]: ...
+    def terminal_counts_since(self, ts: float) -> dict[str, int]:
+        """Router-terminated calls since ``ts`` counted by ``terminal_reason``
+        (budget rejections, divergence ceilings, shadow failures)."""
+        ...
 
-    def fallback_calls_since(self, ts: float) -> int: ...
+    def fallback_calls_since(self, ts: float) -> int:
+        """Calls since ``ts`` that the budget rewrote to an approved fallback
+        and the provider then served (terminated calls excluded)."""
+        ...
 
 
 class ExperimentStore(ExperimentRepository, ShadowRepository, Protocol):

@@ -36,6 +36,9 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class ShadowPair:
+    """The identity a mirrored request is filed under: the shadow experiment
+    and the pair id that links the actual trace to its candidate twin."""
+
     shadow_id: str
     pair_id: str
 
@@ -57,6 +60,13 @@ class _Work:
 
 
 class ShadowManager:
+    """Mirrors sampled live requests to a candidate model off the response
+    path. ``submit`` decides synchronously from an in-memory snapshot and
+    queues at most one bounded work item; workers send it, record the
+    candidate trace and update the durable attrition counters. A full queue
+    or any failure is counted as a drop, never surfaced to the client as
+    latency or an error."""
+
     def __init__(
         self,
         store: ShadowRepository,

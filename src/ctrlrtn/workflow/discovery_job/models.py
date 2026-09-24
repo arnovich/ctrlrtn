@@ -16,11 +16,21 @@ MAX_TRACES = 20000
 
 
 class WorkflowDiscoveryJobError(ValueError):
+    """Raised when a discovery job's inputs, scope, or artifact are invalid."""
+
     pass
 
 
 @dataclass(frozen=True)
 class WorkflowDiscoveryJobPlan:
+    """A queued discovery job together with its frozen-input summary.
+
+    ``job`` carries the frozen trace IDs, evidence bindings and input digest
+    the worker later re-verifies; the remaining fields describe the sample
+    so operators can see how many explicit tasks and unscoped traces it
+    holds before running it.
+    """
+
     job: Job
     traces: int
     explicit_tasks: int
@@ -30,6 +40,14 @@ class WorkflowDiscoveryJobPlan:
 
 @dataclass(frozen=True)
 class WorkflowDiscoveryScope:
+    """Immutable cohort filter frozen into a discovery job and its artifact.
+
+    It bounds tasks by last-observed time, provider, served model,
+    experiment and arm. A matching task contributes its whole trajectory
+    rather than having non-matching calls cut from its graph; ``arm``
+    requires ``experiment_id``, and all-``None`` means all legacy traffic.
+    """
+
     since: float | None = None
     until: float | None = None
     provider: str | None = None
@@ -40,6 +58,12 @@ class WorkflowDiscoveryScope:
 
 @dataclass(frozen=True)
 class WorkflowFamilySnapshotMatch:
+    """One-to-one pairing of a family across two discovery snapshots.
+
+    Families are matched by normalized node/edge shape, not by ID, because
+    representative-derived family IDs may legitimately change between runs.
+    """
+
     previous_family_id: str
     current_family_id: str
     similarity: float
@@ -49,6 +73,16 @@ class WorkflowFamilySnapshotMatch:
 
 @dataclass(frozen=True)
 class WorkflowDiscoveryComparison:
+    """Structural diff between two verified discovery artifacts.
+
+    Snapshots are identified by artifact digest. ``compatible_parameters``
+    is false when algorithm or parameters differ (never silently
+    normalized), ``scope_relationship`` names how the scopes differ, and
+    the task counts say which assigned digests stayed in a matched family,
+    moved, appeared, or disappeared. The comparison is analysis-only and
+    grants no stable workflow identity.
+    """
+
     previous_sha256: str
     current_sha256: str
     compatible_parameters: bool

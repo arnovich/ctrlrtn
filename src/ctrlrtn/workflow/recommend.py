@@ -15,6 +15,15 @@ _MIN_COST = 0.01
 
 @dataclass(frozen=True)
 class WorkflowRecommendation:
+    """One read-only optimization prompt for operator review.
+
+    ``kind`` names the pattern (expensive step, repeated calls, parallel or
+    fusion candidate, failure branch, retry amplification, common path),
+    ``confidence`` is ``low`` or ``medium`` from run counts, ``evidence``
+    cites the measurements, and ``hazards`` list why the router must not
+    act on it. Nothing here is executable policy.
+    """
+
     kind: str
     workflow: str
     workflow_version: str

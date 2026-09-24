@@ -29,6 +29,8 @@ EVENT_STATUSES = TERMINAL_STATUSES | {"started"}
 
 
 class WorkflowIdentityError(ValueError):
+    """Raised when workflow, event or tool-operation identity is malformed."""
+
     pass
 
 
@@ -48,6 +50,17 @@ def _identifier(
 
 @dataclass(frozen=True)
 class WorkflowIdentity:
+    """Application-declared identity of one step run within one task.
+
+    The stable step key is ``(workflow, workflow_version, step)`` and the
+    execution key is ``(task_id, step_run_id)``. ``parent_step_run_id``
+    means "created or controlled by" and ``dependency_step_run_ids`` list
+    the runs whose results this one consumes; all refer to runs in the same
+    task. Construction validates the identifier grammar, size limits and
+    attempt, so a live instance is always a complete, valid identity that
+    the router observes and never infers.
+    """
+
     task_id: str
     workflow: str
     workflow_version: str
@@ -191,6 +204,14 @@ def identity_from_headers(
 
 @dataclass(frozen=True)
 class WorkflowEvent:
+    """One explicit lifecycle fact about a step run: an append-only event.
+
+    ``status`` is ``started`` or one of the terminal statuses; outcome
+    fields (``success``, ``score``, ``error_code``) are only valid on a
+    terminal event. ``event_id`` makes retried delivery idempotent. Events
+    are application facts and never rewrite trace identity.
+    """
+
     identity: WorkflowIdentity
     status: str
     event_id: str = field(default_factory=lambda: uuid.uuid4().hex)

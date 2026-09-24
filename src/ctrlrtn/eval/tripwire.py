@@ -162,6 +162,10 @@ def classify_task(
 
 @dataclass(frozen=True)
 class ArmStats:
+    """One arm's tally after classification: outcome counts, cost, per-task
+    call counts, the models actually served and the step paths seen.
+    Contaminated tasks are excluded before the tally is taken."""
+
     arm: str
     success: int = 0
     failure: int = 0  # reported failures incl. ceiling terminals
@@ -208,6 +212,12 @@ class ArmStats:
 
 @dataclass(frozen=True)
 class TripwireReport:
+    """The tripwire's verdict for one experiment, with the per-arm evidence
+    behind it and the bounds on the candidate-minus-baseline failure rate.
+    Anything other than ``GROSS_REGRESSION`` or ``NO_GROSS_REGRESSION`` is a
+    call for more data, and even ``NO_GROSS_REGRESSION`` is a screen, not a
+    certificate."""
+
     verdict: str
     baseline: ArmStats
     candidate: ArmStats

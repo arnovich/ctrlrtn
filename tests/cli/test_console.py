@@ -71,12 +71,7 @@ from ctrlrtn.recorder.store import (  # noqa: E402
     SqliteTraceStore,
 )
 from ctrlrtn.recorder.trace import Trace  # noqa: E402
-from ctrlrtn.workflow.discovery_job import (
-    KIND as WORKFLOW_DISCOVERY_JOB_KIND,
-)  # noqa: E402
-from ctrlrtn.workflow.discovery_job import (  # noqa: E402
-    run_workflow_discovery_job,
-)
+from ctrlrtn.workflow import discovery_job  # noqa: E402
 from ctrlrtn.workflow.identity import (  # noqa: E402
     WorkflowEvent,
     WorkflowIdentity,
@@ -1641,7 +1636,9 @@ async def test_a_paged_out_discovery_job_still_fills_the_discovered_table(
             try:
                 Worker(
                     worker_store,
-                    {WORKFLOW_DISCOVERY_JOB_KIND: run_workflow_discovery_job},
+                    {
+                        discovery_job.KIND: discovery_job.run_workflow_discovery_job
+                    },
                     worker_id="worker:paged-discovery",
                 ).run_once()
                 # Bury it under more than a full page of newer jobs.
@@ -2189,13 +2186,15 @@ async def test_console_discovers_identifies_and_verifies_workflow_family(
                 queued = job_reader.jobs()[0]
             finally:
                 job_reader.close()
-            assert queued.kind == WORKFLOW_DISCOVERY_JOB_KIND
+            assert queued.kind == discovery_job.KIND
             assert "frozen trace(s)" in app._last_notice
             worker_store = SqliteTraceStore(db_path)
             try:
                 Worker(
                     worker_store,
-                    {WORKFLOW_DISCOVERY_JOB_KIND: run_workflow_discovery_job},
+                    {
+                        discovery_job.KIND: discovery_job.run_workflow_discovery_job
+                    },
                     worker_id="worker:console-discovery",
                 ).run_once()
             finally:
@@ -2218,7 +2217,9 @@ async def test_console_discovers_identifies_and_verifies_workflow_family(
             try:
                 Worker(
                     second_worker,
-                    {WORKFLOW_DISCOVERY_JOB_KIND: run_workflow_discovery_job},
+                    {
+                        discovery_job.KIND: discovery_job.run_workflow_discovery_job
+                    },
                     worker_id="worker:console-comparison",
                 ).run_once()
             finally:

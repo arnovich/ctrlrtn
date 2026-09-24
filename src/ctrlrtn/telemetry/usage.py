@@ -29,6 +29,10 @@ from typing import Any
 
 @dataclass
 class Usage:
+    """Token counts extracted from one call. ``input_tokens`` is uncached
+    input; cache reads and writes are kept separate so pricing can discount
+    them. ``None`` means the provider reported nothing, never zero."""
+
     input_tokens: int | None = None  # uncached input
     output_tokens: int | None = None
     cache_read_tokens: int | None = None  # cached input read (discounted)

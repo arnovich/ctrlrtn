@@ -47,6 +47,11 @@ _NORMAL = NormalDist()
 
 @dataclass
 class NIResult:
+    """The paired non-inferiority verdict for one replay batch.
+    ``non_inferior`` is ``True`` only when the batch had enough independent
+    units and the BCa lower bound cleared ``-margin``; an ``underpowered``
+    result concludes nothing either way."""
+
     non_inferior: bool
     mean_diff: float  # candidate - baseline; >0 means candidate scored higher
     lower_bound: float  # one-sided (1 - confidence) lower bound on mean_diff

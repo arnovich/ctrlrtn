@@ -12,6 +12,11 @@ class JobCancelled(Exception):
 
 
 class JobContext:
+    """What a job handler gets for progress and cancellation. Each
+    ``progress`` or ``checkpoint`` call also refreshes the lease heartbeat,
+    and raises ``JobCancelled`` once the job is no longer this worker's to
+    run (cancellation requested, or the lease reclaimed)."""
+
     def __init__(self, store, job: Job, worker_id: str) -> None:
         self.store = store
         self.job = job

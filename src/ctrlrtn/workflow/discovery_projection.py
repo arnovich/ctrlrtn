@@ -15,12 +15,21 @@ from ctrlrtn.workflow.discovery import (
 
 @dataclass(frozen=True)
 class DiscoveredPath:
+    """One exact ordered call-label sequence and its member-task count."""
+
     labels: tuple[str, ...]
     tasks: int
 
 
 @dataclass(frozen=True)
 class DiscoveredTaskProjection:
+    """Digest-only timeline and operational totals for one family member.
+
+    ``outcome`` stays ``"unknown"`` because HTTP success is not a logical
+    workflow outcome; ``ambiguous`` flags a synthetic correlation that
+    matched more than one fragment. No raw task ID or body is kept.
+    """
+
     task_digest: str
     timeline: tuple[str, ...]
     calls: int
@@ -35,6 +44,16 @@ class DiscoveredTaskProjection:
 
 @dataclass(frozen=True)
 class DiscoveredFamilyProjection:
+    """Privacy-safe visual and operational summary of one discovered family.
+
+    Built from frozen observations: representative and per-task timelines,
+    path frequencies, branches, joins, retries and self-loops, plus
+    provider, model, tool-operation, token, cost, latency and HTTP-failure
+    totals. Tasks appear as digests only; every member stays in the
+    ``unknown_outcomes`` denominator. It is an inferred, analysis-only view
+    with no workflow or routing authority.
+    """
+
     family_id: str
     tasks: int
     calls: int
