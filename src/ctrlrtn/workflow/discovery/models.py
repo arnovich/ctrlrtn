@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 ALGORITHM = "observed-tool-graph-family/v4"
 DiscoveryProgress = Callable[[int, int, str], None]

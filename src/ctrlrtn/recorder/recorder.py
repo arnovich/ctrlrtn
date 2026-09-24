@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from ctrlrtn.recorder.models import Outcome
 from ctrlrtn.recorder.repositories import TraceRepository
@@ -112,7 +112,7 @@ class Recorder:
                 self._queue.put(trace), self._important_timeout
             )
             return True
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._dropped_important += 1
             self._discard(trace)
             logger.warning(
@@ -187,7 +187,7 @@ class Recorder:
         # than discarded with the worker.
         try:
             await asyncio.wait_for(self._queue.join(), self._drain_timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 "recorder shutdown: %d traces left undrained",
                 self._queue.qsize(),

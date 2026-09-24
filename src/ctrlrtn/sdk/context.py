@@ -8,7 +8,7 @@ import functools
 import logging
 import os
 import uuid
-from typing import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 
 from ctrlrtn.workflow.identity import WorkflowIdentity
 
@@ -20,16 +20,16 @@ _STRICT_ENV = "CTRLRTN_STRICT"
 
 # Edition id (per run) and use-case route (per sub-agent). Separate because one
 # edition's calls share a task id but may span several use-cases.
-_task: "contextvars.ContextVar[str | None]" = contextvars.ContextVar(
+_task: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "ctrlrtn_task", default=None
 )
-_route: "contextvars.ContextVar[str | None]" = contextvars.ContextVar(
+_route: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "ctrlrtn_route", default=None
 )
-_workflow: "contextvars.ContextVar[tuple[str, str] | None]" = (
+_workflow: contextvars.ContextVar[tuple[str, str] | None] = (
     contextvars.ContextVar("ctrlrtn_workflow", default=None)
 )
-_step_identity: "contextvars.ContextVar[WorkflowIdentity | None]" = (
+_step_identity: contextvars.ContextVar[WorkflowIdentity | None] = (
     contextvars.ContextVar("ctrlrtn_step_identity", default=None)
 )
 

@@ -59,31 +59,33 @@ def test_real_runtime_streams_records_and_runs_lifespan(tmp_path):
             recorder=recorder,
             store=store,
         )
-        with running_server(app) as router_url:
-            with httpx.Client(base_url=router_url, timeout=3.0) as client:
-                response = client.post(
-                    "/v1/messages?keep=yes",
-                    content=json.dumps(
-                        {"model": "claude-haiku-4-5", "messages": []}
-                    ),
-                    headers={
-                        "content-type": "application/json",
-                        "x-ctrlrtn-task": "task-runtime",
-                        "x-ctrlrtn-session": "session-runtime",
-                    },
-                )
-                assert response.status_code == 200
-                assert response.content.endswith(b"data: [DONE]\n\n")
-                assert response.headers.get_list("set-cookie") == [
-                    "session=a; Path=/",
-                    "prefs=b; Path=/",
-                ]
-                outcome = client.post(
-                    "/ctrlrtn/outcome",
-                    json={"task_id": "task-runtime", "success": True},
-                )
-                assert outcome.status_code == 200
-                assert client.get("/healthz").text == "ok"
+        with (
+            running_server(app) as router_url,
+            httpx.Client(base_url=router_url, timeout=3.0) as client,
+        ):
+            response = client.post(
+                "/v1/messages?keep=yes",
+                content=json.dumps(
+                    {"model": "claude-haiku-4-5", "messages": []}
+                ),
+                headers={
+                    "content-type": "application/json",
+                    "x-ctrlrtn-task": "task-runtime",
+                    "x-ctrlrtn-session": "session-runtime",
+                },
+            )
+            assert response.status_code == 200
+            assert response.content.endswith(b"data: [DONE]\n\n")
+            assert response.headers.get_list("set-cookie") == [
+                "session=a; Path=/",
+                "prefs=b; Path=/",
+            ]
+            outcome = client.post(
+                "/ctrlrtn/outcome",
+                json={"task_id": "task-runtime", "success": True},
+            )
+            assert outcome.status_code == 200
+            assert client.get("/healthz").text == "ok"
 
         try:
             assert received == [
@@ -118,15 +120,17 @@ def test_real_runtime_recorder_failure_is_fail_open_and_worker_recovers():
             recorder=recorder,
             store=store,
         )
-        with running_server(app) as router_url:
-            with httpx.Client(base_url=router_url, timeout=3.0) as client:
-                for task_id in ("failed-write", "surviving-write"):
-                    response = client.post(
-                        "/v1/messages",
-                        json={"model": "claude-haiku-4-5", "messages": []},
-                        headers={"x-ctrlrtn-task": task_id},
-                    )
-                    assert response.status_code == 200
+        with (
+            running_server(app) as router_url,
+            httpx.Client(base_url=router_url, timeout=3.0) as client,
+        ):
+            for task_id in ("failed-write", "surviving-write"):
+                response = client.post(
+                    "/v1/messages",
+                    json={"model": "claude-haiku-4-5", "messages": []},
+                    headers={"x-ctrlrtn-task": task_id},
+                )
+                assert response.status_code == 200
 
         assert store.save_attempts == 2
         assert len(store.traces) == 1

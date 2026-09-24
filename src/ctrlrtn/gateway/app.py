@@ -11,8 +11,8 @@ import ipaddress
 import logging
 import math
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 import httpx
 from starlette.applications import Starlette

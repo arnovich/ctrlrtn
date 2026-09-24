@@ -38,8 +38,8 @@ SPEC.loader.exec_module(benchmark)
 SMALL = 1024
 
 
-def _tiny(**overrides) -> "benchmark.BenchmarkConfig":
-    base = dict(requests=4, concurrency=2, warmup=1, small_bytes=64)
+def _tiny(**overrides) -> benchmark.BenchmarkConfig:
+    base = {"requests": 4, "concurrency": 2, "warmup": 1, "small_bytes": 64}
     base.update(overrides)
     return benchmark.BenchmarkConfig(**base)
 
@@ -234,16 +234,18 @@ def test_small_keepalive_responses_do_not_stall(tmp_path):
     threshold has roughly an order of magnitude of headroom.
     """
     config = _tiny(small_bytes=SMALL)
-    with benchmark._server_process("upstream", config, tmp_path) as server:
-        with httpx.Client(base_url=server.url, timeout=10.0) as client:
-            for _ in range(3):
-                client.get("/small")
-            samples = []
-            for _ in range(20):
-                started = time.perf_counter()
-                response = client.get("/small")
-                samples.append((time.perf_counter() - started) * 1000)
-                assert len(response.content) == SMALL
+    with (
+        benchmark._server_process("upstream", config, tmp_path) as server,
+        httpx.Client(base_url=server.url, timeout=10.0) as client,
+    ):
+        for _ in range(3):
+            client.get("/small")
+        samples = []
+        for _ in range(20):
+            started = time.perf_counter()
+            response = client.get("/small")
+            samples.append((time.perf_counter() - started) * 1000)
+            assert len(response.content) == SMALL
     assert (
         statistics.median(samples) < 20.0
     ), f"median {statistics.median(samples):.1f} ms suggests Nagle is back"
@@ -280,11 +282,11 @@ def test_measure_refuses_to_report_a_run_with_errors(tmp_path):
     # warmup=0 so the mismatch is reached inside the timed region rather than
     # by the warmup guard, which is what this test is about.
     config = _tiny(warmup=0)
-    with benchmark._server_process("upstream", config, tmp_path) as server:
-        with pytest.raises(benchmark.BenchmarkError, match="requests failed"):
-            asyncio.run(
-                benchmark._measure(server.url, "small", 999_999, config)
-            )
+    with (
+        benchmark._server_process("upstream", config, tmp_path) as server,
+        pytest.raises(benchmark.BenchmarkError, match="requests failed"),
+    ):
+        asyncio.run(benchmark._measure(server.url, "small", 999_999, config))
 
 
 @pytest.mark.integration

@@ -30,11 +30,12 @@ affected.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 from collections import OrderedDict
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 from ctrlrtn.gateway.decision import ServingDecision
 from ctrlrtn.gateway.inject import inject_cache_control
@@ -91,8 +92,8 @@ class ExperimentRouter:
         ] = {}
         self._control_revision: str | None = None
         self._fallbacks: dict[str, ApprovedFallback] = {}
-        self._tasks: "OrderedDict[str, _TaskState]" = OrderedDict()
-        self._refresh_task: "asyncio.Task | None" = None
+        self._tasks: OrderedDict[str, _TaskState] = OrderedDict()
+        self._refresh_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         """Load the initial snapshot and begin refreshing it in the background."""
@@ -104,10 +105,8 @@ class ExperimentRouter:
     async def aclose(self) -> None:
         if self._refresh_task is not None:
             self._refresh_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._refresh_task
-            except asyncio.CancelledError:
-                pass
             self._refresh_task = None
 
     async def refresh(self) -> None:

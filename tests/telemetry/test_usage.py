@@ -159,18 +159,18 @@ def test_response_model_non_streaming():
 
 def test_response_model_openai_streaming_chunk():
     body = (
-        'data: {"model":"gpt-4o-2024","choices":[{"delta":{}}]}\n\n'
-        "data: [DONE]\n\n"
-    ).encode()
+        b'data: {"model":"gpt-4o-2024","choices":[{"delta":{}}]}\n\n'
+        b"data: [DONE]\n\n"
+    )
     assert extract_response_model(body) == "gpt-4o-2024"
 
 
 def test_response_model_anthropic_message_start():
     body = (
-        'data: {"type":"message_start","message":'
-        '{"model":"claude-haiku-4-5","usage":{"input_tokens":1}}}\n\n'
-        "data: [DONE]\n\n"
-    ).encode()
+        b'data: {"type":"message_start","message":'
+        b'{"model":"claude-haiku-4-5","usage":{"input_tokens":1}}}\n\n'
+        b"data: [DONE]\n\n"
+    )
     assert extract_response_model(body) == "claude-haiku-4-5"
 
 

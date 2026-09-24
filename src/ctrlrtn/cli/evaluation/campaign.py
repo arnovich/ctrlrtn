@@ -52,7 +52,7 @@ class CampaignReportCommands:
         seen_use_cases: dict[str, str] = {}
         for path in args.replay_json:
             try:
-                with open(path, "r", encoding="utf-8") as handle:
+                with open(path, encoding="utf-8") as handle:
                     document = json.load(handle)
                 if not isinstance(document, dict):
                     raise TypeError("not a JSON object")

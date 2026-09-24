@@ -82,17 +82,19 @@ def test_sdk_step_stamps_complete_identity_and_carrier(monkeypatch):
         captured.update(request.headers)
         return httpx.Response(200, json={})
 
-    with sdk.edition(
-        task_id="task-1",
-        workflow="article-pipeline",
-        workflow_version="git:abc123",
-        report_to="http://gateway",
-    ) as run:
-        with run.step("draft", step_run_id="run-1"):
-            carrier = sdk.export_carrier()
-            client = sdk.http_client(transport=httpx.MockTransport(handler))
-            client.post("http://gateway/v1/messages")
-            client.close()
+    with (
+        sdk.edition(
+            task_id="task-1",
+            workflow="article-pipeline",
+            workflow_version="git:abc123",
+            report_to="http://gateway",
+        ) as run,
+        run.step("draft", step_run_id="run-1"),
+    ):
+        carrier = sdk.export_carrier()
+        client = sdk.http_client(transport=httpx.MockTransport(handler))
+        client.post("http://gateway/v1/messages")
+        client.close()
     assert captured["x-ctrlrtn-step"] == "draft"
     assert captured["x-ctrlrtn-workflow-version"] == "git:abc123"
     assert carrier["step_run_id"] == "run-1"
@@ -118,9 +120,8 @@ def test_step_failure_and_explicit_terminal_do_not_double_report(monkeypatch):
     ) as run:
         with run.step("ok") as step:
             step.report(status="completed", success=True, score=0.8)
-        with pytest.raises(RuntimeError):
-            with run.step("bad"):
-                raise RuntimeError("boom")
+        with pytest.raises(RuntimeError), run.step("bad"):
+            raise RuntimeError("boom")
     assert [event.status for event in events] == [
         "started",
         "completed",
