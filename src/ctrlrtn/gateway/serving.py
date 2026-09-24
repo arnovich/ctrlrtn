@@ -40,7 +40,7 @@ from ctrlrtn.gateway.decision import ServingDecision
 from ctrlrtn.gateway.inject import inject_cache_control
 from ctrlrtn.gateway.proxy import TerminalError
 from ctrlrtn.identify.fingerprint import fingerprint
-from ctrlrtn.policy.experiment import Experiment, ServeDecision
+from ctrlrtn.policy.experiment import Experiment
 from ctrlrtn.policy.experiment import decide as resolve_arm
 from ctrlrtn.policy.fallback import ApprovedFallback, FallbackDecision
 from ctrlrtn.policy.route import Route, RouteDecision, WorkflowRoute

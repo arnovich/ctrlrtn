@@ -7,11 +7,11 @@ import json
 import httpx
 import pytest
 
-from ctrlrtn import replay_job
 from ctrlrtn.cli import commands as cli
 from ctrlrtn.cli.commands import main
 from ctrlrtn.eval.dataset_manifest import create_dataset_manifest
 from ctrlrtn.jobs import Job, Worker
+from ctrlrtn.jobs import replay as replay_job
 from ctrlrtn.recorder.sqlite.store import SqliteTraceStore
 from ctrlrtn.recorder.trace import Trace
 

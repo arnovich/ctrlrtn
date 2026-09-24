@@ -52,7 +52,6 @@ from ctrlrtn.cli.console import (  # noqa: E402
     job_detail,
     load_state,
     page_heading,
-    routing_status,
     run_console,
     shadow_detail,
     task_detail,
@@ -72,7 +71,9 @@ from ctrlrtn.recorder.store import (  # noqa: E402
     SqliteTraceStore,
 )
 from ctrlrtn.recorder.trace import Trace  # noqa: E402
-from ctrlrtn.workflow.discovery_job import KIND as WORKFLOW_DISCOVERY_JOB_KIND  # noqa: E402
+from ctrlrtn.workflow.discovery_job import (
+    KIND as WORKFLOW_DISCOVERY_JOB_KIND,
+)  # noqa: E402
 from ctrlrtn.workflow.discovery_job import (  # noqa: E402
     run_workflow_discovery_job,
 )

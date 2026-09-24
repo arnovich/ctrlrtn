@@ -8,7 +8,7 @@ from typing import NoReturn
 
 from ctrlrtn.cli.control import ControlCommands
 from ctrlrtn.cli.dataset import DatasetCommands
-from ctrlrtn.cli.evaluation import EvaluationCommands, _load_labels
+from ctrlrtn.cli.evaluation import EvaluationCommands
 from ctrlrtn.cli.operations import OperationsCommands
 from ctrlrtn.cli.parser import build_parser
 from ctrlrtn.cli.reporting import ReportingCommands
