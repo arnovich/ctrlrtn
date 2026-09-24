@@ -8,7 +8,7 @@ unauthenticated by design and assumes localhost / a trusted private network).
 
 ## Supported versions
 
-The latest release (and `main`) only.
+`main`, until the first tagged release.
 
 ## Reporting a vulnerability
 
@@ -20,7 +20,7 @@ In scope, especially:
 - any path by which a client credential is **persisted** (the contract is:
   forwarded, then redacted from the recorded trace at capture time);
 - escapes of the control-plane trust assumptions beyond what
-  `docs/deploy.md` documents (outcome poisoning / corpus pollution on a
-  loopback-bound router is documented, not news);
+  `docs/deploy.md` documents (outcome poisoning by a caller who can already
+  reach a loopback-bound proxy is a documented limit, not a vulnerability);
 - request smuggling / SSRF through the proxy;
 - anything that lets recorded traffic leave the box.

@@ -17,13 +17,13 @@ Each file has a small frontmatter block and two required sections:
 
 ```markdown
 ---
-title: Batched GPU simulation
+title: Enforce the per-task cost ceiling on experiments
 state: open
-priority: medium
-labels: [enhancement, runtime]
+priority: low
+labels: [experiments, budget]
 ---
 
-# Batched GPU simulation
+# Enforce the per-task cost ceiling on experiments
 
 ## Context
 

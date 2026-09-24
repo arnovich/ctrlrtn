@@ -14,6 +14,8 @@ request headers can send them. When a job ends, POST its result:
 
 ```json
 POST /ctrlrtn/outcome
+content-type: application/json
+
 {"task_id": "run-42", "success": true, "score": 0.9}
 ```
 
@@ -94,7 +96,12 @@ with sdk.edition(
         with draft.tool("search", operation_id="q-1", effect="idempotent"):
             hits = search(sources)
         text = write(client, hits)
+        draft.report(success=bool(text))
 ```
+
+A step's outcome comes only from its own `report(...)`; it is not inherited
+from the edition's, and a step that leaves without one shows as having no
+outcome in `workflow diagnostics`.
 
 The stable step key is `(workflow, workflow_version, step)`; each `step(...)`
 call is one run of it with a fresh run id. Retries and loop iterations are
@@ -114,11 +121,16 @@ through a carrier:
 
 ```python
 carrier = sdk.export_carrier()            # in the parent, inside a step
-with sdk.import_carrier(carrier):          # in the worker
+with sdk.import_carrier(carrier), sdk.route("researcher"):   # in the worker
     call_model(client)
 ```
 
-[Workflow identity](workflow-identity.md) is the full contract: the header
+The carrier holds the task and step identity, not the route, so the worker
+sets its own role.
+
+[Workflow identity](workflow-identity.md) is the full contract and
+[Workflow discovery and analysis](workflow-discovery.md) covers every
+`workflow` command: the header
 names, the identifier grammar, size limits and what the proxy records.
 
 ## What instrumentation unlocks

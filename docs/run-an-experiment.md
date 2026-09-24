@@ -13,8 +13,13 @@ verdict.
   reports `PROPAGATING`.
 - The application reports outcomes to `/ctrlrtn/outcome`; a live A/B is
   judged by nothing else.
+- The use-case has at least 20 recorded tasks; below that a replay can only
+  conclude underpowered.
 - `ANTHROPIC_API_KEY` is set in the shell that runs replays and judges. The
-  replay path currently speaks the Anthropic Messages API only.
+  replay path and the judge (`claude-opus-4-8` by default, `--judge-model`)
+  call the Anthropic API directly, not through the proxy, whatever provider
+  the application uses. Recorded prompts and outputs leave the box on those
+  calls.
 
 ## 1. Replay offline
 
@@ -30,8 +35,9 @@ uv run ctrlrtn replay-eval tag:editor claude-haiku-4-5 --margin 1.0 --yes \
 ```
 
 The margin is in judge points on a 0 to 10 scale. The verdict is one of
-`NON-INFERIOR`, `NOT non-inferior`, or `UNDERPOWERED (cannot conclude)`. An
-underpowered result means the lower confidence bound did not clear the
+`NON-INFERIOR`, `NOT non-inferior`, or `UNDERPOWERED (cannot conclude)`; in
+the JSON artifact the same verdicts are `NON_INFERIOR`, `NOT_NON_INFERIOR`
+and `UNDERPOWERED`. An underpowered result means the lower confidence bound did not clear the
 margin at this sample size, not that the candidate is worse; `--limit`
 raises the number of inputs. `--replicates` sets judge calls per pair,
 `--baseline` overrides the inferred incumbent, and `--max-tokens` clamps a
@@ -63,7 +69,9 @@ uv run ctrlrtn calibrate labels.jsonl --margin 1.0
 
 The report gives agreement with a confidence bound, whether the judge
 compresses the gaps you see, and whether it favours the candidate at parity.
-It is advisory and point-in-time: replay verdicts do not read it.
+It is advisory and point-in-time: replay verdicts do not read it. The labels
+file holds prompts and both outputs in plain text; treat it like the
+database.
 
 ## 3. Shadow live inputs
 
@@ -74,20 +82,20 @@ candidate's cost, latency and failure rate on live inputs with no exposure:
 
 ```bash
 uv run ctrlrtn shadow start tag:editor claude-haiku-4-5 --sample 10
-uv run ctrlrtn shadow list      # submitted, completed, failed, dropped
+uv run ctrlrtn shadow list      # done, failed and dropped per shadow
 uv run ctrlrtn shadow stop <shadow-id>
 ```
 
-Mirrored and actual traces share a pair id, so the console can show them
-side by side. Queue saturation and provider failures count as attrition
-instead of disappearing. Shadowing sends live data to the candidate provider
+Each mirrored call and its actual call share a pair id, so the console can
+show them side by side. Mirrors dropped by a full queue or failed at the
+provider are counted as attrition instead of disappearing. Shadowing sends live data to the candidate provider
 and bills its credentials.
 
 ## 4. Split live traffic
 
 A live experiment serves the candidate to a share of the use-case's tasks.
-Assignment is by task and sticky, so every call of one job sees the same
-model:
+Each task is assigned to one arm, the baseline model or the candidate, and
+the assignment is sticky, so every call of one job sees the same model:
 
 ```bash
 uv run ctrlrtn experiment start tag:editor claude-haiku-4-5 --split 50
@@ -95,10 +103,10 @@ uv run ctrlrtn experiment list
 uv run ctrlrtn experiment status <experiment-id>
 ```
 
-`status` is a tripwire, not a certificate. It compares the failure rate the
-application reported per arm and reports `NO_GROSS_REGRESSION`,
-`GROSS_REGRESSION`, `INCONCLUSIVE` or `UNDERPOWERED`, with exit codes 0, 1,
-3, and 4 when there is no data, so a script can act on it. It needs at least 30 tasks with a reported
+`status` is a tripwire, not a certificate: it catches a gross regression in
+the failure rate the application reported per arm, and cannot certify a
+fine quality margin. Its verdicts and exit codes are tabulated in
+[Evaluation](evaluation.md). It needs at least 30 tasks with a reported
 outcome per arm. `--fail-below` treats a reported score under a threshold as
 a failure; `--idle-minutes` decides when a task with no new calls is closed.
 A candidate that makes more than `--max-calls` calls in one task is cut off
@@ -134,6 +142,10 @@ uv run ctrlrtn route set tag:editor claude-haiku-4-5 \
 uv run ctrlrtn route clear tag:editor    # rollback
 ```
 
+The note is stored with the route and shown by `route list` and the console.
+`calls` shows the model the application asked for; `show <call-id>` shows
+`served_model`, the one a route or experiment actually served.
+
 Precedence per call is: running experiment, then route, then pass-through.
 A `max_tokens` above the routed model's cap is clamped. Routes have no
 per-task call ceiling, so watch outcomes after switching.
@@ -153,7 +165,7 @@ The baseline and the candidate must declare the same `api`. The proxy does
 not translate between provider APIs; it rejects a mismatch before sending.
 When the provider changes, the client's credential headers are removed, and
 the named provider's own credential from its environment is used if it has
-one. [Configure](configure.md) describes the `providers` block.
+one. [Configuration](configure.md) describes the `providers` block.
 
 ## 7. Scope evidence to one step
 
@@ -166,25 +178,30 @@ promoted to a claim about the whole workflow. See
 ## 8. Put the control plane in Git
 
 Routes and running experiments can be declared in a committed YAML file and
-activated atomically, so switches have a history and a reviewer:
+activated atomically, so switches have a history and a reviewer. Keep the
+file in the repository where you keep operational configuration and name
+that repository with `--repo`:
 
 ```bash
-cp examples/routing.yaml routing.yaml
-$EDITOR routing.yaml
+cp examples/routing.yaml /srv/ops/routing.yaml
+cd /srv/ops && $EDITOR routing.yaml
 git add routing.yaml && git commit -m "Route the editor to Haiku"
 uv run ctrlrtn routing-config validate routing.yaml
-uv run ctrlrtn routing-config diff routing.yaml
-uv run ctrlrtn routing-config activate routing.yaml
+uv run ctrlrtn routing-config diff routing.yaml --repo /srv/ops
+uv run ctrlrtn routing-config activate routing.yaml --repo /srv/ops
 uv run ctrlrtn routing-config status
 ```
 
-The example routes to a provider named `ollama`; declare it under
-`providers` in the configuration, or edit the file. Activation requires a
-tracked, clean file. It records the Git revision and
+Activation requires a tracked, clean file. It records the Git revision and
 the file's SHA-256 with the state it installed, and keeps the last known-good
 state if anything fails. The file is authoritative for routes and running
 experiments; recorded traces, finished experiments and jobs stay in SQLite.
-Never commit credentials or recordings to that repository.
+Rolling back is a commit that removes the route, then `activate` again.
+A `route clear` or `experiment stop` from the CLI takes effect at once but
+leaves the active state out of step with the activated revision; `diff`
+shows the drift. A route to a provider with a different API fails every
+call of that use-case until it is cleared. Never commit credentials or
+recordings to that repository; `note` values are stored and displayed.
 
 ## 9. Use a verdict under budget pressure
 
@@ -200,7 +217,7 @@ uv run ctrlrtn budget
 ```
 
 Absent or stale evidence never guesses; without an approval the ceiling
-simply blocks. [Configure](configure.md) has the `budgets` block.
+simply blocks. [Configuration](configure.md) has the `budgets` block.
 
 ## 10. Report a campaign
 

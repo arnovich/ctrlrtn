@@ -11,7 +11,7 @@ This page is the worked example. The general procedure for one use-case is in
 verdicts are in [evaluation.md](evaluation.md).
 
 The worked example uses the `financial_newspaper` app from Hugin
-(`github.com/arnovich/gimle-hugin`), whose roles (journalist, analyst, editor)
+(`github.com/arnovich/gimle-hugin`), whose roles (financial_journalist, technical_analyst, editor)
 are each keyed as their own `tag:` use-case via `x-ctrlrtn-route`, with Sonnet
 as the incumbent and Haiku as the candidate. Swap in your own app and models.
 
@@ -48,12 +48,12 @@ tasks.
 
 ## Phase 2: paired offline verdicts (the quality map)
 
-Per role, shadow-replay the recorded inputs on the candidate and run the NI
-test; save the machine-readable verdict for the report:
+Per role, replay the recorded inputs on the candidate and run the
+non-inferiority test; save the machine-readable verdict for the report:
 
 ```bash
 mkdir -p campaign
-for role in journalist analyst editor; do
+for role in financial_journalist technical_analyst editor; do
   uv run ctrlrtn replay-eval "tag:${role}" claude-haiku-4-5 \
     --margin 1.0 --limit 40 --yes --json "campaign/${role}.json" || true
 done
@@ -75,7 +75,7 @@ uv run ctrlrtn calibrate campaign/labels.jsonl
 Start 50/50 experiments for the roles replay blessed, then run another batch:
 
 ```bash
-scripts/campaign_experiments.sh claude-haiku-4-5 journalist editor
+scripts/campaign_experiments.sh claude-haiku-4-5 financial_journalist editor
 HUGIN_DIR=../gimle-hugin scripts/campaign_run.sh 60
 uv run ctrlrtn experiment status <exp-id>   # tripwire per experiment
 ```

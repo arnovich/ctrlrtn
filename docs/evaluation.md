@@ -17,10 +17,12 @@ is inferred from what the use-case has been served, or set with
 replayable: a text transform qualifies, an agent whose tool calls act on
 the world does not.
 
-## Paired shadow replay
+## Paired offline replay
 
 `replay-eval` is the primary path and the only one that produces a
-margin-based verdict. It is a dry run until you pass `--yes`.
+margin-based verdict. It is a dry run until you pass `--yes`. Replay and
+judge calls go to the Anthropic API directly, not through the proxy, so the
+sampled prompts and both outputs leave the box.
 
 ```bash
 uv run ctrlrtn replay-eval <use-case> <candidate-model> --margin 1.0 --yes
@@ -65,10 +67,11 @@ bias-corrected from the share of bootstrap means below the observed mean
 and accelerated by a jackknife over clusters. A plain percentile bootstrap
 undercovers at these sizes, always toward waving a downgrade through.
 
-Two guards refuse to conclude. Fewer than 20 clusters and the bound is not
-computed, so a lucky small batch cannot cross the boundary. More than 20%
-of samples failed or blank on both arms and the batch is too degraded; the
-distinct failure reasons are printed. Both are reported as underpowered.
+Two guards refuse to conclude. If fewer than 20 clusters are usable, the
+bound is not computed, so a lucky small batch cannot cross the boundary. If
+more than 20% of samples failed or came back blank on both arms, the batch
+is too degraded, and the distinct failure reasons are printed. Both cases
+are reported as underpowered.
 
 Three verdicts are possible: `NON-INFERIOR`, `NOT non-inferior`, and
 `UNDERPOWERED (cannot conclude)`. In `--json` output they are
@@ -84,8 +87,9 @@ uv run ctrlrtn experiment start <use-case> <candidate-model> --split 50
 uv run ctrlrtn experiment status <experiment-id>
 ```
 
-The arm is a stable hash of experiment id and task id against `--split`
-(default 50, range 1 to 99), so every call of one task lands on one arm.
+A task's arm, the baseline model or the candidate, is a stable hash of
+experiment id and task id against `--split` (default 50, range 1 to 99),
+so every call of one task lands on one arm.
 The gateway checks a running experiment first, then a persistent route,
 then passes the request through. Untagged calls never enter an experiment.
 
@@ -111,8 +115,16 @@ when even its worst case is within the margin of the baseline's best case,
 and `INCONCLUSIVE` in between. `--min-tasks` (default and floor 30)
 reported tasks per arm are required first, otherwise `UNDERPOWERED`.
 `NOT_EXERCISED` means the candidate arm served the baseline's model or
-took no tasks; `NO_DATA` means no experiment traffic at all. Only
-`NO_GROSS_REGRESSION` exits 0.
+took no tasks; `NO_DATA` means no experiment traffic at all.
+
+| Verdict | Meaning | Exit |
+| --- | --- | ---: |
+| `NO_GROSS_REGRESSION` | Candidate's worst case is within the margin of the baseline's best case | 0 |
+| `GROSS_REGRESSION` | Candidate's best case exceeds the baseline's worst case by more than the margin | 1 |
+| `INCONCLUSIVE` | The bounds overlap the margin | 3 |
+| `UNDERPOWERED` | Fewer than `--min-tasks` reported tasks on an arm | 3 |
+| `NOT_EXERCISED` | The candidate arm never served the candidate | 4 |
+| `NO_DATA` | No traffic for the experiment | 4 |
 
 A 20 point gap on a binary outcome, with 30 reported tasks per arm, is a
 check for gross breakage. It cannot certify a one-point margin on a 10
