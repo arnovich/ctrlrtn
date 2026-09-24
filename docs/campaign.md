@@ -36,7 +36,7 @@ uv run ctrlrtn console
 HUGIN_DIR=../gimle-hugin scripts/campaign_run.sh 20
 ```
 
-`scripts/campaign_run.sh` runs each edition with `HUGIN_GIMLE_ROUTER=1` and
+`scripts/campaign_run.sh` runs each edition with `HUGIN_CTRLRTN=1` and
 `ANTHROPIC_BASE_URL` pointed at the router, so the app tags every call
 (`x-ctrlrtn-task` per edition, `x-ctrlrtn-route` per role) and posts each
 edition's outcome to `/ctrlrtn/outcome`. It refuses to start when `/healthz`
