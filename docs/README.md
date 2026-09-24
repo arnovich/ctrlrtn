@@ -1,32 +1,38 @@
-# Docs
+# Documentation
 
-A map of what lives here. The top-level `README.md` is the front door; these are
-the deeper guides. History docs are frozen snapshots kept for rationale — the
-guides below them describe current behavior where the two differ.
+The top-level [README](../README.md) is the front door. These pages go
+deeper, in the order a new user needs them.
 
-## Operator guides — how it works and how to run it
+## Guides
 
-- [architecture.md](architecture.md) — system overview: request flow, code map,
-  dependency rules, persistence, and the deliberate limits.
-- [configure.md](configure.md) — the `ctrlrtn.yaml` reference: daily
-  budgets, named providers, provider-owned credentials, cross-provider
-  experiments and routes, and the Ollama quick start.
-- [deploy.md](deploy.md) — deployment: the security model first, then same-box
-  and dedicated-box topologies, Docker, and operating notes.
-- [router-operational-benchmark.md](router-operational-benchmark.md) — bounded
-  direct-versus-router latency, throughput, per-server peak RSS, and
-  failure probes.
-- [campaign.md](campaign.md) — the end-to-end worked example: record → paired
-  replay verdict → live A/B → report → adopt. Doubles as the full-pipeline
-  integration test.
+- [Getting started](getting-started.md): start the proxy, point an
+  application at it, name the work with three headers, report outcomes,
+  read the per-role numbers, keep the recording bounded.
+- [Run an experiment](run-an-experiment.md): offline replay, judge
+  calibration, shadow, live A/B, adoption and rollback, candidates on
+  another provider, step scope, Git-backed routing, budget fallbacks.
+- [Instrument a workflow](instrument-a-workflow.md): the Python SDK, task
+  identity, declaring steps and tools, what step-level evidence unlocks.
+- [The campaign](campaign.md): the whole loop scripted end to end on a
+  multi-agent application, producing the README's table and chart.
 
-## Protocol and subsystem references
+## Reference
 
-- [workflow-identity.md](workflow-identity.md) — how a request declares which
-  workflow, version, and step it belongs to.
+- [Evaluation](evaluation.md): how a verdict is reached and what it does not
+  claim.
+- [Console](console.md): the live terminal view, every key, and the actions
+  it can take after confirmation.
+- [Configure](configure.md): every setting, named providers, budgets, the
+  price table, and the `routing.yaml` schema.
+- [Deploy](deploy.md): the security model first, then same-box and
+  dedicated-box topologies, Docker, and day-two operations.
+- [Architecture](architecture.md): request flow, code map, dependency rules,
+  persistence.
+- [Workflow identity](workflow-identity.md): the header and event contract
+  the SDK implements.
+- [Operational benchmark](router-operational-benchmark.md): measured
+  overhead of the proxy on the request path, and how to reproduce it.
 
-## Generated artifact
+## Planning
 
-- [campaign-report.md](campaign-report.md) + [campaign-chart.svg](campaign-chart.svg)
-  — sample output of `campaign-report`, embedded in the top-level README.
-  Regenerate on your own workload with the steps in [campaign.md](campaign.md).
+- [Roadmap](roadmap.md), and the task files under [`tasks/open`](../tasks/open/).
