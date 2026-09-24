@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# TEMPORARY while the repository is private: GitHub-hosted runners are not
+# available to this account for private repositories, so jobs run on the
+# shared self-hosted runner. Switch every runs-on back to ubuntu-latest
+# before the repository goes public (tasks/open/006); a self-hosted runner
+# on a public repository executes untrusted code from forks.
 permissions:
   contents: read
 
@@ -14,8 +19,8 @@ concurrency:
 
 jobs:
   quality:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: [self-hosted, Linux, X64, hetzner, shared-ci]
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,8 +35,8 @@ jobs:
       - run: uv run mypy
 
   test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: [self-hosted, Linux, X64, hetzner, shared-ci]
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
@@ -51,8 +56,8 @@ jobs:
           --cov-report=xml
 
   package:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: [self-hosted, Linux, X64, hetzner, shared-ci]
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
