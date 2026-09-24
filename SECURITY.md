@@ -24,10 +24,3 @@ In scope, especially:
   loopback-bound router is documented, not news);
 - request smuggling / SSRF through the proxy;
 - anything that lets recorded traffic leave the box.
-
-Local-model training is not currently enabled. The reviewed future contract in
-[`docs/local-model-training.md`](docs/local-model-training.md) treats corpus
-materialization and trainer execution as new sensitive boundaries: no generic
-shell jobs, inherited credentials, evaluation-split materialization, or
-automatic serving. A report that an implemented future adapter violates those
-boundaries is in scope.
