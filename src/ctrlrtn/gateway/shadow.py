@@ -10,6 +10,7 @@ import time
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import httpx
 
@@ -26,6 +27,9 @@ from ctrlrtn.recorder.repositories import ShadowRepository
 from ctrlrtn.recorder.trace import Trace
 from ctrlrtn.telemetry import pricing
 from ctrlrtn.workflow.identity import CTRLRTN_HEADER_PREFIX
+
+if TYPE_CHECKING:
+    from ctrlrtn.routing import ProviderCredential
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +53,7 @@ class _Work:
     base_url: str
     provider: str | None
     provider_free: bool
-    credential: object | None
+    credential: ProviderCredential | None
 
 
 class ShadowManager:
@@ -122,7 +126,7 @@ class ShadowManager:
         baseline_api: str | None,
         baseline_provider: str | None,
         baseline_free: bool,
-        baseline_credential,
+        baseline_credential: ProviderCredential | None,
     ) -> ShadowPair | None:
         use_case = fingerprint(headers, body)
         experiment = self._snapshot.get(use_case or "")

@@ -87,6 +87,12 @@ class BudgetPolicy:
 class SpendSnapshot:
     """In-memory daily spend plus lifetime totals for known session IDs."""
 
+    _day_ordinal: int | None
+    total: float
+    by_use_case: dict[str, float]
+    by_session: dict[str, float]
+    unknown_sessions: set[str]
+
     @staticmethod
     def _day(ts: float) -> int:
         return datetime.fromtimestamp(ts, UTC).date().toordinal()
@@ -99,11 +105,11 @@ class SpendSnapshot:
             self.by_use_case = {}
 
     def __init__(self) -> None:
-        self._day_ordinal: int | None = None
+        self._day_ordinal = None
         self.total = 0.0
-        self.by_use_case: dict[str, float] = {}
-        self.by_session: dict[str, float] = {}
-        self.unknown_sessions: set[str] = set()
+        self.by_use_case = {}
+        self.by_session = {}
+        self.unknown_sessions = set()
 
     def seed(
         self,

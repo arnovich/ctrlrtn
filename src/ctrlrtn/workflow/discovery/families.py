@@ -52,7 +52,9 @@ def discover_workflow_families(
     done = 0
     if progress is not None:
         progress(done, total_work, "correlated inputs")
-    adjacency = {index: set() for index in range(len(eligible))}
+    adjacency: dict[int, set[int]] = {
+        index: set() for index in range(len(eligible))
+    }
     for left in range(len(eligible)):
         for right in range(left + 1, len(eligible)):
             if (
@@ -81,7 +83,7 @@ def discover_workflow_families(
         components.append(tuple(eligible[index] for index in sorted(component)))
 
     families = []
-    assignments = []
+    assignments: list[WorkflowFamilyAssignment] = []
     clustered = 0
     for members in components:
         done += len(members)

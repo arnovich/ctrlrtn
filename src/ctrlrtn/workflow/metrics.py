@@ -77,10 +77,14 @@ def build_workflow_step_metrics(
         row["latency"] += trace.get("latency_ms") or 0.0
 
     for event in events:
-        identity = event.identity
-        row = record(identity.task_id, identity.step_run_id)
+        event_identity = event.identity
+        row = record(event_identity.task_id, event_identity.step_run_id)
         row["identities"].add(
-            (identity.workflow, identity.workflow_version, identity.step)
+            (
+                event_identity.workflow,
+                event_identity.workflow_version,
+                event_identity.step,
+            )
         )
         row["events"].append(event)
 

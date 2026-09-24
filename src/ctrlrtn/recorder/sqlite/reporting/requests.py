@@ -9,6 +9,7 @@ from ctrlrtn.policy.scope import ExperimentScope
 from ctrlrtn.recorder.models import UNKEYED as _UNKEYED
 from ctrlrtn.recorder.models import ModelRanking
 
+from ..connection import SqliteCapability
 from ..queries import (
     _BUCKET_SERIES,
     _GET,
@@ -20,7 +21,7 @@ from ..queries import (
 )
 
 
-class RequestReportingSqliteMixin:
+class RequestReportingSqliteMixin(SqliteCapability):
     """Project recorded requests, datasets, models, and bucket series."""
 
     def investigation_calls(
@@ -97,7 +98,7 @@ class RequestReportingSqliteMixin:
             clause = "AND workflow = ? AND workflow_version = ?"
             if scope.is_step_scoped:
                 clause += " AND step = ?"
-        params = [_UNKEYED, use_case_key]
+        params: list[str | int | None] = [_UNKEYED, use_case_key]
         if scope.is_workflow_scoped:
             params.extend([workflow, workflow_version])
             if scope.is_step_scoped:
