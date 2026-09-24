@@ -13,7 +13,7 @@ from ctrlrtn.cli.render import render_replay
 from ctrlrtn.eval.live import anthropic_judge_fn, anthropic_replay_fn
 from ctrlrtn.eval.ni import NIResult
 from ctrlrtn.eval.replay import ReplayReport
-from ctrlrtn.recorder.store import _UNKEYED, SqliteTraceStore
+from ctrlrtn.recorder.store import UNKEYED, SqliteTraceStore
 from ctrlrtn.recorder.trace import Trace
 
 
@@ -214,7 +214,7 @@ async def test_requests_for_use_case_reaches_unkeyed_bucket():
     store = SqliteTraceStore(":memory:")
     try:
         await store.save(_req_trace(None, 200, b'{"a":1}', "ed1"))
-        rows = store.requests_for_use_case(_UNKEYED, 10)
+        rows = store.requests_for_use_case(UNKEYED, 10)
         assert len(rows) == 1
         assert rows[0]["request_body"] == b'{"a":1}'
     finally:

@@ -63,7 +63,7 @@ NO_DATA = "NO_DATA"  # no experiment traffic at all
 
 DEFAULT_IDLE_SECONDS = 45 * 60  # generous: a slow tool call must not split one
 DEFAULT_GROSS_MARGIN = 0.20  # "gross" = a 20pp failure-rate gap
-DEFAULT_MIN_TASKS_PER_ARM = 30  # reported tasks per arm (eval-design §6)
+DEFAULT_MIN_TASKS_PER_ARM = 30  # reported tasks per arm (docs/evaluation.md)
 DEFAULT_CONFIDENCE = 0.95
 
 

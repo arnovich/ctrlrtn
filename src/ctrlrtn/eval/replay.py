@@ -1,4 +1,4 @@
-"""Shadow-replay runner — the primary eval signal (docs/history/eval-design.md §2).
+"""Shadow-replay runner — the primary eval signal (docs/evaluation.md).
 
 Re-runs a use-case's recorded inputs through baseline and candidate, judges each
 (baseline, candidate) pair blind (``judge``), and runs a paired non-inferiority
