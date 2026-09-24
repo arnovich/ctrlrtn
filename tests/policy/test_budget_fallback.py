@@ -393,3 +393,17 @@ def test_cli_approves_only_a_non_inferior_replay_artifact(
     assert _CANDIDATE in capsys.readouterr().out
     cli.main(["fallback", "clear", _USE_CASE])
     assert "Cleared" in capsys.readouterr().out
+
+
+def test_fallback_evidence_fields_are_validated_individually():
+    for key in ("use_case", "baseline_model", "candidate_model"):
+        broken = _replay()
+        broken[key] = 7
+        with pytest.raises(ValueError, match=f"{key} must be a non-empty"):
+            approved_fallback_from_replay(broken)
+    stale = _replay()
+    stale["created"] = float("nan")
+    with pytest.raises(ValueError, match="created must be finite"):
+        approved_fallback_from_replay(stale)
+    with pytest.raises(ValueError, match="use_case_key must be a non-empty"):
+        ApprovedFallback("", _CANDIDATE, _BASELINE, evidence_created=1.0)
