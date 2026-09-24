@@ -2,26 +2,14 @@
 
 from __future__ import annotations
 
-from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical, VerticalScroll
-from textual.screen import ModalScreen
-from textual.suggester import SuggestFromList
 from textual.widgets import (
-    Button,
-    Input,
-    Label,
     Static,
 )
 
 from ctrlrtn.config import load_settings
 from ctrlrtn.control.service import (
     provider_error,
-)
-from ctrlrtn.eval.live import DEFAULT_JUDGE_MODEL
-from ctrlrtn.policy.experiment import (
-    DEFAULT_MAX_CALLS_PER_TASK,
-    DEFAULT_MAX_COST_USD_PER_TASK,
 )
 
 

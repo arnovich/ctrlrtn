@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import time
 
-from rich.control import strip_control_codes
-from rich.text import Text
 from textual.widgets import (
     DataTable,
     Label,
@@ -15,7 +13,6 @@ from textual.widgets import (
 
 from ctrlrtn.analysis.report import (
     _fmt_cost,
-    _fmt_outcome,
 )
 from ctrlrtn.cli.tui.formatting import (
     graph_axis,
@@ -28,44 +25,15 @@ from ctrlrtn.cli.tui.models import (
     _PANE_MAX_ROWS,
     _SCOPED_TABLE_HEADINGS,
     _SIDEBAR_PANES,
-    _SIDEBAR_TABLES,
 )
 from ctrlrtn.cli.tui.state import (
-    call_detail,
-    experiment_detail,
-    job_detail,
     load_state,
-    model_detail,
     routing_status,
-    shadow_detail,
     shadow_status,
-    task_detail,
-    usecase_detail,
-)
-from ctrlrtn.workflow.catalog import (
-    build_workflow_catalog,
-    render_workflow_catalog,
-)
-from ctrlrtn.workflow.discovery import (
-    WorkflowDiscoveryReport,
-    render_workflow_discovery,
 )
 from ctrlrtn.workflow.discovery_job import (
     WorkflowDiscoveryJobError,
-    projections_from_workflow_discovery_artifact,
     report_from_workflow_discovery_artifact,
-)
-from ctrlrtn.workflow.discovery_projection import (
-    render_discovered_family_projection,
-)
-from ctrlrtn.workflow.graph import (
-    build_workflow_flow,
-    render_workflow_flow,
-    render_workflow_timeline,
-)
-from ctrlrtn.workflow.recommend import (
-    build_workflow_recommendations,
-    render_workflow_recommendations,
 )
 
 _EMPTY = "No data yet. Start the gateway or queue an experiment job."

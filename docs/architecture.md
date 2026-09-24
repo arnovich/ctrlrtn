@@ -261,9 +261,8 @@ after removing all client credential carriers.
 - `jobs/` owns durable background execution. `models.py` contains lifecycle
   state, `context.py` owns cooperative progress/cancellation, `worker.py` owns
   claim/heartbeat/terminal transitions, and `replay.py` implements offline
-  replay as one injected handler. The package initializer preserves the
-  original generic-jobs API; `replay_job/` is a compatibility facade for the
-  previous replay import path.
+  replay as one injected handler. The package initializer re-exports the
+  generic jobs API.
 - `local-model-training.md` defines the future offline training boundary. It
   reuses durable jobs and console monitoring but forbids database-controlled
   commands, evaluation materialization, gateway execution, and automatic model

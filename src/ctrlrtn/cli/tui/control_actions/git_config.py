@@ -5,19 +5,8 @@ from __future__ import annotations
 import sqlite3
 
 from ctrlrtn.cli.tui.forms import (
-    ConfirmScreen,
     GitConfigScreen,
-    LiveExperimentScreen,
-    RouteScreen,
-    ShadowExperimentScreen,
-    _provider_exists,
     _unknown_provider,
-)
-from ctrlrtn.control.service import (
-    AdoptionPlan,
-    apply_adoption,
-    prepare_adoption,
-    prepare_route_change,
 )
 from ctrlrtn.control_config import (
     ControlConfig,
@@ -28,11 +17,6 @@ from ctrlrtn.control_config import (
     load_control_config,
     verify_git_revision,
 )
-from ctrlrtn.policy.experiment import (
-    Experiment,
-)
-from ctrlrtn.policy.route import Route
-from ctrlrtn.policy.shadow import ShadowExperiment
 
 
 class GitConfigControlActions:
