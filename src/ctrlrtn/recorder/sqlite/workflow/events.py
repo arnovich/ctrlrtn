@@ -3,22 +3,14 @@
 from __future__ import annotations
 
 import json
-import time
 
-from ctrlrtn.workflow.graph import WorkflowGraph, build_workflow_graph
 from ctrlrtn.workflow.identity import WorkflowEvent, WorkflowIdentity
-from ctrlrtn.workflow.inference import InferredWorkflowEdge
-from ctrlrtn.workflow.metrics import (
-    WorkflowStepMetric,
-    build_workflow_step_metrics,
-)
 from ctrlrtn.workflow.tool_operation import (
     ToolOperationEvent,
     ToolOperationIdentity,
 )
 
 from ..queries import _INSERT_TOOL_EVENT, _INSERT_WORKFLOW_EVENT
-from ..results import WorkflowDiscoveryInputDiagnostics
 
 
 class WorkflowEventSqliteMixin:

@@ -12,7 +12,6 @@ from ctrlrtn.analysis.propagation import (
 from ctrlrtn.analysis.recommend import Recommendation
 from ctrlrtn.analysis.report import _fmt, _fmt_cost, _fmt_outcome
 from ctrlrtn.eval.calibration import ALIGNED, INSUFFICIENT, MISALIGNED
-from ctrlrtn.eval.ni import _MIN_UNITS as MIN_NI_UNITS
 from ctrlrtn.eval.replay import ReplayReport
 from ctrlrtn.policy.budget import BudgetPolicy
 from ctrlrtn.policy.experiment import Experiment

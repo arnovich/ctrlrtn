@@ -7,6 +7,7 @@ import re
 
 import pytest
 
+from ctrlrtn.cli.evaluation.loading import _load_labels
 from ctrlrtn.eval.calibration import (
     ALIGNED,
     INSUFFICIENT,
@@ -215,7 +216,6 @@ def _write_label_files(tmp_path, rows, name="labels.jsonl"):
 
 
 def test_load_labels_deblinds_both_orderings(tmp_path):
-    from ctrlrtn.cli.commands import _load_labels
 
     path, _ = _write_label_files(
         tmp_path,
@@ -251,7 +251,6 @@ def test_load_labels_deblinds_both_orderings(tmp_path):
 
 
 def test_load_labels_rejects_out_of_range_score(tmp_path):
-    from ctrlrtn.cli.commands import _load_labels
 
     path, _ = _write_label_files(
         tmp_path,
@@ -270,7 +269,6 @@ def test_load_labels_rejects_out_of_range_score(tmp_path):
 
 
 def test_load_labels_requires_the_sidecar_key(tmp_path):
-    from ctrlrtn.cli.commands import _load_labels
 
     path, key = _write_label_files(
         tmp_path,
@@ -290,7 +288,6 @@ def test_load_labels_requires_the_sidecar_key(tmp_path):
 
 
 def test_load_labels_rejects_stringified_bool_in_key(tmp_path):
-    from ctrlrtn.cli.commands import _load_labels
 
     path, key = _write_label_files(
         tmp_path,
@@ -427,6 +424,6 @@ def test_calibration_set_streams_and_survives_failures(tmp_path, monkeypatch):
     for r in labels:
         r["score_a"], r["score_b"] = 7.0, 8.0
     out.write_text("\n".join(json.dumps(r) for r in labels) + "\n")
-    loaded = cli._load_labels(str(out))
+    loaded = _load_labels(str(out))
     assert len(loaded) == 2
     assert all(lp.pairing.candidate_output == "SCORE_7.0" for lp in loaded)
