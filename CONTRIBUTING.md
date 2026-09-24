@@ -12,8 +12,9 @@ uv run pytest -q          # under a minute, no network, no API keys needed
 
 ## Conventions (enforced by CI)
 
-- `black` (line length 80) and `isort` (profile=black): run
-  `uv run black src tests && uv run isort src tests` before committing.
+- `black` (line length 80), `isort` (profile=black), `ruff` and `mypy`
+  run as pre-commit hooks: `uv run pre-commit install` once, and every
+  commit is checked with the same pinned tools CI uses.
 - Tests accompany behavior changes; `pytest` runs with `asyncio_mode=auto`.
 - Live-API code paths take injected functions (see `eval/live.py`) so the
   suite stays offline.
