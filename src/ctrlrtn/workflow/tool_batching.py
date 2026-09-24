@@ -11,11 +11,22 @@ from ctrlrtn.workflow.tool_operation import ToolOperationIdentity
 
 
 class ToolBatchError(ValueError):
+    """Raised when a batch capability contract or item result is malformed."""
+
     pass
 
 
 @dataclass(frozen=True)
 class ToolBatchCapabilities:
+    """An adapter's self-declared guarantees for safely batching tool calls.
+
+    Batching runs only when every guarantee flag is true, so an adapter
+    that cannot preserve order, keep per-operation idempotency, scope
+    authentication, account for rate limits, attribute partial failures
+    and cancel cooperatively is bypassed before dispatch. Declarations are
+    trusted as stated; ctrlrtn never infers them.
+    """
+
     adapter_id: str
     max_batch_size: int
     preserves_order: bool
@@ -38,12 +49,24 @@ class ToolBatchCapabilities:
 
 @dataclass(frozen=True)
 class ToolBatchOperation:
+    """One explicit tool attempt and its arguments offered for batching.
+
+    The identity's effect contract decides eligibility: only ``pure`` or
+    ``idempotent`` operations may be batched.
+    """
+
     identity: ToolOperationIdentity
     arguments: Mapping[str, object]
 
 
 @dataclass(frozen=True)
 class ToolBatchItemResult:
+    """An adapter's outcome for exactly one attempt inside a batch.
+
+    ``attempt_id`` must echo the operation's attempt so partial failures
+    stay attributed; a failed item requires an ``error_code``.
+    """
+
     attempt_id: str
     success: bool
     value: object | None = None
@@ -75,6 +98,15 @@ class ToolBatchItemResult:
 
 @dataclass(frozen=True)
 class ToolBatchResult:
+    """What ``run_tool_batch`` did and why.
+
+    ``mode`` is ``bypass`` (the original callable ran instead, before any
+    dispatch), ``batched`` (every item succeeded), ``partial`` (some items
+    failed but stayed attributed) or ``needs_operator`` (the adapter's
+    result could not be trusted). After dispatch the original is never
+    replayed, so ``value`` is the bypass result, the items, or ``None``.
+    """
+
     mode: str
     value: object
     reason: str
@@ -82,6 +114,12 @@ class ToolBatchResult:
 
 
 class ToolBatchAdapter(Protocol):
+    """Protocol an application-supplied batching adapter must satisfy.
+
+    It publishes validated ``capabilities`` and executes one batch,
+    returning one result per operation in the same order.
+    """
+
     capabilities: ToolBatchCapabilities
 
     def execute_batch(

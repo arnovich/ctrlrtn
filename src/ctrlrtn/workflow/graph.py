@@ -10,6 +10,15 @@ from ctrlrtn.workflow.inference import InferredWorkflowEdge
 
 @dataclass(frozen=True)
 class WorkflowGraphNode:
+    """One step run in a task graph, merged from traces and lifecycle events.
+
+    ``status`` is the run's single terminal lifecycle status, ``active`` if
+    only ``started`` was seen, ``observed`` if only traces exist, or
+    ``inconsistent`` when terminal statuses, identities or attempts
+    conflict. Calls, cost and latency are provider-call totals; ``attempt``
+    is 0 when it could not be determined.
+    """
+
     step_run_id: str
     step: str
     attempt: int
@@ -25,6 +34,15 @@ class WorkflowGraphNode:
 
 @dataclass(frozen=True)
 class WorkflowGraphEdge:
+    """A directed link between two step runs, labelled by its provenance.
+
+    ``provenance`` is ``"explicit"`` for application-declared ``parent``
+    and ``dependency`` facts, or ``"inferred"`` for analysis-only
+    ``tool-result`` links, which also carry a ``confirmation`` of
+    ``confirmed``, ``contradicted`` or ``unverified``. Inferred edges never
+    create structural claims.
+    """
+
     source_step_run_id: str
     target_step_run_id: str
     kind: str
@@ -34,6 +52,13 @@ class WorkflowGraphEdge:
 
 @dataclass(frozen=True)
 class WorkflowGraph:
+    """Read-only per-task projection of step runs and their edges.
+
+    ``workflow`` and ``workflow_version`` are ``"(mixed)"`` when the runs
+    disagree on their definition. It is a display and export projection,
+    never an orchestration definition or an import format.
+    """
+
     task_id: str
     workflow: str
     workflow_version: str
@@ -43,6 +68,13 @@ class WorkflowGraph:
 
 @dataclass(frozen=True)
 class WorkflowFlowNode:
+    """One stable step aggregated over many task graphs of one version.
+
+    ``tasks`` counts distinct tasks that ran the step, ``runs`` its step
+    runs, and ``failed_runs`` runs that failed, were cancelled, or were
+    inconsistent.
+    """
+
     step: str
     tasks: int
     runs: int
@@ -54,6 +86,14 @@ class WorkflowFlowNode:
 
 @dataclass(frozen=True)
 class WorkflowFlowEdge:
+    """One step-to-step link aggregated over task graphs of one version.
+
+    ``tasks`` counts tasks containing the link and ``source_tasks`` tasks
+    containing the source step, so ``branch_rate`` is the observed share of
+    source tasks that continued along this edge. Explicit and inferred
+    provenance are kept separate rather than summed.
+    """
+
     source: str
     target: str
     kind: str
@@ -68,6 +108,13 @@ class WorkflowFlowEdge:
 
 @dataclass(frozen=True)
 class WorkflowFlow:
+    """Aggregate step/edge volumes for exactly one workflow version.
+
+    Graphs of differing or ``"(mixed)"`` versions are never combined. The
+    flow is an analysis-only projection; inferred edges are excluded from
+    explicit flow volume.
+    """
+
     workflow: str
     workflow_version: str
     tasks: int

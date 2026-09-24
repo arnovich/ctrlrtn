@@ -9,6 +9,17 @@ from ctrlrtn.workflow.identity import TERMINAL_STATUSES, WorkflowEvent
 
 @dataclass(frozen=True)
 class WorkflowStepMetric:
+    """Explicit attribution for one stable step across its step runs.
+
+    Runs are grouped by ``(task_id, step_run_id)`` and then by the stable
+    ``(workflow, workflow_version, step)`` key; a run whose ID maps to more
+    than one stable identity is excluded entirely. Call figures come from
+    traces, lifecycle counts and durations from events, and outcome counts
+    only from explicit terminal step reports; a workflow outcome is never
+    copied onto its steps. ``inconsistent`` runs are excluded from success
+    and score statistics.
+    """
+
     workflow: str
     workflow_version: str
     step: str

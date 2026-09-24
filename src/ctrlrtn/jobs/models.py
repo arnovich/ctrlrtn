@@ -20,6 +20,10 @@ def new_job_id() -> str:
 
 @dataclass(frozen=True)
 class Job:
+    """One durable job record: its kind and config, lifecycle status, lease
+    and progress. Immutable; every transition is a new value produced by the
+    store, and ``status`` is restricted to the module's constants."""
+
     kind: str
     config: dict
     job_id: str = field(default_factory=new_job_id)

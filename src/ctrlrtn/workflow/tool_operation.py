@@ -21,6 +21,16 @@ TERMINAL_STATUSES = STATUSES - {"started"}
 
 @dataclass(frozen=True)
 class ToolOperationIdentity:
+    """Application-declared identity of one tool attempt within a step run.
+
+    ``operation_id`` is the stable logical operation and ``attempt_id`` the
+    unique per-attempt ID; ``effect`` is the conservative side-effect
+    contract (``unknown``, ``pure``, ``idempotent`` or ``stateful``),
+    defaulting to ``unknown`` because ctrlrtn never infers purity from a
+    tool name or provider schema. Provider-owned tool IDs are not part of
+    this identity; they remain inference evidence only.
+    """
+
     workflow_identity: WorkflowIdentity
     operation: str
     operation_id: str
@@ -56,6 +66,15 @@ class ToolOperationIdentity:
 
 @dataclass(frozen=True)
 class ToolOperationEvent:
+    """One explicit lifecycle fact about a tool attempt.
+
+    ``status`` is ``started`` or terminal (``completed``, ``failed`` or
+    ``cancelled``); a terminal event must state ``success`` explicitly and
+    may carry a bounded ``error_code``, latency and cost, none of which is
+    allowed on ``started``. These are application facts, distinct from
+    provider tool IDs, and cannot authorize batching or execution changes.
+    """
+
     identity: ToolOperationIdentity
     status: str
     event_id: str = field(default_factory=lambda: uuid.uuid4().hex)

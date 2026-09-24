@@ -49,6 +49,10 @@ class ReplaySample:
 
 @dataclass
 class ReplayReport:
+    """What one replay batch produced: the NI verdict plus how many samples
+    yielded a usable pairing, failed, or were blank, so a reader can judge
+    how degraded the batch was before trusting the verdict."""
+
     result: NIResult
     n_pairings: int  # pairings that produced a usable diff
     n_failed: int  # samples a replay/judge call raised on (skipped)
