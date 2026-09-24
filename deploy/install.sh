@@ -2,7 +2,7 @@
 # ctrlrtn bare-metal installer/upgrader (Debian/Ubuntu-ish, systemd).
 #
 #   sudo deploy/install.sh                 # install or upgrade to origin/main
-#   sudo deploy/install.sh --ref v0.1.0    # pin a tag/branch/commit
+#   sudo deploy/install.sh --ref <ref>      # pin a tag/branch/commit
 #
 # Idempotent: re-running upgrades the checkout and restarts the service;
 # your /etc/ctrlrtn/config.yaml and the recorded database are never
@@ -73,6 +73,14 @@ log_requests: true
 YAML
   chmod 0640 /etc/ctrlrtn/config.yaml
   chown root:ctrlrtn /etc/ctrlrtn/config.yaml
+fi
+# 5b. Environment file for provider-owned credentials, created once.
+if [ ! -f /etc/ctrlrtn/env ]; then
+  cat > /etc/ctrlrtn/env <<'ENV'
+# KEY=value lines read by the service (providers.<name>.credential.env).
+ENV
+  chmod 0640 /etc/ctrlrtn/env
+  chown root:ctrlrtn /etc/ctrlrtn/env
 fi
 
 # 6. Unit, enable, start (StateDirectory creates /var/lib/ctrlrtn).

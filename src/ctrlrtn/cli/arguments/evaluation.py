@@ -184,7 +184,7 @@ def register_evaluations(sub, commands) -> None:
         type=float,
         default=None,
         help="NI margin in judge points; sets the bias ceiling "
-        "(default a 1.0-point ceiling)",
+        "(margin/2; without a margin the ceiling is 0.5 points)",
     )
     calibrate.add_argument(
         "--replicates",

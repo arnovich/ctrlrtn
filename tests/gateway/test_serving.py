@@ -164,7 +164,7 @@ async def test_candidate_arm_switches_to_a_same_api_provider(
     recorder.start()
     task = _task_for_arm(exp, CANDIDATE)
     async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://router"
+        transport=httpx.ASGITransport(app=app), base_url="http://localhost"
     ) as client:
         response = await client.post(
             "/v1/chat/completions?api_key=baseline-secret&x=1",

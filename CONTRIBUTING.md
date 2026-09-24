@@ -22,16 +22,5 @@ uv run pytest -q                   # under a minute, offline, no API keys
 
 ## Code map
 
-- `gateway/` — the hot path: proxy, serving snapshot, injection, shadow mirror
-- `recorder/` — trace queue, capability contracts (`repositories.py`), memory
-  and SQLite stores; `recorder/sqlite/` splits schema from queries
-- `policy/` — the switching primitives: experiment, route, fallback, shadow,
-  plus budget admission
-- `identify/` — use-case keying (tag header / prompt fingerprint)
-- `telemetry/` — usage, pricing, enrichment · `analysis/` — reports and
-  recommendations · `eval/` — replay, blinded judge, non-inferiority,
-  calibration, tripwire
-- `workflow/` — identity, discovery, graphs, tool-call correlation
-- `cli/` — `parser.py` / `render.py` / `commands.py`, and `console.py`, the
-  TUI: monitoring plus confirmed control actions
-- `docs/architecture.md` — current boundaries and request flow
+[docs/architecture.md](docs/architecture.md) has the package map, the
+request flow and the dependency rules the test suite enforces.

@@ -12,6 +12,7 @@ from starlette.background import BackgroundTask
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
+from ctrlrtn.gateway.hosts import trusted_host
 from ctrlrtn.gateway.proxy.headers import (
     _forward_request_headers,
     _forward_response_headers,
@@ -57,6 +58,7 @@ async def proxy_pass_through(
     fallback: FallbackFn | None = None,
     budget_gate: BudgetGate | None = None,
     shadow_manager: ShadowManager | None = None,
+    control_hosts: tuple[str, ...] = (),
 ) -> Response:
     """Forward ``request`` to the upstream provider and stream the response.
 
@@ -316,6 +318,42 @@ async def proxy_pass_through(
         budget_reservation_id = budget.reservation_id
 
     credentials_replaced = provider_switched or selected_credential is not None
+    if selected_credential is not None and not trusted_host(
+        request.headers.get("host", ""), control_hosts
+    ):
+        # This call would spend the operator's own key. The same
+        # DNS-rebinding guard as the control plane applies: a browser page
+        # reaching a loopback-bound proxy through a rebound name is refused.
+        if recorder is not None and (
+            serve is not None or budget_reservation_id is not None
+        ):
+            _record_synthetic(
+                recorder,
+                serve,
+                403,
+                started,
+                reason="host",
+                method=method,
+                path=path,
+                query=query,
+                request_headers=request_headers,
+                request_body=request_body,
+                provider=selected_provider,
+                provider_free=selected_free,
+                note=b"untrusted Host for a provider-owned credential",
+                budget_reservation_id=budget_reservation_id,
+            )
+        return JSONResponse(
+            {
+                "error": {
+                    "type": "ctrlrtn_untrusted_host",
+                    "message": "untrusted Host (DNS-rebinding guard): address "
+                    "the proxy as localhost or an IP literal, or add the "
+                    "name to control_hosts.",
+                }
+            },
+            status_code=403,
+        )
     try:
         provider_headers = (
             selected_credential.headers() if selected_credential else {}
