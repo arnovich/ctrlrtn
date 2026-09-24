@@ -16,8 +16,10 @@ from ctrlrtn.recorder.models import (
 from ctrlrtn.recorder.trace import Trace
 from ctrlrtn.telemetry.pricing import price_for
 
+from .core import MemoryState
 
-class ReportingMemoryMixin:
+
+class ReportingMemoryMixin(MemoryState):
     """Project in-memory traces into reporting read models."""
 
     def _latest_outcomes(self) -> dict[str, Outcome]:

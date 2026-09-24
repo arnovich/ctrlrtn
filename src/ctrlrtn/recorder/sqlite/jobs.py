@@ -8,10 +8,11 @@ import time
 
 from ctrlrtn.jobs import Job
 
+from .connection import SqliteCapability
 from .queries import _SELECT_JOBS, _row_to_job
 
 
-class JobSqliteMixin:
+class JobSqliteMixin(SqliteCapability):
     """Create, claim, update, and complete durable jobs."""
 
     def create_job(self, job: Job) -> None:

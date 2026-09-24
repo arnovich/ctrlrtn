@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 
 from ctrlrtn.eval.replay import ReplayReport
 from ctrlrtn.eval.tripwire import run_tripwire
+from ctrlrtn.policy.experiment import Experiment
 from ctrlrtn.recorder.repositories import ReportingRepository
 from ctrlrtn.telemetry import pricing
 from ctrlrtn.telemetry.usage import Usage
@@ -135,12 +136,12 @@ def build_campaign_report(
         for r in (replay_reports or [])
         if r.get("scope") is None
     }
-    experiments: dict[str, object] = {}
-    for exp in store.experiments(limit=500):
-        if exp.scope.is_workflow_scoped:
+    experiments: dict[str, Experiment] = {}
+    for experiment in store.experiments(limit=500):
+        if experiment.scope.is_workflow_scoped:
             continue
         # experiments() is newest-first; keep the newest per use-case.
-        experiments.setdefault(exp.use_case_key, exp)
+        experiments.setdefault(experiment.use_case_key, experiment)
     baselines = store.use_case_models()
     now = time.time() if now is None else now
 
@@ -254,14 +255,14 @@ def render_campaign_markdown(rows: list[RoleRow]) -> str:
             f"| {live} |"
         )
     total = sum(r.cost_usd for r in rows)
-    blessed = [
-        r
+    blessed_savings = [
+        r.cost_usd - r.repriced_usd
         for r in rows
         if r.replay_verdict == NON_INFERIOR and r.repriced_usd is not None
     ]
-    if blessed and total > 0:
+    if blessed_savings and total > 0:
         # Only count savings the eval actually blessed; the rest stays as-is.
-        saved = sum(r.cost_usd - r.repriced_usd for r in blessed)
+        saved = sum(blessed_savings)
         lines.append("")
         lines.append(
             f"Switching only the ✓ roles would save **${saved:.2f} of "

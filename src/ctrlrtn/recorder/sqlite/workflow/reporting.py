@@ -8,8 +8,10 @@ from ctrlrtn.workflow.metrics import (
     build_workflow_step_metrics,
 )
 
+from ..connection import SqliteCapability
 
-class WorkflowReportingSqliteMixin:
+
+class WorkflowReportingSqliteMixin(SqliteCapability):
     """Project workflow observations into diagnostics and read models."""
 
     def workflow_step_metrics(

@@ -7,8 +7,10 @@ from ctrlrtn.policy.fallback import ApprovedFallback
 from ctrlrtn.policy.route import Route, WorkflowRoute
 from ctrlrtn.policy.shadow import ShadowExperiment, ShadowStats
 
+from .core import MemoryState
 
-class ControlMemoryMixin:
+
+class ControlMemoryMixin(MemoryState):
     """Apply in-memory experiment, route, fallback, and shadow control."""
 
     def create_experiment(self, experiment: Experiment) -> None:

@@ -152,8 +152,8 @@ def identity_from_headers(
     values = {
         key: headers.get(header) for key, header in WORKFLOW_HEADERS.items()
     }
-    present = {key for key, value in values.items() if value not in (None, "")}
-    workflow_fields = present - {"task_id"}
+    present = {key: value for key, value in values.items() if value}
+    workflow_fields = set(present) - {"task_id"}
     if not workflow_fields:
         return None, None
     required = {
@@ -163,7 +163,7 @@ def identity_from_headers(
         "step",
         "step_run_id",
     }
-    missing = required - present
+    missing = required - set(present)
     if missing:
         return (
             None,
@@ -175,11 +175,11 @@ def identity_from_headers(
         )
         attempt = int(values["attempt"] or "1")
         identity = WorkflowIdentity(
-            task_id=values["task_id"],
-            workflow=values["workflow"],
-            workflow_version=values["workflow_version"],
-            step=values["step"],
-            step_run_id=values["step_run_id"],
+            task_id=present["task_id"],
+            workflow=present["workflow"],
+            workflow_version=present["workflow_version"],
+            step=present["step"],
+            step_run_id=present["step_run_id"],
             parent_step_run_id=values["parent_step_run_id"] or None,
             dependency_step_run_ids=dependencies,
             attempt=attempt,

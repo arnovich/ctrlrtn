@@ -8,6 +8,7 @@ from collections.abc import Callable
 from ctrlrtn.recorder.models import Outcome
 from ctrlrtn.recorder.trace import Trace
 
+from .connection import SqliteCapability
 from .queries import (
     _INSERT,
     _INSERT_OUTCOME,
@@ -16,7 +17,7 @@ from .queries import (
 )
 
 
-class TraceSqliteMixin:
+class TraceSqliteMixin(SqliteCapability):
     """Persist raw trace facts without owning connection lifecycle."""
 
     def _insert_outcome(self, outcome: Outcome) -> None:

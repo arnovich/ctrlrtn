@@ -12,6 +12,7 @@ from ctrlrtn.recorder.models import UNTASKED as _UNTASKED
 from ctrlrtn.recorder.models import SessionSummary, TaskSummary
 from ctrlrtn.workflow.identity import TERMINAL_STATUSES
 
+from ..connection import SqliteCapability
 from ..queries import (
     _EXPERIMENT_TASK_ROWS,
     _SESSIONS,
@@ -20,7 +21,7 @@ from ..queries import (
 )
 
 
-class TaskReportingSqliteMixin:
+class TaskReportingSqliteMixin(SqliteCapability):
     """Project task, session, and experiment-task summaries."""
 
     def tasks(
