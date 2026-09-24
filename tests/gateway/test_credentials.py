@@ -172,7 +172,7 @@ async def test_named_provider_uses_its_credential_not_the_clients(
     )
 
     async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://router"
+        transport=httpx.ASGITransport(app=app), base_url="http://localhost"
     ) as client:
         response = await client.post(
             "/ollama_cloud/v1/chat/completions?api_key=client-secret&x=1",
@@ -213,7 +213,7 @@ async def test_missing_named_provider_credential_fails_before_forwarding(
     )
 
     async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://router"
+        transport=httpx.ASGITransport(app=app), base_url="http://localhost"
     ) as client:
         response = await client.post(
             "/cloud/v1/chat/completions", content=b"{}"
@@ -257,3 +257,52 @@ def test_scrub_also_cleans_query_strings(tmp_path):
         assert _KEY not in row["query"] and "alt=json" in row["query"]
     finally:
         store.close()
+
+
+async def test_provider_owned_credential_refuses_an_untrusted_host(
+    streaming_upstream, monkeypatch
+):
+    """A mount that spends the operator's key gets the control plane's
+    DNS-rebinding guard: a Host the operator never configured is refused
+    before anything is forwarded."""
+    record: dict = {}
+    monkeypatch.setenv("OLLAMA_API_KEY", "ollama-cloud-secret")
+    app = create_app(
+        Settings(
+            routes=(
+                UpstreamRoute(
+                    "ollama_cloud",
+                    "http://upstream",
+                    ("/ollama_cloud",),
+                    strip_prefix="/ollama_cloud",
+                    api="openai",
+                    credential=ProviderCredential("OLLAMA_API_KEY"),
+                ),
+            ),
+            control_hosts=("proxy.internal",),
+        ),
+        upstream_client=httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=streaming_upstream(record)),
+            base_url="http://upstream",
+        ),
+    )
+
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://router"
+    ) as client:
+        refused = await client.post(
+            "/ollama_cloud/v1/chat/completions",
+            content=b"{}",
+            headers={"host": "evil.example"},
+        )
+        allowed = await client.post(
+            "/ollama_cloud/v1/chat/completions",
+            content=b"{}",
+            headers={"host": "proxy.internal"},
+        )
+
+    assert refused.status_code == 403
+    assert refused.json()["error"]["type"] == "ctrlrtn_untrusted_host"
+    assert "headers" not in record or record.get("calls", 1) == 1
+    assert allowed.status_code == 200
+    assert record["headers"]["authorization"] == "Bearer ollama-cloud-secret"

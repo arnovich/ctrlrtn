@@ -57,6 +57,7 @@ class _Work:
     provider: str | None
     provider_free: bool
     credential: ProviderCredential | None
+    provider_switched: bool
 
 
 class ShadowManager:
@@ -187,6 +188,9 @@ class ShadowManager:
             provider=target.name if target else baseline_provider,
             provider_free=target.free if target else baseline_free,
             credential=target.credential if target else baseline_credential,
+            provider_switched=(
+                target is not None and target.name != baseline_provider
+            ),
         )
         try:
             self._queue.put_nowait(work)
@@ -231,7 +235,13 @@ class ShadowManager:
                 work.credential.headers() if work.credential is not None else {}
             )
             skip = {"host", "content-length", "connection"}
-            if work.credential is not None:
+            # The client's credential belongs to the provider it addressed;
+            # it never travels to a different upstream, and a provider-owned
+            # credential replaces it.
+            replace_credentials = (
+                work.provider_switched or work.credential is not None
+            )
+            if replace_credentials:
                 skip |= CREDENTIAL_HEADERS
             headers = {
                 k: v
@@ -242,7 +252,7 @@ class ShadowManager:
             headers.update(credential_headers)
             query = (
                 strip_query_credentials(work.query)
-                if work.credential is not None
+                if replace_credentials
                 else work.query
             )
             target = work.base_url.rstrip("/") + work.forward_path

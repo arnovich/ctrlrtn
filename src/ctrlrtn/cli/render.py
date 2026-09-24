@@ -357,8 +357,9 @@ def render_propagation(report: PropagationReport) -> str:
     ]
     if report.total_calls == 0:
         lines.append(
-            "  verdict: NO DATA — start the gateway (`serve`), send traffic "
-            "with the x-ctrlrtn-task header set, then re-check (see "
+            "  verdict: NO DATA — no successful completion calls recorded "
+            "yet; failed calls do not count. Send traffic with the "
+            "x-ctrlrtn-task header set, then re-check (see "
             "docs/instrument-a-workflow.md)."
         )
         return "\n".join(lines)
