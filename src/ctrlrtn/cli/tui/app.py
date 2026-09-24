@@ -156,8 +156,8 @@ class ConsoleApp(ConsoleActions, ConsolePresentation, App):
         }
         # 0-based page per unbounded list; a page survives refresh ticks, so
         # reading page 3 of the feed isn't yanked back to the tail every 3s.
-        self._page = {table: 0 for table in _PAGED_TABLES}
-        self._has_more = {table: False for table in _PAGED_TABLES}
+        self._page = dict.fromkeys(_PAGED_TABLES, 0)
+        self._has_more = dict.fromkeys(_PAGED_TABLES, False)
         # The live call feed follows the newest row (tail -f). Moving the
         # cursor off the top row pauses following so a call can be inspected
         # while new ones arrive; returning to the top — or the inspected row

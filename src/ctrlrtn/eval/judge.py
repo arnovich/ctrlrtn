@@ -28,8 +28,8 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 # prompt -> raw judge response (expected to contain a JSON object with the
 # per-response scores). The live implementation calls the judge model.

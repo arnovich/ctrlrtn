@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Mapping
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ctrlrtn.gateway.decision import ServingDecision
@@ -47,7 +48,7 @@ class TerminalError(Exception):
         self,
         status: int,
         message: str,
-        serve: "ServingDecision",
+        serve: ServingDecision,
         *,
         record: bool = True,
     ) -> None:

@@ -36,11 +36,11 @@ import sys
 import tempfile
 import threading
 import time
-from contextlib import closing, contextmanager
+from collections.abc import Iterator
+from contextlib import closing, contextmanager, suppress
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterator
 
 import httpx
 import uvicorn
@@ -403,10 +403,8 @@ def _server_process(
             except subprocess.TimeoutExpired:
                 handle.killed = True
                 proc.kill()
-                try:
-                    proc.wait(timeout=5)
-                except subprocess.TimeoutExpired:  # uninterruptible sleep
-                    pass
+                with suppress(subprocess.TimeoutExpired):
+                    proc.wait(timeout=5)  # may be in uninterruptible sleep
 
 
 def _upstream(config: BenchmarkConfig) -> Starlette:
@@ -670,9 +668,11 @@ def _recorder_failure_probe(upstream_url: str) -> bool:
     previous_disable = logging.root.manager.disable
     logging.disable(logging.CRITICAL)
     try:
-        with _running_server(app) as router_url:
-            with httpx.Client(base_url=router_url, timeout=5.0) as client:
-                statuses = [client.get("/small").status_code for _ in range(2)]
+        with (
+            _running_server(app) as router_url,
+            httpx.Client(base_url=router_url, timeout=5.0) as client,
+        ):
+            statuses = [client.get("/small").status_code for _ in range(2)]
     finally:
         logging.disable(previous_disable)
     return (

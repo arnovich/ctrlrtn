@@ -6,7 +6,7 @@ import socket
 import threading
 import time
 import uuid
-from typing import Mapping
+from collections.abc import Mapping
 
 from ctrlrtn.jobs.context import JobCancelled, JobContext, JobHandler
 

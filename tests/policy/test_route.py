@@ -26,6 +26,7 @@ from ctrlrtn.telemetry.enrich import enrich_trace
 from ctrlrtn.workflow.identity import WorkflowIdentity
 
 _UC = "tag:editor"
+_ROUTE = _UC.removeprefix("tag:")
 _SONNET = "claude-sonnet-4-5"
 _HAIKU = "claude-haiku-4-5"
 
@@ -36,7 +37,7 @@ def _body(model=_SONNET) -> bytes:
     ).encode()
 
 
-def _headers(route=_UC.removeprefix("tag:"), task=None) -> dict:
+def _headers(route=_ROUTE, task=None) -> dict:
     headers = {"x-ctrlrtn-route": route}
     if task:
         headers["x-ctrlrtn-task"] = task

@@ -224,7 +224,7 @@ class TableRefreshMixin:
         n_calls = sum(calls)
         # Weight each bucket's average by its call count for the window avg.
         avg_ms = (
-            sum(ms * n for ms, n in zip(latency, calls)) / n_calls
+            sum(ms * n for ms, n in zip(latency, calls, strict=True)) / n_calls
             if n_calls
             else 0.0
         )

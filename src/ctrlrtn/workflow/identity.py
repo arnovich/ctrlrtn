@@ -6,8 +6,8 @@ import math
 import re
 import time
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Mapping
 
 WORKFLOW_HEADERS = {
     "task_id": "x-ctrlrtn-task",
@@ -124,7 +124,7 @@ class WorkflowIdentity:
         }
 
     @classmethod
-    def from_carrier(cls, value: Mapping) -> "WorkflowIdentity":
+    def from_carrier(cls, value: Mapping) -> WorkflowIdentity:
         if not isinstance(value, Mapping):
             raise WorkflowIdentityError("workflow carrier must be an object")
         allowed = set(cls.__dataclass_fields__)
@@ -239,7 +239,7 @@ class WorkflowEvent:
         }
 
     @classmethod
-    def from_payload(cls, value: Mapping) -> "WorkflowEvent":
+    def from_payload(cls, value: Mapping) -> WorkflowEvent:
         if not isinstance(value, Mapping):
             raise WorkflowIdentityError("workflow event must be an object")
         identity_keys = set(WorkflowIdentity.__dataclass_fields__)

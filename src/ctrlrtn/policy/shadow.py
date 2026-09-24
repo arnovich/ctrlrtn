@@ -55,7 +55,7 @@ class ShadowExperiment:
     def is_running(self) -> bool:
         return self.status == RUNNING
 
-    def stopped(self) -> "ShadowExperiment":
+    def stopped(self) -> ShadowExperiment:
         return replace(self, status=STOPPED)
 
     @property

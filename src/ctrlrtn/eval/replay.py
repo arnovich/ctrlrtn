@@ -15,8 +15,8 @@ agent whose tool calls act on the world).
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from ctrlrtn.eval.judge import JudgeFn, Pairing, judge_pairing
 from ctrlrtn.eval.ni import NIResult, paired_ni
