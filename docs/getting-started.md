@@ -104,7 +104,7 @@ curl http://127.0.0.1:4000/v1/messages \
 
 For Python applications the SDK sets the task and route headers and reports
 outcomes; the session header is yours to add.
-[instrument a workflow](instrument-a-workflow.md) shows it. The proxy strips
+[Instrument a workflow](instrument-a-workflow.md) shows it. The proxy strips
 every `x-ctrlrtn-*` header before forwarding, so providers never see them.
 
 ## 4. Report outcomes

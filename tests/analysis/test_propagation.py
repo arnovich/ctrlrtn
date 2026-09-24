@@ -30,7 +30,7 @@ def _editions(n, agents=("fp:orch", "fp:analyst", "fp:editor")):
 
 def test_unkeyed_call_is_not_a_second_subagent():
     # A tagged task with one keyed + one unkeyed call must NOT read as spanning
-    # two sub-agents (the False-PROVEN bug both judges reproduced).
+    # two sub-agents (an unproven result must never read as proven).
     report = build_propagation_report(
         [_row("ed1", "fp:orch", 1), _row("ed1", None, 1)]
     )

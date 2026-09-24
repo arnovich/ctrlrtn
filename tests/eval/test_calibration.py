@@ -384,7 +384,7 @@ def test_calibration_set_streams_and_survives_failures(tmp_path, monkeypatch):
             pass
 
         def requests_for_use_case(self, use_case, n):
-            return [{"request_body": b} for b in bodies]
+            return [{"request_body": b, "path": "/v1/messages"} for b in bodies]
 
         def use_case_models(self):
             return {"uc": "base-model"}

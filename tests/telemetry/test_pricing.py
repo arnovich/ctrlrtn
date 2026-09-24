@@ -61,10 +61,14 @@ def test_claude_5_generation_is_priced():
     # A missing row records $0 cost for real traffic (the campaign report
     # warns on exactly that) — pin that the current models are priced.
     assert price_for("claude-fable-5").input == 10.0
-    assert price_for("claude-sonnet-5").input == 2.0  # intro until 2026-09-01
-    # sonnet-5 must not prefix-fall into the sonnet-4 family.
     assert (
-        price_for("claude-sonnet-5").input != price_for("claude-sonnet-4").input
+        price_for("claude-sonnet-5").input == 3.0
+    )  # list price from 2026-09-01
+    # sonnet-5 must not prefix-fall into the sonnet-4 family; the list prices
+    # coincide, the output caps do not.
+    assert (
+        price_for("claude-sonnet-5").max_output
+        != price_for("claude-sonnet-4").max_output
     )
 
 

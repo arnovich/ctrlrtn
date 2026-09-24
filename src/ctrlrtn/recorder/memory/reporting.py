@@ -127,6 +127,7 @@ class ReportingMemoryMixin(MemoryState):
                 "id": trace_id,
                 "request_body": trace.request_body,
                 "task_id": trace.task_id,
+                "path": trace.path,
             }
             for trace_id, trace in ordered
         ]

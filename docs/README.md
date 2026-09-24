@@ -39,3 +39,8 @@ deeper, in the order a new user needs them.
 ## Planning
 
 - [Roadmap](roadmap.md), and the task files under [`tasks/open`](../tasks/open/).
+
+## Generated
+
+- [campaign-report.md](campaign-report.md) and [campaign-chart.svg](campaign-chart.svg):
+  the output of `campaign-report` on the recorded workload in the README.

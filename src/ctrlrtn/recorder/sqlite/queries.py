@@ -385,8 +385,8 @@ FROM traces WHERE ts >= ? GROUP BY bucket
 # partition — they are independent units and must not fuse into one
 # pseudo-task. Deterministic (id is monotonic).
 _REQUESTS_FOR_USE_CASE = """
-SELECT id, request_body, task_id FROM (
-    SELECT request_body, task_id, id,
+SELECT id, request_body, task_id, path FROM (
+    SELECT request_body, task_id, id, path,
            ROW_NUMBER() OVER (
                PARTITION BY COALESCE(task_id, 'row:' || id)
                ORDER BY id DESC

@@ -9,53 +9,13 @@ labels: [benchmark, measurement, tooling]
 
 ## Context
 
-The benchmark's numbers are still soft, for reasons
-`docs/router-operational-benchmark.md` lists under "Interpretation limits"
-but does not address:
-
-- **The baseline is bounded by the load generator.** The single-threaded httpx
-  client burns 0.97–0.98 of a core during every `direct` scenario, while the
-  upstream it is measuring uses 0.16–0.41. On the routed path the client drops
-  to 0.55–0.69, so the client term does not cancel in `routed − direct`.
-  Overhead is understated and router capacity is never measured. This is the
-  same class of defect as the GIL sharing that version 2 removed — narrowed to
-  one process rather than eliminated.
-- **The routed path gets more parallelism than the baseline.** Three processes
-  against two, consuming 1.68–2.21 concurrent cores versus 1.14–1.39. In the
-  1 MiB recorded scenario the router used roughly 1.28 cores across the window
-  — about 2.5 ms of router CPU per request against the upstream's 0.125 ms —
-  to add ~7 ms of latency. Co-located or on a loaded host, added latency would
-  converge on added CPU.
-- **Run-to-run spread is 6–54% and is never reported.** One run is published as
-  the reference; the docs work around this by quoting medians of five runs, but
-  the harness has no `--repeat`.
-- **n=30 biases the recorded path low by 10–16%.** The recorder is a background
-  queue, and at n=30 the window is short enough that the writer's work lands
-  after the measurement. At n=400 the same overheads rise. The unrecorded path
-  moves the other way (−7 to −14%), so the two biases have opposite signs.
-- **At n=30 the p99 label is the sample maximum** and p95 the second-largest,
-  and they underestimate the real tail by about 2x against n=400.
-- **The recorder's drain of scenario k runs inside scenario k+1's baseline.**
-  Scenario order is fixed and there is no quiesce; `_await_traces` is called
-  once, at the end. Reordering shifted every recorded overhead by 0.12–0.52 ms,
-  which is inside the run-to-run noise band — meaning the harness cannot
-  currently distinguish an ordering artefact from router cost.
-- **`throughput_ratio` is not a capacity measurement.** At fixed closed-loop
-  concurrency it is approximately an inverted mean-latency ratio, its
-  denominator is the client-limited direct throughput, and the committed sample
-  derives one of them from a 9.9 ms window.
-- **Host state is neither controlled nor recorded**: no CPU affinity, load
-  average, governor, SMT topology or cgroup limits, and nothing is pinned.
-- **The committed evidence config (30/6/3) is below the harness's own
-  documented defaults (50/10/5).**
-
-Two portability items belong here rather than with the fixes already made:
-`stopped_cleanly` infers a graceful stop from `-SIGTERM`, which is uvicorn's
-signal-restoration behaviour and is wrong-shaped on Windows, where
-`terminate()` yields exit code 1; a sentinel written by the child before exit
-would be vendor-independent and portable. And the hidden `--role` flag is
-reachable from a shell, so it can start a real recording gateway against an
-arbitrary database path.
+The operational benchmark reports loopback latency overhead, but its numbers
+are soft for reasons `docs/router-operational-benchmark.md` lists under
+"Interpretation limits" and does not address: the single-threaded load
+generator bounds the baseline, the routed path gets more parallelism than
+the direct one, run-to-run spread is never reported, the small default
+sample understates the recorded path and the tail, and `throughput_ratio`
+is not a capacity measurement.
 
 ## Outcome
 

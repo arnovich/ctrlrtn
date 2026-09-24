@@ -39,7 +39,10 @@ is the per-pairing difference `candidate - baseline` on the judge's scale.
 Both models saw the same input, so variance from the input cancels in the
 difference. An unpaired comparison would need volume to overcome it.
 
-**The judge.** Each pairing is scored by a separate judge model,
+**The judge.** Each pairing is scored by a separate judge model. The default
+judge is from the same vendor as both arms; calibrate it on your use-case
+before trusting a verdict that rests on it.
+Each pairing is scored by that model,
 `claude-opus-4-8` by default (`--judge-model`). It sees the task and two
 responses labelled A and B and returns a 0.0 to 10.0 score for each, never
 an arm label or a model name. The task shown is the user-turn text of the
