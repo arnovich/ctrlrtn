@@ -19,6 +19,10 @@ ProviderExists = Callable[[str], bool]
 
 
 class ControlRepository(Protocol):
+    """The store access the control-plane services need: experiment and
+    model lookups, recorded requests (advisory input to hazard notices, never
+    control authority), and the one write, atomic adoption."""
+
     def experiment(self, experiment_id: str) -> Experiment | None: ...
 
     def running_experiments(self) -> dict[str, Experiment]: ...
@@ -34,12 +38,19 @@ class ControlRepository(Protocol):
 
 @dataclass(frozen=True)
 class ControlNotice:
+    """A safety notice attached to a plan: a stable ``code`` and text for the
+    operator. Advisory; it never blocks the change."""
+
     code: str
     message: str
 
 
 @dataclass(frozen=True)
 class RoutePlan:
+    """A validated persistent-route change awaiting operator confirmation:
+    the exact ``Route`` to install, the running experiment (if any) that will
+    keep it dormant until stopped, and the notices to show first."""
+
     route: Route
     dormant_experiment_id: str | None
     notices: tuple[ControlNotice, ...]
@@ -47,6 +58,10 @@ class RoutePlan:
 
 @dataclass(frozen=True)
 class AdoptionPlan:
+    """A validated experiment adoption awaiting confirmation: the experiment
+    to stop, the exact route its candidate becomes, and the notices to show
+    first. ``apply_adoption`` performs the two as one transition."""
+
     experiment: Experiment
     route: Route
     notices: tuple[ControlNotice, ...]

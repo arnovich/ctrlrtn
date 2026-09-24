@@ -32,6 +32,11 @@ MIN_MULTI_AGENT_TASKS = 3
 
 @dataclass
 class PropagationReport:
+    """Propagation signals over one recent window of completion calls: how
+    many carried a task id, how many tagged tasks actually link several keyed
+    use-cases, and how one focus use-case fares if asked. ``propagated`` is
+    the verdict; the counts are the evidence behind it."""
+
     window_calls: int  # cap on most-recent completion calls examined
     total_calls: int  # completion calls actually in the window
     untasked_calls: int  # of those, calls with no x-ctrlrtn-task

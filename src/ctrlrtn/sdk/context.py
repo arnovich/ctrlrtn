@@ -51,10 +51,15 @@ def new_task_id() -> str:
 
 
 def current_task_id() -> str | None:
+    """The task id of the active edition, or ``None`` outside one (including
+    on a thread or subprocess the edition context did not reach)."""
     return _task.get()
 
 
 def current_route() -> str | None:
+    """The use-case route in effect here: the innermost ``route(...)``, else
+    the edition's ``default_route``, else ``None`` (the gateway then keys the
+    use-case by request fingerprint)."""
     return _route.get()
 
 
@@ -113,6 +118,9 @@ def route(name: str) -> Iterator[None]:
 
 
 def export_carrier() -> dict:
+    """The active workflow step's identity as a JSON-safe dict, to hand to a
+    subprocess or remote worker that will ``import_carrier`` it. Requires an
+    open ``Edition.step(...)`` block; raises ``ValueError`` outside one."""
     identity = _step_identity.get()
     if identity is None:
         raise ValueError("no active workflow step to export")
@@ -121,6 +129,11 @@ def export_carrier() -> dict:
 
 @contextlib.contextmanager
 def import_carrier(carrier: Mapping) -> Iterator[WorkflowIdentity]:
+    """Adopt a workflow identity exported by ``export_carrier`` for the calls
+    in this block, so stamped requests from a subprocess or remote worker
+    continue the originating step run under the same task id. Yields the
+    parsed ``WorkflowIdentity``; a malformed carrier raises
+    ``WorkflowIdentityError`` before anything is bound."""
     identity = WorkflowIdentity.from_carrier(carrier)
     task_token = _task.set(identity.task_id)
     workflow_token = _workflow.set(

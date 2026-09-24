@@ -30,6 +30,11 @@ _DEFAULT_DRAIN_TIMEOUT = 5.0
 
 
 class Recorder:
+    """The queue and worker that persist traces without touching the request
+    path. ``enqueue`` never blocks and drops loudly when full; low-volume
+    outcome and lifecycle events bypass the queue and are written directly
+    because their callers want an acknowledgement."""
+
     def __init__(
         self,
         store: TraceRepository,
