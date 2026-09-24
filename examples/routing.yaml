@@ -1,0 +1,41 @@
+# Copy to routing.yaml, edit, commit, then preview and activate it.
+version: 1
+
+routes:
+  tag:editor:
+    model: qwen2.5:7b
+    provider: ollama
+    previous_model: claude-sonnet-4-5
+    note: replay eval non-inferior
+
+experiments:
+  tag:journalist:
+    # Changing an experiment requires a new stable id.
+    id: exp:journalist-local-v1
+    candidate_model: qwen2.5:7b
+    provider: ollama
+    split_pct: 25
+    max_calls_per_task: 60
+    max_cost_usd_per_task: 5.0
+
+# Descriptive only: validates stable names and routing targets; never schedules.
+workflows:
+  article-pipeline:
+    git:abc123:
+      steps:
+        research:
+          allows: {fan_out: true, retry: true}
+        draft:
+          predecessors: [research]
+          allows: {retry: true}
+
+# Exact-version rules only. Step beats workflow, which beats use-case routing.
+workflow_routes:
+  article-pipeline:
+    git:abc123:
+      model: qwen2.5:7b
+      provider: ollama
+      steps:
+        draft:
+          model: local-writer
+          provider: ollama

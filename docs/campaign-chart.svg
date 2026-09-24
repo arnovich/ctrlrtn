@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="268" font-family="ui-monospace, monospace" font-size="12" fill="#1f2328">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="8" y="20" font-size="14" font-weight="bold">Recorded workload, repriced at the candidate — green only where the paired eval passed</text>
+<text x="8" y="38" font-size="11" fill="#9aa4ad">claude-haiku-4-5, claude-sonnet-4-5 (blue) vs claude-haiku-4-5 (green = non-inferior, grey = not)</text>
+<text x="8" y="72">tag:financial_journalist</text>
+<rect x="200" y="60" width="350.0" height="16" fill="#5b7fa6"/>
+<text x="556.0" y="72">$20.00</text>
+<rect x="200" y="80" width="116.7" height="16" fill="#9aa4ad"/>
+<text x="322.7" y="92">$6.67 ✗ worse</text>
+<text x="8" y="136">tag:technical_analyst</text>
+<rect x="200" y="124" width="29.2" height="16" fill="#5b7fa6"/>
+<text x="235.2" y="136">$1.67</text>
+<text x="8" y="200">tag:editor</text>
+<rect x="200" y="188" width="27.4" height="16" fill="#5b7fa6"/>
+<text x="233.4" y="200">$1.57</text>
+<rect x="200" y="208" width="9.1" height="16" fill="#3fa66f"/>
+<text x="215.1" y="220">$0.52 ✓ non-inferior</text>
+</svg>

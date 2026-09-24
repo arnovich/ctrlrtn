@@ -1,0 +1,137 @@
+[project]
+name = "ctrlrtn"
+version = "0.1.0"
+description = "Self-hosted LLM proxy that records agent traffic, evaluates cheaper models per use-case, and switches only on evidence"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+authors = [{ name = "gimlelabs" }]
+keywords = ["llm", "router", "proxy", "gateway", "ai", "openai", "anthropic"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    "cryptography>=43.0.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0",
+    "starlette>=0.40.0",
+    "uvicorn>=0.30.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "hypothesis>=6.100.0",
+    "mypy>=1.10.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "ruff>=0.8.0",
+]
+tui = [
+    "textual>=0.60",
+]
+provider-test = [
+    "anthropic>=0.40.0",
+]
+mutation = [
+    "mutmut>=3.0.0",
+]
+stress = [
+    "pytest-randomly>=3.15.0",
+    "pytest-repeat>=0.9.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/arnovich/ctrlrtn"
+Repository = "https://github.com/arnovich/ctrlrtn"
+Issues = "https://github.com/arnovich/ctrlrtn/issues"
+
+[project.scripts]
+ctrlrtn = "ctrlrtn.cli.commands:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ctrlrtn"]
+
+[tool.black]
+line-length = 80
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 80
+
+[tool.ruff]
+line-length = 80
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E4", "E9", "F811", "F821", "F822", "F823"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+addopts = ["-v", "--tb=short", "--strict-markers"]
+markers = [
+    "unit: Unit tests",
+    "integration: Tests crossing process, socket, or persistence boundaries",
+    "contract: Executable compatibility contracts shared by implementations",
+    "stress: Repeated or deliberately high-contention tests",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["ctrlrtn"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = true
+fail_under = 85.0
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+
+[tool.mypy]
+python_version = "3.12"
+files = [
+    "src/ctrlrtn/recorder/repositories.py",
+    "src/ctrlrtn/recorder/protocols.py",
+    "src/ctrlrtn/gateway/proxy/headers.py",
+    "src/ctrlrtn/gateway/proxy/models.py",
+]
+mypy_path = "src"
+explicit_package_bases = true
+ignore_missing_imports = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+show_error_codes = true
+
+[tool.mutmut]
+source_paths = ["src/ctrlrtn"]
+only_mutate = [
+    "src/ctrlrtn/gateway/proxy/headers.py",
+]
+pytest_add_cli_args = ["-q", "--tb=short", "-p", "no:randomly"]
+pytest_add_cli_args_test_selection = [
+    "tests/gateway/test_headers.py",
+    "tests/gateway/test_header_properties.py",
+    "tests/gateway/test_passthrough.py",
+    "tests/workflow/test_workflow.py",
+]
+mutate_only_covered_lines = true

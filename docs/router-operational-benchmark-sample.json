@@ -1,0 +1,213 @@
+{
+  "comparisons": [
+    {
+      "mode": "router_unrecorded",
+      "p50_overhead_ms": 0.882,
+      "p95_overhead_ms": 2.799,
+      "path": "small",
+      "throughput_ratio": 0.7313
+    },
+    {
+      "mode": "router_recorded",
+      "p50_overhead_ms": 2.117,
+      "p95_overhead_ms": 3.098,
+      "path": "small",
+      "throughput_ratio": 0.6584
+    },
+    {
+      "mode": "router_unrecorded",
+      "p50_overhead_ms": 5.437,
+      "p95_overhead_ms": 12.085,
+      "path": "large",
+      "throughput_ratio": 0.5831
+    },
+    {
+      "mode": "router_recorded",
+      "p50_overhead_ms": 14.574,
+      "p95_overhead_ms": 16.887,
+      "path": "large",
+      "throughput_ratio": 0.3576
+    },
+    {
+      "mode": "router_unrecorded",
+      "p50_overhead_ms": 8.9,
+      "p95_overhead_ms": 16.99,
+      "path": "stream",
+      "throughput_ratio": 0.5282
+    },
+    {
+      "mode": "router_recorded",
+      "p50_overhead_ms": 23.196,
+      "p95_overhead_ms": 29.232,
+      "path": "stream",
+      "throughput_ratio": 0.3083
+    }
+  ],
+  "config": {
+    "concurrency": 6,
+    "large_bytes": 1048576,
+    "requests": 30,
+    "small_bytes": 1024,
+    "stream_chunk_bytes": 16384,
+    "stream_chunks": 64,
+    "timeout_seconds": 30.0,
+    "warmup": 3
+  },
+  "environment": {
+    "cpu_count": 12,
+    "machine": "x86_64",
+    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+    "python": "3.12.13",
+    "router_revision": "8de64258daf22ee7d0cdaaec480300345d99ef3a",
+    "server_peak_rss_bytes": {
+      "router_recorded": 70385664,
+      "router_unrecorded": 51269632,
+      "upstream": 46256128
+    },
+    "worktree_clean": true
+  },
+  "measurement_notes": {
+    "baseline": "the load generator is one Python process and saturates a core on the direct path, so it bounds the baseline and overhead is understated; see the interpretation limits in the docs",
+    "isolation": "every measured server runs in its own OS process, so the client, the upstream and the router never share one GIL",
+    "memory": "server_peak_rss_bytes is each server's own VmHWM, sampled before shutdown; null off Linux",
+    "nagle": "TCP_NODELAY is set on every listener; without it keep-alive traffic stalls on the peer's delayed ACK and that stall dominates the measurement",
+    "overhead": "p50/p95_overhead_ms difference two independently measured percentiles rather than percentiles of a per-request difference, so p95 overhead can fall below p50 overhead",
+    "thresholds": "none; compare like-for-like runs on the same host",
+    "transport": "real loopback TCP via Uvicorn and HTTPX"
+  },
+  "measurements": [
+    {
+      "completed_requests": 30,
+      "elapsed_seconds": 0.019515,
+      "errors": 0,
+      "mode": "direct",
+      "p50_ms": 2.999,
+      "p95_ms": 6.445,
+      "p99_ms": 6.697,
+      "path": "small",
+      "response_bytes": 1024,
+      "throughput_rps": 1537.303,
+      "total_response_bytes": 30720
+    },
+    {
+      "completed_requests": 30,
+      "elapsed_seconds": 0.026684,
+      "errors": 0,
+      "mode": "router_unrecorded",
+      "p50_ms": 3.881,
+      "p95_ms": 9.244,
+      "p99_ms": 16.459,
+      "path": "small",
+      "response_bytes": 1024,
+      "throughput_rps": 1124.249,
+      "total_response_bytes": 30720
+    },
+    {
+      "completed_requests": 30,
+      "elapsed_seconds": 0.029639,
+      "errors": 0,
+      "mode": "router_recorded",
+      "p50_ms": 5.116,
+      "p95_ms": 9.543,
+      "p99_ms": 9.609,
+      "path": "small",
+      "response_bytes": 1024,
+      "throughput_rps": 1012.175,
+      "total_response_bytes": 30720
+    },
+    {
+      "completed_requests": 30,
+      "elapsed_seconds": 0.041573,
+      "errors": 0,
+      "mode": "direct",
+      "p50_ms": 7.775,
+      "p95_ms": 10.164,
+      "p99_ms": 10.314,
+      "path": "large",
+      "response_bytes": 1048576,
+      "throughput_rps": 721.616,
+      "total_response_bytes": 31457280
+    },
+    {
+      "completed_requests": 30,
+      "elapsed_seconds": 0.071292,
+      "errors": 0,
+      "mode": "router_unrecorded",
+      "p50_ms": 13.212,
+      "p95_ms": 22.249,
+      "p99_ms": 23.148,
+      "path": "large",
+      "response_bytes": 1048576,
+      "throughput_rps": 420.806,
+      "total_response_bytes": 31457280
+    },
+    {
+      "completed_requests": 30,
+      "elapsed_seconds": 0.116253,
+      "errors": 0,
+      "mode": "router_recorded",
+      "p50_ms": 22.349,
+      "p95_ms": 27.051,
+      "p99_ms": 28.232,
+      "path": "large",
+      "response_bytes": 1048576,
+      "throughput_rps": 258.059,
+      "total_response_bytes": 31457280
+    },
+    {
+      "completed_requests": 30,
+      "elapsed_seconds": 0.053615,
+      "errors": 0,
+      "mode": "direct",
+      "p50_ms": 10.139,
+      "p95_ms": 13.487,
+      "p99_ms": 14.585,
+      "path": "stream",
+      "response_bytes": 1048576,
+      "throughput_rps": 559.54,
+      "total_response_bytes": 31457280
+    },
+    {
+      "completed_requests": 30,
+      "elapsed_seconds": 0.101509,
+      "errors": 0,
+      "mode": "router_unrecorded",
+      "p50_ms": 19.039,
+      "p95_ms": 30.477,
+      "p99_ms": 31.897,
+      "path": "stream",
+      "response_bytes": 1048576,
+      "throughput_rps": 295.541,
+      "total_response_bytes": 31457280
+    },
+    {
+      "completed_requests": 30,
+      "elapsed_seconds": 0.173928,
+      "errors": 0,
+      "mode": "router_recorded",
+      "p50_ms": 33.335,
+      "p95_ms": 42.719,
+      "p99_ms": 45.509,
+      "path": "stream",
+      "response_bytes": 1048576,
+      "throughput_rps": 172.485,
+      "total_response_bytes": 31457280
+    }
+  ],
+  "probes": {
+    "clean_shutdown": true,
+    "recorded_traces_after_shutdown": 99,
+    "recorded_traces_before_shutdown": 99,
+    "recorded_traces_expected": 99,
+    "recorder_failure_isolated": true,
+    "server_exit_codes": {
+      "router_recorded": -15,
+      "router_unrecorded": -15,
+      "upstream": -15
+    },
+    "servers_out_of_process": true,
+    "upstream_error_passthrough": true
+  },
+  "schema_version": 2,
+  "started_at": "2026-09-18T14:22:58.726051+00:00"
+}

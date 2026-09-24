@@ -1,0 +1,23 @@
+# ctrlrtn next to your app. `docker compose up -d`, then point the app's
+# ANTHROPIC_BASE_URL / OPENAI_BASE_URL at http://127.0.0.1:4000 (or, from a
+# sibling compose service, http://ctrlrtn:4000 on a shared network).
+#
+# SECURITY: keep the port published on 127.0.0.1 — Docker publishing bypasses
+# host firewalls, and the /ctrlrtn/ control plane is unauthenticated by design
+# (localhost assumption). Never expose the router publicly. docs/deploy.md
+# covers the private-network topology for multi-host setups.
+services:
+  ctrlrtn:
+    build: .
+    # image: ghcr.io/arnovich/ctrlrtn:latest   # once images are published
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4000:4000"
+    volumes:
+      - ctrlrtn-data:/var/lib/ctrlrtn
+    # All settings via env if needed, e.g.:
+    # environment:
+    #   CTRLRTN_LOG_REQUESTS: "1"
+
+volumes:
+  ctrlrtn-data:

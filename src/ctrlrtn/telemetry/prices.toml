@@ -1,0 +1,143 @@
+# ctrlrtn model prices — USD per 1,000,000 tokens.
+#
+# Approximate provider list prices. Edit here to change them, then restart the
+# server (prices are read once at startup). Or point CTRLRTN_PRICES at your
+# own TOML file to overlay these without editing the package; an override merges
+# per field, so setting just `input` keeps a model's other fields.
+#
+# Models are matched by the longest family prefix ending on a delimiter, so
+# version-suffixed ids (claude-sonnet-4-5-20250929) resolve to their family —
+# only add a version-specific row when its price differs. A model id containing
+# a dot MUST be quoted in the table header: [prices."gpt-3.5-turbo"].
+#
+# Anthropic prices verified against platform.claude.com/docs pricing, 2026-07.
+# max_output = the model's synchronous max output tokens (models overview,
+# same date) — a route clamps a larger recorded max_tokens down to this so a
+# switch to a smaller-cap model can't 400 the whole use-case.
+# Cache figures: 5-minute write (1.25x input) and cache read (0.1x input).
+#
+# NOTE: Fable 5, Sonnet 5 and Opus >= 4.7 use a newer tokenizer producing ~30%
+# MORE tokens for the same text than Sonnet-4.x-era models. A cross-tokenizer
+# repricing on recorded token counts (as the campaign report does) under-counts
+# the newer model's tokens accordingly.
+
+[prices.claude-fable-5]
+input = 10.0
+output = 50.0
+cache_read = 1.0
+cache_write = 12.50
+max_output = 128000
+
+# Opus 4.5 through 4.8 share one price. claude-opus-4 (below) keeps the retired
+# 4.0/4.1-era price, which claude-opus-4-1 correctly prefix-matches.
+[prices.claude-opus-4-8]
+input = 5.0
+output = 25.0
+cache_read = 0.50
+cache_write = 6.25
+max_output = 128000
+
+[prices.claude-opus-4-7]
+input = 5.0
+output = 25.0
+cache_read = 0.50
+cache_write = 6.25
+max_output = 128000
+
+[prices.claude-opus-4-6]
+input = 5.0
+output = 25.0
+cache_read = 0.50
+cache_write = 6.25
+max_output = 128000
+
+[prices.claude-opus-4-5]
+input = 5.0
+output = 25.0
+cache_read = 0.50
+cache_write = 6.25
+max_output = 64000
+
+[prices.claude-opus-4]
+input = 15.0
+output = 75.0
+cache_read = 1.50
+cache_write = 18.75
+max_output = 32000
+
+# Introductory pricing through 2026-08-31; becomes 3.0 / 15.0 (cache read
+# 0.30, write 3.75) from 2026-09-01 — update this row then.
+[prices.claude-sonnet-5]
+input = 2.0
+output = 10.0
+cache_read = 0.20
+cache_write = 2.50
+max_output = 128000
+
+[prices.claude-sonnet-4-6]
+input = 3.0
+output = 15.0
+cache_read = 0.30
+cache_write = 3.75
+max_output = 128000
+
+[prices.claude-sonnet-4-5]
+input = 3.0
+output = 15.0
+cache_read = 0.30
+cache_write = 3.75
+max_output = 64000
+
+[prices.claude-sonnet-4]
+input = 3.0
+output = 15.0
+cache_read = 0.30
+cache_write = 3.75
+max_output = 64000
+
+[prices.claude-haiku-4-5]
+input = 1.0
+output = 5.0
+cache_read = 0.10
+cache_write = 1.25
+max_output = 64000
+
+[prices.claude-3-5-haiku]
+input = 0.80
+output = 4.0
+cache_read = 0.08
+cache_write = 1.0
+max_output = 8192
+
+[prices.gpt-4o-mini]
+input = 0.15
+output = 0.60
+cache_read = 0.075
+
+[prices.gpt-4o]
+input = 2.50
+output = 10.0
+cache_read = 1.25
+
+# Standard text-token prices and output cap verified 2026-09-08:
+# https://developers.openai.com/api/docs/models/gpt-5-nano
+# Includes reasoning in billed output; hosted-tool/tier charges are additional.
+[prices.gpt-5-nano]
+input = 0.05
+output = 0.40
+cache_read = 0.005
+max_output = 128000
+
+# Cheaper same-family models worth testing as substitutes, most-capable first.
+[ladder]
+claude-fable-5 = ["claude-opus-4-8", "claude-sonnet-5", "claude-haiku-4-5"]
+claude-opus-4-8 = ["claude-sonnet-5", "claude-haiku-4-5"]
+claude-opus-4-7 = ["claude-sonnet-5", "claude-haiku-4-5"]
+claude-opus-4-6 = ["claude-sonnet-5", "claude-haiku-4-5"]
+claude-opus-4-5 = ["claude-sonnet-5", "claude-haiku-4-5"]
+claude-opus-4 = ["claude-sonnet-4-5", "claude-haiku-4-5"]
+claude-sonnet-5 = ["claude-haiku-4-5"]
+claude-sonnet-4-6 = ["claude-haiku-4-5"]
+claude-sonnet-4-5 = ["claude-haiku-4-5"]
+claude-sonnet-4 = ["claude-haiku-4-5"]
+gpt-4o = ["gpt-4o-mini"]
