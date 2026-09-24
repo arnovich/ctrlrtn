@@ -3,20 +3,17 @@ version: 1
 
 routes:
   tag:editor:
-    model: qwen2.5:7b
-    provider: ollama
+    model: claude-haiku-4-5
     previous_model: claude-sonnet-4-5
     note: replay eval non-inferior
 
 experiments:
-  tag:journalist:
+  tag:financial_journalist:
     # Changing an experiment requires a new stable id.
-    id: exp:journalist-local-v1
-    candidate_model: qwen2.5:7b
-    provider: ollama
+    id: exp:journalist-haiku-v1
+    candidate_model: claude-haiku-4-5
     split_pct: 25
     max_calls_per_task: 60
-    max_cost_usd_per_task: 5.0
 
 # Descriptive only: validates stable names and routing targets; never schedules.
 workflows:
@@ -30,12 +27,12 @@ workflows:
           allows: {retry: true}
 
 # Exact-version rules only. Step beats workflow, which beats use-case routing.
+# A route to another provider must speak the same API as the use-case, or
+# every call of that use-case fails until the route is cleared.
 workflow_routes:
   article-pipeline:
     git:abc123:
-      model: qwen2.5:7b
-      provider: ollama
+      model: claude-haiku-4-5
       steps:
         draft:
-          model: local-writer
-          provider: ollama
+          model: claude-sonnet-4-5

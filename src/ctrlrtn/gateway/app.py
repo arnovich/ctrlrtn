@@ -7,7 +7,6 @@ recording. Routing hooks in here later without changing the hot-path contract.
 from __future__ import annotations
 
 import asyncio
-import ipaddress
 import logging
 import math
 import time
@@ -21,6 +20,7 @@ from starlette.responses import PlainTextResponse, Response
 from starlette.routing import Route
 
 from ctrlrtn.config import Settings, load_settings
+from ctrlrtn.gateway.hosts import trusted_host as _trusted_host
 from ctrlrtn.gateway.inject import cache_inject_decide
 from ctrlrtn.gateway.proxy import proxy_pass_through
 from ctrlrtn.gateway.serving import ExperimentRouter
@@ -57,30 +57,6 @@ async def _apply_automatic_retention(
         result.pruned_traces,
         result.protected_traces,
     )
-
-
-def _trusted_host(host_header: str, extra: tuple[str, ...]) -> bool:
-    """True when the Host names this box the way a legitimate client would:
-    ``localhost``, an IP literal, or an operator-configured name. A rebound
-    attack domain is a DNS name the operator never configured."""
-    host = (host_header or "").strip()
-    if host.startswith("["):  # bracketed IPv6, e.g. [::1]:4000
-        end = host.find("]")
-        host = host[1:end] if end != -1 else ""
-    else:
-        host = host.split(":", 1)[0]
-    if not host:
-        return False
-    lowered = host.lower()
-    if lowered == "localhost":
-        return True
-    if lowered in {name.lower() for name in extra}:
-        return True
-    try:
-        ipaddress.ip_address(host)
-    except ValueError:
-        return False
-    return True
 
 
 def create_app(
@@ -303,6 +279,7 @@ def create_app(
             fallback=request.app.state.request_fallback,
             budget_gate=request.app.state.budget_gate,
             shadow_manager=request.app.state.shadow_manager,
+            control_hosts=settings.control_hosts,
         )
 
     async def workflow_event(request: Request) -> Response:

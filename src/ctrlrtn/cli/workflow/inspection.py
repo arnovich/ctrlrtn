@@ -93,8 +93,8 @@ class WorkflowInspectionCommands:
             print("No explicit workflow step runs.")
             return
         print(
-            "workflow@version / step             runs calls cost       "
-            "call/run ms  state(c/f/x/s/a/!) outcomes(+/-/?) score"
+            "workflow@version                     / step             runs calls "
+            "cost       call/run ms  state(c/f/x/s/a/!) outcomes(+/-/?) score"
         )
         for row in rows:
             duration = (
@@ -104,7 +104,7 @@ class WorkflowInspectionCommands:
             )
             score = "-" if row.avg_score is None else f"{row.avg_score:.2f}"
             print(
-                f"{(row.workflow + '@' + row.workflow_version)[:20]:<20} / "
+                f"{(row.workflow + '@' + row.workflow_version)[:36]:<36} / "
                 f"{row.step[:15]:<15} {row.runs:>4} {row.calls:>5} "
                 f"${row.cost_usd:<9.4f} {row.avg_call_latency_ms:>4.0f}/"
                 f"{duration:<6} {row.completed}/{row.failed}/{row.cancelled}/"

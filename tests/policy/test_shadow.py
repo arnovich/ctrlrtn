@@ -20,6 +20,7 @@ from ctrlrtn.policy.experiment import Experiment
 from ctrlrtn.policy.shadow import ShadowExperiment, selected
 from ctrlrtn.recorder.recorder import Recorder
 from ctrlrtn.recorder.store import InMemoryTraceStore, SqliteTraceStore
+from ctrlrtn.routing import UpstreamRoute
 from ctrlrtn.workflow.identity import WorkflowIdentity
 
 
@@ -327,3 +328,79 @@ def test_whole_workflow_shadow_rejects_baseline_history_splicing():
             workflow="pipeline",
             workflow_version="v1",
         )
+
+
+async def test_cross_provider_shadow_never_forwards_the_clients_credential():
+    """A mirror to another provider is a different upstream: the client's
+    key must not travel there, whether or not that provider has its own."""
+    calls: list[httpx.Request] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(200, json={"choices": []})
+
+    store = InMemoryTraceStore()
+    store.create_shadow_experiment(
+        ShadowExperiment(
+            "tag:editor",
+            "qwen2.5:7b",
+            100,
+            shadow_id="shadow:local",
+            candidate_provider="ollama",
+        )
+    )
+    recorder = Recorder(store)
+    recorder.start()
+    client = httpx.AsyncClient(transport=httpx.MockTransport(respond))
+    settings = Settings(
+        routes=(
+            UpstreamRoute(
+                "ollama",
+                "http://ollama",
+                ("/ollama",),
+                strip_prefix="/ollama",
+                api="openai",
+            ),
+        )
+    )
+    manager = ShadowManager(
+        store,
+        recorder,
+        settings.resolver(),
+        client=client,
+        workers=1,
+        refresh_seconds=3600,
+    )
+    await manager.start()
+    try:
+        pair = manager.submit(
+            method="POST",
+            path="/v1/chat/completions",
+            provider_path="/v1/chat/completions",
+            query="api_key=sk-live-query&x=1",
+            headers={
+                "x-ctrlrtn-route": "editor",
+                "x-ctrlrtn-task": "t1",
+                "authorization": "Bearer sk-live-secret",
+                "x-api-key": "sk-live-secret",
+            },
+            body=b'{"model":"gpt-4o","messages":[]}',
+            baseline_base_url="http://openai",
+            baseline_api="openai",
+            baseline_provider=None,
+            baseline_free=False,
+            baseline_credential=None,
+        )
+        assert pair is not None
+        await manager._queue.join()
+    finally:
+        await manager.aclose()
+        await recorder.aclose()
+        await client.aclose()
+
+    (request,) = calls
+    assert request.url.host == "ollama"
+    assert "authorization" not in request.headers
+    assert "x-api-key" not in request.headers
+    assert "sk-live" not in str(request.url)
+    assert request.url.params.get("x") == "1"

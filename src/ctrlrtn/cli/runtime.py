@@ -31,6 +31,10 @@ def _default_fail(message: str) -> NoReturn:
     raise SystemExit(2)
 
 
+def _fmt_tokens(count: int | None) -> str:
+    return "-" if count is None else str(count)
+
+
 def _access_log(trace: Trace) -> None:
     """Print one compact line per recorded request."""
     print(
@@ -39,7 +43,8 @@ def _access_log(trace: Trace) -> None:
         f"{trace.use_case_key or '(unkeyed)'}  "
         f"{trace.model or '-'}  {trace.status_code}  "
         f"{trace.latency_ms:.0f}ms  "
-        f"in/out={trace.input_tokens}/{trace.output_tokens}  "
+        f"in/out={_fmt_tokens(trace.input_tokens)}/"
+        f"{_fmt_tokens(trace.output_tokens)}  "
         f"{_fmt_cost(trace.cost_usd)}",
         flush=True,
     )
@@ -140,6 +145,9 @@ class RuntimeCommands:
             host=settings.host,
             port=settings.port,
             log_level=numeric_level,
+            # uvicorn's access line would print the raw query string, and a
+            # ?key= credential with it; --log-requests logs the path only.
+            access_log=False,
         )
 
     def _console(self, args: argparse.Namespace) -> None:
