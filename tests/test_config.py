@@ -497,3 +497,15 @@ def test_cli_honors_db_path_from_config_file(tmp_path, monkeypatch, capsys):
     main(["experiment", "list"])
     assert "exp:cfg" in capsys.readouterr().out
     assert db.exists()  # wrote to the config's db_path, not ./ctrlrtn.db
+
+
+def test_number_settings_reject_values_that_are_not_numbers(
+    tmp_path, monkeypatch
+):
+    # YAML parses an unquoted date into a date object, a plausible typo.
+    _config(tmp_path, monkeypatch, "port: 2026-01-01\n")
+    with pytest.raises(ConfigError, match="expected a number, got date"):
+        load_settings()
+    _config(tmp_path, monkeypatch, "timeout: 2026-01-01\n")
+    with pytest.raises(ConfigError, match="expected a number, got date"):
+        load_settings()

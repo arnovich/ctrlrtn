@@ -12,6 +12,7 @@ from ctrlrtn.control_config import (
     ControlConfig,
     ControlConfigError,
     ControlRevision,
+    canonical_document,
     config_diff,
     load_control_config,
     verify_git_revision,
@@ -102,6 +103,20 @@ def test_load_control_config_validates_and_builds_domain_objects(tmp_path):
         (
             "version: 1\nworkflow_routes:\n  pipeline:\n    v1:\n      model: m\n",
             "has no declared workflow",
+        ),
+        (
+            "version: 1\nroutes:\n  tag:x:\n    provider: ollama\n",
+            "invalid route 'tag:x': model must be non-empty",
+        ),
+        (
+            "version: 1\nexperiments:\n  tag:x:\n    id: exp:x\n",
+            "candidate_model is required",
+        ),
+        (
+            "version: 1\nworkflow_routes:\n  pipeline:\n    v1:\n      steps:\n"
+            "        draft:\n          note: x\nworkflows:\n  pipeline:\n"
+            "    v1:\n      steps:\n        draft: {}\n",
+            "model must be non-empty",
         ),
         (
             "version: 1\nworkflows:\n  pipeline:\n    v1:\n      steps:\n"
@@ -249,3 +264,16 @@ def test_cli_validate_diff_activate_and_status(tmp_path, monkeypatch, capsys):
     cli.main(["routing-config", "status"])
     status = capsys.readouterr().out
     assert "revision:" in status and "active:    1 route(s)" in status
+
+
+def test_canonical_document_round_trips_the_full_desired_state(tmp_path):
+    text = _document().replace(
+        "          allows: {retry: true}\n",
+        "          allows: {retry: true}\n          condition: needs_review\n",
+    )
+    config = load_control_config(_write(tmp_path / "routing.yaml", text))
+    rendered = canonical_document(config)
+    again = load_control_config(_write(tmp_path / "canonical.yaml", rendered))
+    assert again == config
+    assert canonical_document(again) == rendered
+    assert "condition: needs_review" in rendered
