@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def register_processes(sub, runtime, operations) -> None:
-    serve = sub.add_parser("serve", help="run the gateway")
+    serve = sub.add_parser("serve", help="run the proxy")
     # None lets an unset flag fall through to YAML/env/default settings.
     serve.add_argument(
         "--host", default=None, help="bind address (default 127.0.0.1)"

@@ -1,6 +1,6 @@
-# ctrlrtn next to your app. `docker compose up -d`, then point the app's
-# ANTHROPIC_BASE_URL / OPENAI_BASE_URL at http://127.0.0.1:4000 (or, from a
-# sibling compose service, http://ctrlrtn:4000 on a shared network).
+# ctrlrtn next to your app. `docker compose up -d`, then point the app at it:
+# ANTHROPIC_BASE_URL=http://127.0.0.1:4000 or OPENAI_BASE_URL=http://127.0.0.1:4000/v1
+# (from a sibling compose service, http://ctrlrtn:4000 on a shared network).
 #
 # SECURITY: keep the port published on 127.0.0.1 — Docker publishing bypasses
 # host firewalls, and the /ctrlrtn/ control plane is unauthenticated by design
@@ -18,6 +18,9 @@ services:
     # All settings via env if needed, e.g.:
     # environment:
     #   CTRLRTN_LOG_REQUESTS: "1"
+    #   # A sibling service posting outcomes addresses the proxy by name, and
+    #   # the control plane accepts only localhost, IP literals and these:
+    #   CTRLRTN_CONTROL_HOSTS: ctrlrtn
 
 volumes:
   ctrlrtn-data:

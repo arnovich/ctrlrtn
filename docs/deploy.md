@@ -1,74 +1,96 @@
 # Deploying ctrlrtn
 
-The router is a single lightweight process (uvicorn + SQLite). Deploying it is
-mostly about *where it listens* — its security model is "only things you trust
-can reach it".
+The proxy is a single lightweight process (uvicorn + SQLite). Deploying it is
+mostly about *where it listens*. Its security model is: only things you trust
+can reach it.
 
 ## The security model, first
 
 - **The `/ctrlrtn/` control plane is unauthenticated by design** (localhost
-  assumption). Anyone who can reach the router can `POST /ctrlrtn/outcome` and
-  poison your experiment statistics. A Host-header check blocks DNS-rebinding
-  (browser pages reaching a loopback-bound port via a rebound domain); if
-  your apps address the router by an internal DNS name, add it to
-  `control_hosts`.
-- **Anyone who can reach the proxy can send traffic through it** (with their
-  own key — the router holds none), polluting your recorded corpus.
+  assumption). Anyone who can reach the proxy can post to `/ctrlrtn/outcome`,
+  `/ctrlrtn/workflow-events` and `/ctrlrtn/tool-operation-events`, reporting
+  outcomes and step events for any task, and so poison experiment statistics.
+  A Host-header check blocks DNS rebinding (a browser page reaching a
+  loopback-bound port through a rebound domain). If your apps address the
+  proxy by a DNS name, including through a TLS proxy in front of it, add that
+  name to `control_hosts`.
+- **Anyone who can reach the proxy can send traffic through it**, with their
+  own key, polluting your recorded corpus. With a named provider that has a
+  `credential:` block the proxy does hold a key: every request on that mount
+  is sent on the operator's credential, whatever the client sent, and
+  nothing authenticates the client. Such requests get the same Host check as
+  the control plane, so a rebound browser page is refused, but every host
+  that can reach the port can spend on that key. Put a `budgets` ceiling on
+  it and treat the whole listener as sensitive, not only the control plane.
 - **The database contains your full prompts and responses.** Credentials are
-  redacted at capture time and never stored — a named list covering the
-  standard headers (`authorization`, `x-api-key`, `api-key`, cookies) and
-  common `?key=`-style query params; an upstream using an exotic custom
+  redacted at capture time and never stored. The redaction is a named list:
+  the standard headers (`authorization`, `x-api-key`, `api-key`, cookies) and
+  common `?key=`-style query parameters. An upstream using an exotic custom
   credential carrier is out of scope. The recorded *content* remains as
-  sensitive as your application's data — treat backups accordingly.
-  (Databases from before July 2026: run `ctrlrtn scrub-credentials`
-  once.)
+  sensitive as your application's data, so treat backups accordingly.
 - Experiments and routes are controlled via the **CLI on the box** (they
-  write the SQLite directly) — there is no remote admin surface to secure.
+  write the SQLite directly). There is no remote admin surface to secure.
 - A shadow experiment discloses each selected live prompt to its candidate
   provider. Confirm data residency and provider policy before starting one.
-  Candidate responses are retained even though users never see them, and calls
-  still consume provider quota, bandwidth, and billed tokens.
+  Candidate responses are retained even though users never see them, and the
+  calls still consume provider quota, bandwidth, and billed tokens.
+- `replay-eval`, `calibration-set` and `calibrate` send recorded prompts,
+  tool results and both models' outputs to the Anthropic API directly, not
+  through the proxy, and `calibration-set` writes prompts and outputs to a
+  local file. Handle that file like the database.
+- The proxy's own log line names the path, never the query string, and
+  uvicorn's access log is off, so a `?key=` credential does not reach the
+  journal. `log_level: debug` adds task ids, use-case keys and model names.
 
-Consequence: **never expose the router publicly.** Loopback by default;
-a private network + firewall when it must cross hosts.
+Consequence: **never expose the proxy publicly.** Loopback by default; a
+private network plus a firewall when it must cross hosts.
 
-## Topology A — same box as your app (recommended)
+## Topology A: same box as your app (recommended)
 
-Run the router next to the application it fronts, bound to `127.0.0.1`
-(the default). This is the strongest isolation available — the router has no
-network presence — and the app's API key never leaves the box.
+Run the proxy next to the application it fronts, bound to `127.0.0.1`
+(the default). This is the strongest isolation available: the proxy has no
+network presence, and the app's API key never leaves the box.
 
 ```bash
-# on the server, as root — read it first, it is short:
-git clone https://github.com/arnovich/ctrlrtn /tmp/gr \
-  && sudo /tmp/gr/deploy/install.sh
+# on the server, as root. Read it first; it is short.
+git clone https://github.com/arnovich/ctrlrtn /tmp/ctrlrtn \
+  && sudo /tmp/ctrlrtn/deploy/install.sh
 ```
 
-The installer is **idempotent**: it creates a `ctrlrtn` system user,
-installs into `/opt/ctrlrtn` (pinned to `--ref`, default `main`), writes
-`/etc/ctrlrtn/config.yaml` once (never overwritten), installs a hardened
-systemd unit with state in `/var/lib/ctrlrtn`, and verifies `/healthz`.
-**Re-running it is the upgrade path.**
+`deploy/install.sh` runs as root and is **idempotent**. It creates a
+`ctrlrtn` system user, installs `uv` from `astral.sh` if it is missing,
+checks out `/opt/ctrlrtn` at `--ref` (default `main`; pass a tag for a
+pinned deployment), and writes `/etc/ctrlrtn/config.yaml` and
+`/etc/ctrlrtn/env` once, never overwriting them. It then installs the
+sandboxed systemd unit `deploy/ctrlrtn.service`, replacing any local edits
+to the unit, with state in `/var/lib/ctrlrtn`, and verifies `/healthz`.
+**Re-running it is the upgrade path.** Provider-owned credentials
+(`providers.<name>.credential.env`) go in `/etc/ctrlrtn/env` as
+`KEY=value` lines; the unit reads it as its `EnvironmentFile`, and it is
+`root:ctrlrtn` mode `0640`.
 
-Then point the app at it (its systemd env file / `.env`):
+Then point the app at it (its systemd env file or `.env`):
 
 ```
-ANTHROPIC_BASE_URL=http://127.0.0.1:4000     # or OPENAI_BASE_URL
+ANTHROPIC_BASE_URL=http://127.0.0.1:4000
+OPENAI_BASE_URL=http://127.0.0.1:4000/v1
 ```
 
-## Topology B — a dedicated router box (multi-app)
+## Topology B: a dedicated proxy box (multi-app)
 
-When several apps share one router, give it its own host:
+When several apps share one proxy, give it its own host:
 
-1. Put router + app hosts on a **private network** (e.g. a cloud-provider private
-   network); bind the router to its private IP (`host:` in the config).
-2. Firewall the router port to the app hosts' private IPs only (cloud
+1. Put the proxy and app hosts on a **private network**; bind the proxy to
+   its private IP (`host:` in the config).
+2. Firewall the proxy port to the app hosts' private IPs only (a network
    firewall or nftables). The public interface serves nothing.
-3. Apps use `ANTHROPIC_BASE_URL=http://<router-private-ip>:4000`. Keys
-   transit the private network — acceptable on a provider-isolated LAN;
-   put a TLS-terminating proxy in front if your threat model needs more.
-4. **Namespace your route tags per app** (`x-ctrlrtn-route: newsroom:composer`,
-   `hugin:editor`): tag keys are global to a router, and two apps both
+3. Apps use `ANTHROPIC_BASE_URL=http://<proxy-private-ip>:4000`. Keys and
+   full prompts cross the private network as plain HTTP, which is acceptable
+   on an isolated LAN; put a TLS-terminating proxy in front otherwise, and
+   add its DNS name to `control_hosts`. Every app host on that network can
+   also spend on any provider-owned credential the proxy holds.
+4. **Namespace your route tags per app** (`x-ctrlrtn-route: newsroom:editor`,
+   `support:editor`): tag keys are global to a proxy, and two apps both
    sending `tag:editor` would silently merge their statistics.
 
 ## Docker
@@ -77,131 +99,31 @@ When several apps share one router, give it its own host:
 docker compose up -d        # see compose.yaml
 ```
 
-Keep the port published on `127.0.0.1:4000:4000` — Docker's port publishing
-**bypasses ufw-style host firewalls**; a bare `4000:4000` silently exposes
-the router to the internet.
+Keep the port published on `127.0.0.1:4000:4000`. Docker's port publishing
+**bypasses ufw-style host firewalls**; a bare `4000:4000` silently exposes the
+proxy to the internet. Inside the container the proxy binds `0.0.0.0`; the
+published address decides reachability. Every `CTRLRTN_*` environment
+variable works in the container.
 
-## Operating it
+## Day-two operations
 
-```bash
-sudo -u ctrlrtn ctrlrtn usecases          # spend per use-case
-sudo -u ctrlrtn ctrlrtn console           # monitor + confirmed controls over ssh -t
-sudo -u ctrlrtn ctrlrtn experiment ...    # A/Bs, routes, evals — all on-box
-journalctl -u ctrlrtn -f                       # service logs
-```
+`/usr/local/bin/ctrlrtn` is a wrapper the installer adds so every CLI
+invocation reads the service config, and therefore the same absolute
+`db_path` as `serve`. Run it as the service user: `sudo -u ctrlrtn ctrlrtn`.
+Console and CLI writes land in the same SQLite state and take effect on the
+proxy's next snapshot refresh, normally within about 10 seconds.
 
-In the console, `e` starts a reviewed live split; `s` stops the selected split;
-`a` adopts its candidate; and `p`/`c` set or clear a selected use-case's route.
-Use `h` to start a reviewed online shadow and `z` to stop the selected shadow;
-its detail pane shows the latest served/candidate pair and any attrition.
-These controls write the same local SQLite state as the CLI and take effect on
-the gateway's next snapshot refresh (normally within about 10 seconds).
-Launch with `--routing-config` and `--routing-repo` to enable the console's `g`
-preview/activation workflow for a configuration checkout outside the service's
-working directory. The service user needs read access to that Git checkout; no
-network Git credentials are required for validation or activation.
+| Task | Command | Note |
+| --- | --- | --- |
+| Check health | `curl -sf http://127.0.0.1:4000/healthz` | Prints `ok`. The installer polls it for up to 30 seconds after a restart. |
+| Read the logs | `journalctl -u ctrlrtn -f` | One line per recorded call when `log_requests` is on. |
+| Watch it over SSH | `ssh -t HOST sudo -u ctrlrtn ctrlrtn console` | Add `--routing-config` and `--routing-repo` for the `g` preview-and-activate action; the service user needs read access to that Git checkout, and no network Git credentials are needed. Keys are in [console.md](console.md). |
+| Inspect spend | `ctrlrtn usecases`, `ctrlrtn spend`, `ctrlrtn budget` | All on-box; see [configure.md](configure.md) for what each reports. |
+| Back up | `sudo -u ctrlrtn sqlite3 /var/lib/ctrlrtn/router.db ".backup /var/lib/ctrlrtn/backup-$(date +%a).db"` | Cron it. The database holds your routes and experiments, not just recordings; losing it silently reverts every switch to pass-through. The content is sensitive. SQLite with WAL needs a local filesystem: never put the live database on a network mount. |
+| Upgrade | Re-run `deploy/install.sh` (the clone-and-run pair above) | It rebuilds the venv from scratch and waits up to 30 seconds for `/healthz`, so a re-run either upgrades the box or exits non-zero; it never leaves the checkout on the new sha with the old code serving. Restart is quick; in-flight LLM calls fail and clients retry. |
+| Prune | `ctrlrtn prune --older-than-days 30`, then add `--apply` | The default is a dry run; apply only after reviewing the count. Pruning clears query strings, headers, and bodies for selected traces in one transaction. Derived metrics stay, and payloads frozen by queued or running jobs are reported and skipped. A positive `retention_days` in the config applies the same job-aware prune before `serve` accepts traffic and fails startup if it cannot. |
+| Compact | `ctrlrtn prune --older-than-days 30 --apply --compact` | Stop every proxy, worker, and mutating CLI on the database first. Compaction takes the exclusive maintenance lock, checkpoints the WAL, and runs `VACUUM`. It fails if another ctrlrtn writer is open or an external SQLite user keeps the checkpoint busy. The lock needs POSIX advisory locks; ordinary serving works without them, but compaction fails closed. |
+| Rotate the price table | `systemctl edit ctrlrtn` to add `Environment=CTRLRTN_PRICES=/etc/ctrlrtn/prices.toml`, then `systemctl restart ctrlrtn` | Prices are read once at startup. The file format is in [configure.md](configure.md). |
 
-To monitor an application-owned execution canary ledger, pass it explicitly:
-
-```bash
-sudo -u ctrlrtn ctrlrtn console \
-  --canary-state /var/lib/ctrlrtn/execution-canary.db
-```
-
-The console opens that ledger read-only for monitoring. Pressing `k` on an
-active campaign requires confirmation and opens a short-lived writer solely to
-fence and roll back that campaign. File permissions therefore govern rollback
-access; the console cannot activate execution.
-
-Signing keys themselves belong in the application's secret manager or service
-environment, not this database. Deploy a new key to all executor processes
-before running `execution-plan canary-key-rotate`; keep both secrets available
-through the configured overlap. Use `canary-key-list` to verify the audit chain.
-Emergency `canary-key-revoke` (or console `v`) rejects the signer immediately
-and rolls affected active campaigns back on their next trust check; the console
-also performs the campaign rollback in the same confirmed operation.
-
-(`/usr/local/bin/ctrlrtn` is a wrapper the installer adds so every CLI
-invocation reads the service config — same absolute `db_path` as `serve`.)
-
-- **Backups**: the database holds your **routes and experiments**, not just
-  recordings — losing it silently reverts every switch to pass-through. A
-  rolling on-box backup:
-  `sudo -u ctrlrtn sqlite3 /var/lib/ctrlrtn/router.db ".backup /var/lib/ctrlrtn/backup-$(date +%a).db"`
-  (cron it; content is sensitive — see above). SQLite + WAL requires a local
-  filesystem: never put the live DB on a network mount.
-- **Upgrades**: re-run `install.sh`. It rebuilds the venv from scratch
-  (`uv venv --clear`) and waits up to 30s for `/healthz` before reporting
-  success, so a re-run either upgrades the box or exits non-zero — it never
-  leaves the checkout on the new sha with the old code still serving. Restart
-  is quick; the proxy is stateless, in-flight LLM calls fail and clients retry.
-- **Retention**: manual retention is the default. Preview an age-based payload
-  prune with `ctrlrtn prune --older-than-days 30`; add `--apply` only after
-  reviewing the count. To apply a reviewed age automatically on every gateway
-  startup, set the positive `retention_days` configuration value. The gateway
-  applies the same job-aware transaction before accepting traffic and fails
-  startup if the policy cannot be applied. It does not compact a live database.
-  Derived metrics remain available, and payloads frozen by queued/running jobs
-  are reported and skipped.
-- **Databases from before July 2026**: run `ctrlrtn scrub-credentials`
-  once (newer versions never store credential headers).
-
-Applying `prune` transactionally clears selected query strings,
-request/response headers, and bodies. This is logical SQLite deletion, not
-guaranteed forensic erasure or immediate file-size reduction. For physical
-database reclamation, stop every gateway, worker, and mutating CLI using the
-database, then run the same command with `--apply --compact`. Every writable
-ctrlrtn process holds a shared local maintenance lock; compaction requires its
-exclusive form before opening SQLite, checkpoints the WAL, and runs `VACUUM`.
-It fails if another ctrlrtn writer is open or an external SQLite user keeps the
-checkpoint busy. The lock is local-filesystem only, matching the database's
-deployment contract. Exclusive compaction requires POSIX advisory locks;
-ordinary routing remains available on platforms without them, but the compact
-operation fails closed.
-
-Filesystem snapshots and backups can still retain old bytes after compaction.
-Expire those copies under the deployment's backup-retention policy when
-media-level erasure is required.
-
-That policy is outside the router process and must name every copy class: local
-rolling backups, off-box backups, volume/filesystem snapshots, replicas, and
-operator exports. For each class, declare a maximum age, deletion owner,
-verification method, and any legal hold. `retention_days` applies only to payload
-fields in the live SQLite database; it never expires or rewrites a backup.
-
-Logical deletion plus `VACUUM` is not cryptographic erasure. Deployments that
-require a key-destruction guarantee must encrypt the database, WAL, temporary
-files, backups, and snapshots with deployment-owned keys and document how key
-rotation and destruction cover every retained copy. ctrlrtn does not manage those
-keys and does not report secure media erasure.
-
-# Remote execution endpoint
-
-The optional remote execution component is an application-owned ASGI app built
-with `create_remote_executor_app`; it is not a route on the ctrlrtn gateway and is
-not enabled by the standard CLI. The embedding application must explicitly
-bootstrap a dedicated nonce database, construct its bounded canary runner, and
-inject live public-key/grant sources plus pure operation and baseline callbacks.
-
-Terminate TLS at the ASGI server or at a trusted proxy configured to set the
-ASGI scope scheme to `https`. The endpoint ignores forwarding headers, requires
-the configured external authority exactly, and refuses an HTTP scope. Keep the
-nonce database on durable local storage shared by every local executor process.
-Do not split requests across hosts with independent SQLite files; multi-host
-deployment requires a shared transactional admission backend.
-
-Set `minimum_retention_seconds` to cover the longer of campaign audit retention
-and result-idempotency retention. Grant expiry is included automatically. Store
-bootstrap is explicit; normal startup must open the existing database without
-`create=True`, so a lost volume stops admission rather than resetting replay
-history. Private signing keys and provider/tool credentials remain in the
-application's secret manager and runtime closures, never in requests or SQLite.
-
-For canary operator migration, register only an Ed25519 public PEM with
-`execution-plan canary-operator-key-register`; distribute the corresponding
-public-key record to verifier configuration before starting a newly signed
-campaign. Existing HMAC campaigns require explicit `allow_legacy_hmac=True`
-while draining. Do not overwrite or re-label their artifacts. After they stop,
-remove the shared secret bytes and revoke the legacy key ID. Rotate asymmetric
-keys with `canary-operator-key-rotate`; the ledger refuses principal changes and
-asymmetric-to-legacy downgrades.
+`prune` is logical deletion and `--compact` reclaims disk; neither touches
+backups or snapshots, and neither is cryptographic erasure.

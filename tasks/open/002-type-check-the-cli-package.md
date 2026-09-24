@@ -16,8 +16,8 @@ produce most of the remaining errors: roughly 500 when the exclusion is
 lifted, dominated by `attr-defined` on the TUI mixins and untyped
 `argparse.Namespace` handlers.
 
-The same typed-base-class approach that fixed the recorder mixins applies
-to the console mixins (`ConsoleActions`, the table mixins, the control
+The typed base class the recorder mixins use (`recorder/sqlite/capability.py`,
+described in `docs/architecture.md`) applies to the console mixins (`ConsoleActions`, the table mixins, the control
 actions), and the argument handlers can take a small typed view of the
 namespace instead of `argparse.Namespace`.
 

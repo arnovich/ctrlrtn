@@ -17,6 +17,9 @@ User=ctrlrtn
 Group=ctrlrtn
 ExecStart=/opt/ctrlrtn/.venv/bin/ctrlrtn serve
 Environment=CTRLRTN_CONFIG=/etc/ctrlrtn/config.yaml
+# Provider-owned credentials (providers.<name>.credential.env) go here,
+# root:ctrlrtn 0640, never in the unit file.
+EnvironmentFile=-/etc/ctrlrtn/env
 Restart=always
 RestartSec=2
 
@@ -33,6 +36,17 @@ ProtectKernelTunables=true
 ProtectControlGroups=true
 RestrictSUIDSGID=true
 ReadWritePaths=/var/lib/ctrlrtn
+UMask=0077
+PrivateDevices=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectClock=true
+ProtectHostname=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
 
 [Install]
 WantedBy=multi-user.target
