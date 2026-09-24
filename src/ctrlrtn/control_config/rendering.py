@@ -26,7 +26,7 @@ def canonical_document(config: ControlConfig) -> str:
         "workflows": {},
     }
     for route in sorted(config.routes, key=lambda row: row.use_case_key):
-        fields = {"model": route.model}
+        fields: dict[str, object] = {"model": route.model}
         for key in ("provider", "previous_model", "note"):
             value = getattr(route, key)
             if value is not None:
@@ -47,25 +47,27 @@ def canonical_document(config: ControlConfig) -> str:
             if value is not None:
                 fields[key] = value
         data["experiments"][exp.use_case_key] = fields
-    for route in sorted(
+    for workflow_route in sorted(
         config.workflow_routes,
         key=lambda row: (row.workflow, row.workflow_version, row.step or ""),
     ):
         version = (
             data["workflow_routes"]
-            .setdefault(route.workflow, {})
-            .setdefault(route.workflow_version, {})
+            .setdefault(workflow_route.workflow, {})
+            .setdefault(workflow_route.workflow_version, {})
         )
         target = (
             version
-            if route.step is None
-            else version.setdefault("steps", {}).setdefault(route.step, {})
+            if workflow_route.step is None
+            else version.setdefault("steps", {}).setdefault(
+                workflow_route.step, {}
+            )
         )
-        target["model"] = route.model
-        if route.provider is not None:
-            target["provider"] = route.provider
-        if route.note is not None:
-            target["note"] = route.note
+        target["model"] = workflow_route.model
+        if workflow_route.provider is not None:
+            target["provider"] = workflow_route.provider
+        if workflow_route.note is not None:
+            target["note"] = workflow_route.note
     for workflow in sorted(
         config.workflows, key=lambda row: (row.workflow, row.workflow_version)
     ):

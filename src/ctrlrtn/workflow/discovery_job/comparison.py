@@ -99,12 +99,12 @@ def compare_workflow_discovery_artifacts(
     previous_tasks = {
         item.task_digest: item.family_id
         for item in previous.assignments
-        if item.status == "assigned"
+        if item.status == "assigned" and item.family_id is not None
     }
     current_tasks = {
         item.task_digest: item.family_id
         for item in current.assignments
-        if item.status == "assigned"
+        if item.status == "assigned" and item.family_id is not None
     }
     shared = set(previous_tasks) & set(current_tasks)
     retained = sum(

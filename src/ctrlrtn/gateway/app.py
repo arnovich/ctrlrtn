@@ -11,7 +11,7 @@ import ipaddress
 import logging
 import math
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 
 import httpx
@@ -119,10 +119,12 @@ def create_app(
         # observed cost still settles capacity even when the row cannot be saved.
         recorder.add_discard_observer(budget_gate.observe)
     owns_upstream_client = upstream_client is None
-    if close_store_on_shutdown and (
-        store is None or not callable(getattr(store, "close", None))
-    ):
-        raise TypeError("owned store must define close()")
+    close_store: Callable[[], object] | None = None
+    if close_store_on_shutdown:
+        close = getattr(store, "close", None)
+        if store is None or not callable(close):
+            raise TypeError("owned store must define close()")
+        close_store = close
     experiment_router = (
         ExperimentRouter(store, inject_cache=settings.inject_cache)
         if store is not None
@@ -133,24 +135,22 @@ def create_app(
     # only be a ServingRepository to run the gateway. Mirroring additionally
     # requires ShadowRepository, so a serving-only store degrades to no
     # shadowing rather than failing when the first mirror is submitted.
-    shadow_capable = callable(
-        getattr(store, "running_shadow_experiments", None)
-    )
-    actual_shadow_client = (
-        shadow_client or httpx.AsyncClient(timeout=settings.timeout)
-        if shadow_capable and recorder is not None
-        else None
-    )
-    shadow_manager = (
-        ShadowManager(
+    actual_shadow_client: httpx.AsyncClient | None = None
+    shadow_manager: ShadowManager | None = None
+    if (
+        store is not None
+        and recorder is not None
+        and callable(getattr(store, "running_shadow_experiments", None))
+    ):
+        actual_shadow_client = shadow_client or httpx.AsyncClient(
+            timeout=settings.timeout
+        )
+        shadow_manager = ShadowManager(
             store,
             recorder,
             settings.resolver(),
             client=actual_shadow_client,
         )
-        if shadow_capable and recorder is not None
-        else None
-    )
 
     @asynccontextmanager
     async def lifespan(app: Starlette) -> AsyncIterator[None]:
@@ -176,10 +176,10 @@ def create_app(
                 await recorder.aclose()
             if owns_upstream_client:
                 await app.state.upstream_client.aclose()
-            if shadow_manager is not None and owns_shadow_client:
+            if actual_shadow_client is not None and owns_shadow_client:
                 await actual_shadow_client.aclose()
-            if close_store_on_shutdown:
-                await asyncio.to_thread(store.close)
+            if close_store is not None:
+                await asyncio.to_thread(close_store)
 
     async def healthz(request: Request) -> Response:
         return PlainTextResponse("ok")

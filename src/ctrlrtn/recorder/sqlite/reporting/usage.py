@@ -7,6 +7,7 @@ import sqlite3
 from ctrlrtn.recorder.models import UNKEYED as _UNKEYED
 from ctrlrtn.recorder.models import UseCaseRanking
 
+from ..connection import SqliteCapability
 from ..queries import (
     _FALLBACK_CALLS_SINCE,
     _PRICING_IDENTITIES_SINCE,
@@ -21,7 +22,7 @@ from ..queries import (
 )
 
 
-class UsageReportingSqliteMixin:
+class UsageReportingSqliteMixin(SqliteCapability):
     """Project recorded traces into offline and monitoring read models."""
 
     def rankings(

@@ -109,12 +109,9 @@ exclude_also = [
 
 [tool.mypy]
 python_version = "3.12"
-files = [
-    "src/ctrlrtn/recorder/repositories.py",
-    "src/ctrlrtn/recorder/protocols.py",
-    "src/ctrlrtn/gateway/proxy/headers.py",
-    "src/ctrlrtn/gateway/proxy/models.py",
-]
+files = ["src/ctrlrtn"]
+# The CLI and console are the one package not yet under mypy; see tasks/open.
+exclude = ["^src/ctrlrtn/cli/"]
 mypy_path = "src"
 explicit_package_bases = true
 ignore_missing_imports = true

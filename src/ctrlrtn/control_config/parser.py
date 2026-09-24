@@ -77,11 +77,16 @@ def load_control_config(path: str) -> ControlConfig:
             f"route {use_case!r}",
             {"model", "provider", "previous_model", "note"},
         )
+        model = fields.get("model")
+        if model is None:
+            raise ControlConfigError(
+                f"invalid route {use_case!r}: model must be non-empty"
+            )
         try:
             routes.append(
                 Route(
                     use_case_key=use_case,
-                    model=fields.get("model"),
+                    model=model,
                     provider=fields.get("provider"),
                     previous_model=fields.get("previous_model"),
                     note=fields.get("note"),
@@ -120,12 +125,17 @@ def load_control_config(path: str) -> ControlConfig:
             raise ControlConfigError(
                 f"experiment {use_case!r} requires a stable non-empty id"
             )
+        candidate_model = fields.get("candidate_model")
+        if candidate_model is None:
+            raise ControlConfigError(
+                f"invalid experiment {use_case!r}: candidate_model is required"
+            )
         try:
             experiments.append(
                 Experiment(
                     experiment_id=fields["id"],
                     use_case_key=use_case,
-                    candidate_model=fields.get("candidate_model"),
+                    candidate_model=candidate_model,
                     candidate_provider=fields.get("provider"),
                     split_pct=fields.get("split_pct", 50),
                     max_calls_per_task=fields.get(
@@ -221,20 +231,26 @@ def load_control_config(path: str) -> ControlConfig:
             declared[(workflow, version)] = names
 
     for experiment in experiments:
-        if experiment.scope.is_workflow_scoped:
-            steps = declared.get(
-                (experiment.workflow, experiment.workflow_version)
+        # ExperimentScope sets workflow and workflow_version together, so
+        # this is exactly "not workflow-scoped".
+        if experiment.workflow is None or experiment.workflow_version is None:
+            continue
+        declared_steps = declared.get(
+            (experiment.workflow, experiment.workflow_version)
+        )
+        if declared_steps is None:
+            raise ControlConfigError(
+                f"experiment {experiment.experiment_id!r} scope is not "
+                "a declared workflow version"
             )
-            if steps is None:
-                raise ControlConfigError(
-                    f"experiment {experiment.experiment_id!r} scope is not "
-                    "a declared workflow version"
-                )
-            if experiment.scope.is_step_scoped and experiment.step not in steps:
-                raise ControlConfigError(
-                    f"experiment {experiment.experiment_id!r} scope is not "
-                    "a declared workflow step"
-                )
+        if (
+            experiment.scope.is_step_scoped
+            and experiment.step not in declared_steps
+        ):
+            raise ControlConfigError(
+                f"experiment {experiment.experiment_id!r} scope is not "
+                "a declared workflow step"
+            )
 
     workflow_routes = []
     seen: set[tuple[str, str, str | None]] = set()
@@ -255,7 +271,7 @@ def load_control_config(path: str) -> ControlConfig:
                 f"workflow route {workflow!r}@{version!r}",
                 {"model", "provider", "note", "steps"},
             )
-            definitions = [(None, fields)]
+            definitions: list[tuple[str | None, dict]] = [(None, fields)]
             for step, step_value in _mapping(
                 fields.get("steps"), "steps"
             ).items():
@@ -277,13 +293,13 @@ def load_control_config(path: str) -> ControlConfig:
                 if step is None and definition.get("model") is None:
                     continue
                 key = (workflow, version, step)
-                steps = declared.get((workflow, version))
-                if steps is None:
+                declared_steps = declared.get((workflow, version))
+                if declared_steps is None:
                     raise ControlConfigError(
                         f"workflow route {workflow!r}@{version!r} has no "
                         "declared workflow"
                     )
-                if step is not None and step not in steps:
+                if step is not None and step not in declared_steps:
                     raise ControlConfigError(
                         f"workflow route step {step!r} is not declared"
                     )
@@ -292,13 +308,19 @@ def load_control_config(path: str) -> ControlConfig:
                         f"duplicate workflow route {key!r}"
                     )
                 seen.add(key)
+                model = definition.get("model")
+                if model is None:
+                    raise ControlConfigError(
+                        f"invalid workflow route {key!r}: model must be "
+                        "non-empty"
+                    )
                 try:
                     workflow_routes.append(
                         WorkflowRoute(
                             workflow=workflow,
                             workflow_version=version,
                             step=step,
-                            model=definition.get("model"),
+                            model=model,
                             provider=definition.get("provider"),
                             note=definition.get("note"),
                             ts=0.0,

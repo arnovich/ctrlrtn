@@ -141,12 +141,11 @@ async def proxy_pass_through(
             if resolve_provider is not None
             else None
         )
-        compatible = (
-            override is not None
-            and selected_api is not None
-            and override.api == selected_api
-        )
-        if not compatible:
+        if (
+            override is None
+            or selected_api is None
+            or override.api != selected_api
+        ):
             if recorder is not None and serve is not None:
                 _record_synthetic(
                     recorder,
@@ -194,7 +193,7 @@ async def proxy_pass_through(
             provider_free=selected_free,
         )
         if budget.error_type == "ctrlrtn_budget_fallback_required":
-            fallback_body: bytes | bytearray = bytes(forward_body)
+            fallback_body: bytes = bytes(forward_body)
             fallback_serve: ServingDecision | None = None
             if fallback is not None and serve is None:
                 try:
@@ -297,7 +296,7 @@ async def proxy_pass_through(
                     provider_free=selected_free,
                     note=(budget.error_type or "budget rejected").encode(),
                 )
-            detail = {
+            detail: dict[str, object] = {
                 "type": (
                     "ctrlrtn_budget_fallback_unavailable"
                     if budget.error_type == "ctrlrtn_budget_fallback_required"

@@ -9,8 +9,10 @@ from ctrlrtn.workflow.metrics import (
 )
 from ctrlrtn.workflow.tool_operation import ToolOperationEvent
 
+from .core import MemoryState
 
-class WorkflowMemoryMixin:
+
+class WorkflowMemoryMixin(MemoryState):
     """Store and project workflow and tool-operation observations."""
 
     async def save_workflow_event(self, event: WorkflowEvent) -> None:
