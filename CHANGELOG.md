@@ -1,8 +1,11 @@
 # Changelog
 
+## Unreleased
+
 ## 0.1.0 — 2026-09-24
 
-First public release.
+First public release. The proxy was developed privately from June 2026 as
+an internal router; its history was squashed at the public rename.
 
 - Drop-in proxy for the Anthropic and OpenAI wire formats with named
   upstream providers, capture-time credential redaction, and SQLite recording.
