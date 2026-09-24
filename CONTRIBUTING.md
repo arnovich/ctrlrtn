@@ -6,8 +6,9 @@ Responses may take a few days.
 ## Setup
 
 ```bash
-uv venv && uv pip install -e ".[test,tui]"
-uv run pytest -q          # under a minute, no network, no API keys needed
+uv sync --extra test --extra tui   # the same locked set CI installs
+uv run pre-commit install          # black, isort, ruff, mypy on every commit
+uv run pytest -q                   # under a minute, offline, no API keys
 ```
 
 ## Conventions (enforced by CI)
@@ -32,5 +33,5 @@ uv run pytest -q          # under a minute, no network, no API keys needed
   calibration, tripwire
 - `workflow/` — identity, discovery, graphs, tool-call correlation
 - `cli/` — `parser.py` / `render.py` / `commands.py`, and `console.py`, the
-  read-only TUI
+  TUI: monitoring plus confirmed control actions
 - `docs/architecture.md` — current boundaries and request flow

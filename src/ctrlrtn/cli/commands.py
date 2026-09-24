@@ -58,12 +58,14 @@ def _write_json_artifact(path: str, document: dict, label: str) -> None:
 
 
 def _configure_logging(level: str) -> int:
-    """Configure logging with the CLI's failure handler bound."""
+    """Bind the CLI's failure handler so ``main`` and direct callers such
+    as tests share one logging setup."""
     return configure_logging(level, _fail)
 
 
 def _console(args) -> None:
-    """Run the console with settings and logging resolved the CLI's way."""
+    """Run the console the way ``main`` would, for direct callers such as
+    tests."""
     RuntimeCommands(
         load_settings, _fail, build_app, _configure_logging
     )._console(args)

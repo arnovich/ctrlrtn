@@ -6,7 +6,7 @@ is far tighter (and reaches a usable sample size far sooner) than an unpaired
 one. Replay is a **batch analysed once**, not a live trickle, so a fixed-sample
 bootstrap lower bound is appropriate here; the always-valid / confidence-sequence
 machinery is only needed for the live A/B path (see
-``docs/evaluation.md`` §6).
+``docs/evaluation.md``).
 
 Convention: ``diff = candidate - baseline`` per pairing (higher = candidate
 better). The candidate is **non-inferior** if it is not worse than baseline by

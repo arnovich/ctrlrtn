@@ -1,4 +1,4 @@
-"""Argument registration for workflow analysis and trajectories."""
+"""Argument registration for workflow analysis."""
 
 from __future__ import annotations
 

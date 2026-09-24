@@ -1,4 +1,4 @@
-"""ctrlrtn — the learning LLM router.
+"""ctrlrtn — a self-hosted LLM proxy that switches models on evidence.
 
 Supported import surface
 ------------------------

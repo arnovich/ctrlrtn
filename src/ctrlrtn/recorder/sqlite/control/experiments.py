@@ -10,7 +10,7 @@ from ctrlrtn.policy.shadow import RUNNING as SHADOW_RUNNING
 from ctrlrtn.policy.shadow import STOPPED as SHADOW_STOPPED
 from ctrlrtn.policy.shadow import ShadowExperiment, ShadowStats
 
-from ..connection import SqliteCapability
+from ..capability import SqliteCapability
 from ..queries import (
     _INSERT_EXPERIMENT,
     _STOP_EXPERIMENT,

@@ -1,7 +1,7 @@
 """Header-propagation gate (docs/evaluation.md).
 
-Whole-task analysis — the future orchestrator live A/B, and clustering for the
-editor's paired replay — depends on the app stamping the *same* ``x-ctrlrtn-task``
+Whole-task analysis — task-level live A/B, and clustering for paired
+replay — depends on the app stamping the *same* ``x-ctrlrtn-task``
 on every sub-agent HTTP call of one edition. If it doesn't, a "task" silently
 misses calls and the experiment tests the fail-safe, not the candidate.
 
@@ -15,7 +15,8 @@ A `use_case_key` is the gate's proxy for "sub-agent" — two agents sharing a
 fingerprint, or one emitting two, would mis-count; an unkeyed (`None`) call is
 the *absence* of a use-case, never a second one, so it is excluded from spans.
 This certifies that propagation *works*, NOT that every sub-agent of every
-edition is captured — that needs an operator-declared expected set (future).
+edition is captured — that would need an operator-declared expected set,
+which the gate does not have.
 """
 
 from __future__ import annotations

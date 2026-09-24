@@ -14,7 +14,7 @@ from ctrlrtn.control_config import (
 from ctrlrtn.policy.experiment import RUNNING, STOPPED
 from ctrlrtn.policy.route import Route, WorkflowRoute
 
-from ..connection import SqliteCapability
+from ..capability import SqliteCapability
 from ..queries import (
     _INSERT_EXPERIMENT,
     _SELECT_WORKFLOW_ROUTES,

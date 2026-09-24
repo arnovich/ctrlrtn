@@ -97,6 +97,26 @@ def test_sdk_tool_context_reports_started_and_terminal_events(monkeypatch):
     assert payloads[1]["latency_ms"] >= 0
 
 
+def test_sdk_tool_report_success_follows_status_unless_stated(monkeypatch):
+    payloads = []
+    monkeypatch.setattr(
+        sdk,
+        "report_tool_operation_event",
+        lambda _base_url, event: payloads.append(event.payload()),
+    )
+    step = sdk.Step(_workflow(), "http://router")
+    with step.tool("search", operation_id="op-1", attempt_id="a-1") as tool:
+        tool.report(status="failed", error_code="timeout")
+    with step.tool("search", operation_id="op-2", attempt_id="a-2") as tool:
+        tool.report(status="failed", success=True)
+    terminal = [p for p in payloads if p["status"] != "started"]
+    assert [(p["status"], p["success"]) for p in terminal] == [
+        ("failed", False),
+        ("failed", True),
+    ]
+    assert terminal[0]["error_code"] == "timeout"
+
+
 def test_direct_report_uses_dedicated_control_endpoint():
     requests = []
 

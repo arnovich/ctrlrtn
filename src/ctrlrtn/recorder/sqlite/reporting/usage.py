@@ -7,7 +7,7 @@ import sqlite3
 from ctrlrtn.recorder.models import UNKEYED as _UNKEYED
 from ctrlrtn.recorder.models import UseCaseRanking
 
-from ..connection import SqliteCapability
+from ..capability import SqliteCapability
 from ..queries import (
     _FALLBACK_CALLS_SINCE,
     _PRICING_IDENTITIES_SINCE,
@@ -108,7 +108,7 @@ class UsageReportingSqliteMixin(SqliteCapability):
                 raise
         return int(row[0])
 
-    def use_case_models(self) -> dict[str, str | None]:
+    def use_case_models(self) -> dict[str, str]:
         """The most recent model seen per use-case (from each group's latest
         call), keyed the same way as ``rankings``."""
         with self._lock:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Protocol
 
 import httpx
 
@@ -35,19 +35,10 @@ class _StarletteHeaders(Protocol):
     def getlist(self, key: str) -> list[str]: ...
 
 
-@runtime_checkable
-class _HttpxHeaders(Protocol):
-    """httpx ``Headers``: raw fields plus ``get_list``."""
-
-    @property
-    def raw(self) -> list[tuple[bytes, bytes]]: ...
-
-    def get_list(self, key: str) -> list[str]: ...
-
-
 # Request headers arrive from Starlette and response headers from httpx; the
-# two spell the repeated-value accessor differently.
-_RawHeaders = _StarletteHeaders | _HttpxHeaders
+# two spell the repeated-value accessor differently. httpx is named as the
+# concrete class so the dispatch below is one cheap type check per request.
+_RawHeaders = _StarletteHeaders | httpx.Headers
 
 
 # Credential redaction lives in ctrlrtn.recorder.redaction: applied at
@@ -57,7 +48,7 @@ _recordable_headers = redact_headers
 
 
 def _values(headers: _RawHeaders, name: str) -> list[str]:
-    if isinstance(headers, _HttpxHeaders):
+    if isinstance(headers, httpx.Headers):
         return headers.get_list(name)
     return headers.getlist(name)
 

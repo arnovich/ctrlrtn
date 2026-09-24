@@ -1,6 +1,6 @@
 """Architecture guards for the residual CLI command-family facades."""
 
-from ctrlrtn.cli.evaluation import EvaluationCommands, _load_labels
+from ctrlrtn.cli.evaluation import EvaluationCommands, load_labels
 from ctrlrtn.cli.evaluation.calibration import CalibrationCommands
 from ctrlrtn.cli.evaluation.campaign import CampaignReportCommands
 from ctrlrtn.cli.evaluation.core import EvaluationCommandContext
@@ -21,7 +21,7 @@ def test_evaluation_commands_compose_command_families():
         CampaignReportCommands,
         EvaluationCommandContext,
     )
-    assert _load_labels.__module__.endswith(".evaluation.loading")
+    assert load_labels.__module__.endswith(".evaluation.loading")
 
 
 def test_workflow_commands_compose_command_families():

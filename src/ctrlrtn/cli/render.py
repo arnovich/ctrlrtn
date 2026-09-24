@@ -287,7 +287,7 @@ def render_experiment_started(exp: Experiment) -> str:
         f"on {exp.candidate_provider or 'the baseline provider'}  "
         f"(serving {exp.split_pct}% of this use-case's tasks)\n"
         f"  ceilings:   {exp.max_calls_per_task} calls/task "
-        f"(enforced), ${exp.max_cost_usd_per_task:g}/task (recorded, not yet "
+        f"(enforced), ${exp.max_cost_usd_per_task:g}/task (recorded, not "
         "enforced)\n"
         "The gateway picks it up within ~10s. Stop it with:\n"
         f"  ctrlrtn experiment stop {exp.experiment_id}"

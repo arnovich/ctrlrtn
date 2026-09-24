@@ -1,4 +1,4 @@
-"""The read-only TUI monitor: data functions, the read-only guarantee, the
+"""The TUI: data functions, the read-only guarantee, the
 missing-extra / missing-DB fallbacks, and Textual Pilot behaviour."""
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import pytest
 
 pytest.importorskip("textual")  # skips where the 'tui' extra isn't installed
 
-from textual.widgets import (  # noqa: E402
+from textual.widgets import (
     Button,
     DataTable,
     Header,
@@ -22,8 +22,8 @@ from textual.widgets import (  # noqa: E402
     Static,
 )
 
-from ctrlrtn.cli import commands as cli  # noqa: E402
-from ctrlrtn.cli.console import (  # noqa: E402
+from ctrlrtn.cli import commands as cli
+from ctrlrtn.cli.console import (
     _DEFAULT_GRAPH_WINDOW,
     _DEFAULT_TABLE_WINDOW,
     _EMPTY,
@@ -57,22 +57,22 @@ from ctrlrtn.cli.console import (  # noqa: E402
     task_detail,
     usecase_detail,
 )
-from ctrlrtn.eval.tripwire import run_tripwire  # noqa: E402
-from ctrlrtn.jobs import Job, Worker  # noqa: E402
-from ctrlrtn.policy.budget import BudgetPolicy  # noqa: E402
-from ctrlrtn.policy.experiment import (  # noqa: E402
+from ctrlrtn.eval.tripwire import run_tripwire
+from ctrlrtn.jobs import Job, Worker
+from ctrlrtn.policy.budget import BudgetPolicy
+from ctrlrtn.policy.experiment import (
     BASELINE,
     CANDIDATE,
     Experiment,
 )
-from ctrlrtn.policy.shadow import ShadowExperiment  # noqa: E402
-from ctrlrtn.recorder.store import (  # noqa: E402
+from ctrlrtn.policy.shadow import ShadowExperiment
+from ctrlrtn.recorder.store import (
     Outcome,
     SqliteTraceStore,
 )
-from ctrlrtn.recorder.trace import Trace  # noqa: E402
-from ctrlrtn.workflow import discovery_job  # noqa: E402
-from ctrlrtn.workflow.identity import (  # noqa: E402
+from ctrlrtn.recorder.trace import Trace
+from ctrlrtn.workflow import discovery_job
+from ctrlrtn.workflow.identity import (
     WorkflowEvent,
     WorkflowIdentity,
 )
