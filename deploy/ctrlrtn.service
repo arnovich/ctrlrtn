@@ -1,0 +1,38 @@
+# ctrlrtn systemd unit — installed by deploy/install.sh.
+#
+# State (the SQLite recording) lives in /var/lib/ctrlrtn via
+# StateDirectory; config in /etc/ctrlrtn/config.yaml. The service binds
+# 127.0.0.1 by default (the config decides) — see docs/deploy.md before
+# binding anything wider.
+
+[Unit]
+Description=ctrlrtn — learning LLM gateway
+Documentation=https://github.com/arnovich/ctrlrtn
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=ctrlrtn
+Group=ctrlrtn
+ExecStart=/opt/ctrlrtn/.venv/bin/ctrlrtn serve
+Environment=CTRLRTN_CONFIG=/etc/ctrlrtn/config.yaml
+Restart=always
+RestartSec=2
+
+# State: systemd creates /var/lib/ctrlrtn owned by the service user.
+StateDirectory=ctrlrtn
+StateDirectoryMode=0750
+
+# Hardening: the process needs the state dir and nothing else writable.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/var/lib/ctrlrtn
+
+[Install]
+WantedBy=multi-user.target
