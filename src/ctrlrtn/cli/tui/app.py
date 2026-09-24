@@ -338,13 +338,10 @@ class ConsoleApp(ConsoleActions, ConsolePresentation, App):
         """Make the header say whether what you are looking at is live.
 
         The monitor refreshes on a timer, so a frozen screen and a healthy one
-        look identical — the header used to advertise "refresh 3s" whether or
-        not a refresh had worked since. Now it carries the clock time of the
-        last SUCCESSFUL read (which ticks along by itself, so a stopped clock
-        is the tell), and the header's icon — a decorative circle that only
-        ever opened the command palette — becomes the status light: filled and
-        green while reads are landing, red once one has failed and the screen
-        is stale."""
+        look identical unless the header says when the last successful read
+        landed. It carries that clock time (a stopped clock is the tell), and
+        its icon is the status light: filled and green while reads are
+        landing, red once one has failed and the screen is stale."""
         stamp = (
             time.strftime("%H:%M:%S", time.localtime(self._last_update))
             if self._last_update

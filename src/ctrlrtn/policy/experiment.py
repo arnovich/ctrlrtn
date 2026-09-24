@@ -1,10 +1,11 @@
 """A live A/B experiment: one candidate model tested against the incumbent for
 one use-case.
 
-This is the *tripwire* path (eval-design §3): a running experiment splits a
-use-case's traffic by task, serves the candidate to one arm, and exists to catch
-gross regression — never to certify 5pp non-inferiority (the panel showed
-task-level A/B can't, at this volume). The model here is deliberately inert data:
+This is the *tripwire* path: a running experiment splits a use-case's traffic
+by task, serves the candidate to one arm, and exists to catch gross regression.
+It never certifies non-inferiority, which task-level A/B cannot do at realistic
+volumes; that verdict comes from paired offline replay (``docs/evaluation.md``).
+The model here is deliberately inert data:
 it carries the assignment parameters and the divergence ceilings; the serving
 logic that reads it lives in the gateway, and persistence in the store.
 
@@ -191,7 +192,7 @@ def bucket(experiment_id: str, task_id: str) -> int:
 
     Assignment is UNSTRATIFIED — arms balance only in expectation, so at small n
     a day/regime can land lopsided. That is variance, not bias, and fine for a
-    gross-regression tripwire; stratified/blocked assignment (eval-design §6)
+    gross-regression tripwire; stratified/blocked assignment (``docs/evaluation.md``)
     must precede any finer-than-gross read.
     """
     if not experiment_id or not task_id:

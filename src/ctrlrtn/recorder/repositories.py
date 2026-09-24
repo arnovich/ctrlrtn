@@ -102,8 +102,8 @@ class ExperimentReader(Protocol):
 class ReportingRepository(ExperimentReader, Protocol):
     """Aggregate reads used by offline analysis.
 
-    Campaign reporting previously depended on the concrete SQLite store — 82
-    public methods — to call four of them.
+    Offline analysis needs four aggregate reads, not the whole store; this
+    contract names exactly those.
     """
 
     def use_case_models(self) -> dict[str, str | None]: ...
