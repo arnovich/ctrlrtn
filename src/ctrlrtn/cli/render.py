@@ -74,7 +74,7 @@ def render_tasks(rows: list[TaskSummary], limit: int = 50) -> str:
         return (
             f"All {rows[0].calls} calls are untagged — set the "
             "`x-ctrlrtn-task` header (one value per app/agent run) to group "
-            "calls into tasks. See docs/history/spec.md §12."
+            "calls into tasks. See docs/instrument-a-workflow.md."
         )
     header = (
         f"{'task':<28} {'calls':>6} {'use-cases':>10} {'errors':>7} "
@@ -359,14 +359,14 @@ def render_propagation(report: PropagationReport) -> str:
         lines.append(
             "  verdict: NO DATA — start the gateway (`serve`), send traffic "
             "with the x-ctrlrtn-task header set, then re-check (see "
-            "docs/history/spec.md §12)."
+            "docs/instrument-a-workflow.md)."
         )
         return "\n".join(lines)
     if report.tasked_fraction < MIN_TAGGED_FRACTION:
         lines.append(
             "  verdict: NOT PROPAGATING — most calls carry no x-ctrlrtn-task; the "
-            "app must set the same value on every sub-agent call (docs/history/spec.md "
-            "§12)."
+            "app must set the same value on every sub-agent call "
+            "(docs/instrument-a-workflow.md)."
         )
     elif report.multi_agent_tasks < MIN_MULTI_AGENT_TASKS:
         lines.append(

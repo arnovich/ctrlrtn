@@ -1,4 +1,4 @@
-"""Compatibility facade for the decomposed CLI argument registrars."""
+"""Public import path for the CLI argument parser."""
 
 from ctrlrtn.cli.arguments import build_parser
 
