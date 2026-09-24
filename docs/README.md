@@ -30,6 +30,9 @@ deeper, in the order a new user needs them.
   persistence.
 - [Workflow identity](workflow-identity.md): the header and event contract
   the SDK implements.
+- [Workflow discovery and analysis](workflow-discovery.md): what the proxy
+  derives from recorded traffic, explicit versus inferred, and every
+  `workflow` command.
 - [Operational benchmark](router-operational-benchmark.md): measured
   overhead of the proxy on the request path, and how to reproduce it.
 

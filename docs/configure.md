@@ -2,7 +2,7 @@
 
 Scalar settings come from a **YAML file** or an **environment variable**, so
 the same image runs locally, on a server, or in a container. Named providers
-and budgets are structured, YAML-only blocks. Layers apply most specific wins:
+and budgets are structured, YAML-only blocks. Later layers override earlier ones:
 
 ```
 defaults  <  YAML config file  <  environment variables  <  CLI flags
@@ -16,7 +16,7 @@ an **absolute** `db_path`, or they silently open different databases.
 ```yaml
 # ctrlrtn.yaml
 db_path: /var/lib/ctrlrtn/router.db
-host: 0.0.0.0
+host: 127.0.0.1   # 0.0.0.0 only inside a container or behind a firewall
 port: 4000
 providers:
   ollama:
@@ -35,13 +35,13 @@ retention_days: 30  # optional; omit for manual-only retention
 | `db_path` | `CTRLRTN_DB` | SQLite path for recorded traffic (default `ctrlrtn.db`). |
 | `host` / `port` | `CTRLRTN_HOST` / `CTRLRTN_PORT` | Bind address and port for `serve` (default `127.0.0.1:4000`). |
 | `log_requests` | `CTRLRTN_LOG_REQUESTS` | Print one line per recorded call. |
-| `log_level` | `CTRLRTN_LOG_LEVEL` | Verbosity for uvicorn and `ctrlrtn`: `debug`, `info`, `warning`, `error` (default `info`). `debug` shows per-call arm decisions and snapshot refreshes. |
+| `log_level` | `CTRLRTN_LOG_LEVEL` | Verbosity for uvicorn and `ctrlrtn`: `debug`, `info`, `warning`, `error`, `critical` (default `info`). `debug` shows per-call arm decisions and snapshot refreshes. |
 | `upstream` | `CTRLRTN_UPSTREAM` | Force one upstream base URL for every path (else route by path). Cannot be combined with `providers`. |
 | `anthropic_upstream` / `openai_upstream` | `CTRLRTN_ANTHROPIC_UPSTREAM` / `CTRLRTN_OPENAI_UPSTREAM` | Upstream base URL for the unprefixed Anthropic and OpenAI routes. |
 | `providers` | (YAML only) | Named upstreams mounted at distinct client-facing prefixes; see below. |
 | `timeout` | `CTRLRTN_TIMEOUT` | Upstream request timeout in seconds. |
 | `inject_cache` | `CTRLRTN_INJECT_CACHE` | Opt-in: mark the static prompt prefix with Anthropic `cache_control`. Never applied to an OpenAI-compatible upstream. |
-| `kill_switch` | `CTRLRTN_KILL_SWITCH` | Block all provider traffic locally until the router restarts with it disabled. |
+| `kill_switch` | `CTRLRTN_KILL_SWITCH` | Block all provider traffic locally until the proxy restarts with it disabled. |
 | `retention_days` | `CTRLRTN_RETENTION_DAYS` | Opt-in positive age in days. Eligible trace payloads are pruned transactionally before `serve` accepts traffic. |
 | `budgets` | (YAML only) | Global, per-use-case, and per-session spend ceilings; see below. |
 | `control_hosts` | `CTRLRTN_CONTROL_HOSTS` | Extra Host names the `/ctrlrtn/` control plane trusts (comma-separated, or a YAML list). `localhost` and IP literals are always trusted; other names are rejected as a DNS-rebinding guard. |
@@ -57,18 +57,52 @@ Clients attach up to three independent identities to a provider request:
 
 | Header | Meaning |
 | --- | --- |
-| `x-ctrlrtn-route` | Names the use-case (`tag:<name>`). Without it the router keys the call by a fingerprint of the request structure: system prompt, tool schemas, and response format (`fp:...`). |
+| `x-ctrlrtn-route` | Names the use-case (`tag:<name>`). Without it the proxy keys the call by a fingerprint of the request structure: system prompt, tool schemas, and response format (`fp:...`). |
 | `x-ctrlrtn-task` | Groups the calls of one end-to-end task, for evaluation and app-reported outcomes. |
 | `x-ctrlrtn-session` | Groups calls under an operator-defined cost boundary. |
 
 Instrumented workflows add the complete step identity defined in
 [workflow-identity.md](workflow-identity.md);
-[instrument-a-workflow.md](instrument-a-workflow.md) shows the SDK. The router
+[instrument-a-workflow.md](instrument-a-workflow.md) shows the SDK. The proxy
 removes every `x-ctrlrtn-*` header before a request, baseline or shadow, is
 sent to a provider. These headers are attribution hints among cooperating
 applications, not authentication or access control: a caller can forge or
 rotate a session ID, so a session ceiling prevents accidental overspend by a
 cooperating client and is not a tenant quota.
+
+## Serving precedence
+
+The proxy applies this chain to every call, in order, from an in-memory
+snapshot that refreshes about every 10 seconds. The first rule that applies
+decides the served model; the rest are not consulted.
+
+1. **Running experiment.** Applies when the use-case key has a running
+   experiment whose scope matches the request's validated workflow identity.
+   The experiment then owns the call: with `x-ctrlrtn-task` the task binds to
+   the first experiment it hits and is assigned an arm; without a task header,
+   or when the task is already bound to another experiment, the call passes
+   through unchanged and no route is consulted. A route on the same use-case
+   stays dormant until the experiment stops.
+2. **Step route.** Applies when no experiment took the call and the request
+   carries a complete, valid workflow identity that exactly matches a
+   `workflow_routes` entry for `(workflow, workflow_version, step)`.
+3. **Workflow route.** Applies when the identity exactly matches a
+   `workflow_routes` entry for `(workflow, workflow_version)` with no step.
+4. **Use-case route.** Applies when a `route` exists for the use-case key.
+5. **Approved budget fallback.** Applies only when none of the rules above
+   fired, the use-case's `fallback_at_usd` threshold is reached, an approved
+   fallback exists for the use-case, and the request's model is the evaluated
+   baseline. A running experiment or a route on the use-case is never
+   overridden.
+6. **Pass-through.** The body is forwarded unchanged.
+
+A partial, malformed, or unknown-version workflow identity matches no
+workflow rule and falls back to the use-case rules. A route or fallback
+leaves the body alone when the requested model already equals its target, and
+clamps `max_tokens` down to the target model's `max_output`. Every routed
+trace records the rule scope (`workflow_step`, `workflow`, or `use_case`), the
+rule key, and the activated Git revision. Cache-control injection composes
+with the decision and is gated by the upstream API identity.
 
 ## Spend ceilings (`budgets`)
 
@@ -92,7 +126,7 @@ budgets:
 | --- | --- |
 | `global.daily_usd` | Ceiling on known spend across all traffic. Resets at midnight UTC. |
 | `use_cases.<key>.daily_usd` | Ceiling for one use-case key. Resets at midnight UTC. |
-| `use_cases.<key>.fallback_at_usd` | Optional. Valid only below the same use-case's `daily_usd`. At this threshold the router may switch to one evidence-approved candidate; see below. |
+| `use_cases.<key>.fallback_at_usd` | Optional. Valid only below the same use-case's `daily_usd`. At this threshold the proxy may switch to one evidence-approved candidate; see below. |
 | `session.limit_usd` | Lifetime ceiling for each non-empty `x-ctrlrtn-session` value. Use a new unique value for each logical session. |
 | `reserve_in_flight` | Boolean, default `false`. Count admitted but unsettled requests against every matching ceiling. Requires at least one ceiling. |
 
@@ -116,12 +150,12 @@ declaration.
 
 ### Evidence-approved fallbacks
 
-`fallback_at_usd` lets the router move a use-case to a cheaper candidate before
+`fallback_at_usd` lets the proxy move a use-case to a cheaper candidate before
 the hard ceiling closes it. The switch needs a durable approval, consumed from
 the machine-readable artifact of a non-inferiority evaluation:
 
 ```bash
-ctrlrtn replay-eval tag:editor gpt-4o-mini --yes --json editor-replay.json
+ctrlrtn replay-eval tag:editor claude-haiku-4-5 --yes --json editor-replay.json
 ctrlrtn fallback approve editor-replay.json
 ctrlrtn fallback list
 ctrlrtn fallback clear tag:editor
@@ -132,8 +166,9 @@ artifact's use-case, baseline, candidate, and creation time. The request must
 still use that evaluated baseline; stale evidence for a changed baseline does
 not apply, and model names are never used to guess. `--provider NAME` binds
 the candidate to a named provider, but the proxy permits the switch only when
-its API identity matches the current upstream. A running experiment or active
-route keeps precedence. Step-scoped replay artifacts are rejected. Without an
+its API identity matches the current upstream. A running experiment or route
+comes first ([Serving precedence](#serving-precedence)). Step-scoped replay
+artifacts are rejected. Without an
 applicable approval the threshold fails closed with
 `ctrlrtn_budget_fallback_unavailable`; the hard `daily_usd` still returns
 `ctrlrtn_budget_exceeded`.
@@ -150,7 +185,7 @@ input or cache rate, plus the output bound at the output rate; a rejection's
 `spent_usd` then includes estimates still in flight). Reservations are still
 not a provider billing ledger: proprietary tokenization, provider-added tokens,
 partial responses, and billing after a connection failure can differ from the
-estimate, multiple router processes do not share reservations, and a failed
+estimate, multiple proxy processes do not share reservations, and a failed
 persistence keeps the reservation held until restart. A budget is a local
 safeguard against runaway spend, not an exact cap on the provider invoice.
 
@@ -166,7 +201,7 @@ ctrlrtn budget      # kill switch, ceilings, remaining spend, blocked calls
 session with any unknown-cost call shows `N/A`, and missing values group as
 `(unsessioned)`. `budget` also lists each configured fallback threshold and
 the evidence-approved fallback calls recorded today. Both run in a separate
-process and report persisted accounting only; the live gateway's process-local
+process and report persisted accounting only; the live proxy's process-local
 reservations are not included. The console renders the same budget status
 above its traffic graphs ([console.md](console.md)). Recording is
 non-blocking, so a saturated recorder queue can drop telemetry rather than
@@ -178,7 +213,7 @@ and blocks all provider traffic locally; changing it requires a restart.
 ## Named providers
 
 Use a named provider when two upstreams expose the same API paths. Each name is
-mounted at `/<name>` by default; the router strips that prefix before
+mounted at `/<name>` by default; the proxy strips that prefix before
 forwarding the request:
 
 ```yaml
@@ -201,15 +236,16 @@ providers:
 | `free` | no | `true` declares zero marginal token cost. Default `false`. |
 | `credential` | no | Provider-owned credential read from the environment; see below. |
 
-Point the Ollama client's base URL at `http://localhost:4000/ollama`. A request
-to `/ollama/v1/chat/completions` reaches Ollama as `/v1/chat/completions`.
+Point an OpenAI-compatible client at `http://127.0.0.1:4000/ollama/v1`. Its
+request to `/ollama/v1/chat/completions` reaches Ollama as
+`/v1/chat/completions`.
 Named providers augment the built-in unprefixed OpenAI and Anthropic routes, so
 the ordinary `/v1/...` endpoints continue to reach their default providers.
 
 `api` keeps provider-specific behavior correctly scoped: Anthropic
 cache-control injection is never applied to an OpenAI-compatible upstream, and
 an Ollama model is recorded at `$0` even if its model name also exists on a
-paid provider. The router records the provider name and `free` policy with
+paid provider. The proxy records the provider name and `free` policy with
 every trace, so a later configuration change cannot rewrite the historical
 pricing context. Token counts and latency are still recorded for free calls;
 `free` changes only their calculated cost.
@@ -234,11 +270,19 @@ providers:
       prefix: "Bearer "       # default
 ```
 
-The configured environment variable must be set when the router starts. On a
-request to this provider (including a cross-provider candidate), client
-credential headers and credential-named query parameters are removed and the
+The configured environment variable must be set when the proxy starts; under
+the systemd unit, `/etc/ctrlrtn/env` is the place for it. On a request to
+this provider (including a cross-provider candidate), client credential
+headers and credential-named query parameters are removed and the
 provider-owned credential is injected. A provider without `credential` keeps
 ordinary client-credential pass-through; local Ollama needs none.
+
+A provider-owned credential means the proxy spends the operator's key for
+any client that can reach the port; nothing authenticates the client. Such
+requests get the control plane's Host check, so a rebound browser page is
+refused with `403 ctrlrtn_untrusted_host`, but a host on the same network is
+not. Give the provider a `budgets` ceiling and read the security model in
+[deploy.md](deploy.md) before enabling one.
 
 ### Cross-provider experiments and routes
 
@@ -250,7 +294,7 @@ ctrlrtn route set tag:editor qwen2.5:0.5b --provider ollama
 ```
 
 On an experiment's baseline arm, the original provider and body pass through.
-On its candidate arm, the router swaps the model and sends the same
+On its candidate arm, the proxy swaps the model and sends the same
 provider-facing path to the named provider. `route adopt` preserves the
 provider tested by the experiment.
 
@@ -258,31 +302,29 @@ The baseline and candidate must declare the same `api`. A missing provider or
 API mismatch fails locally with `ctrlrtn_provider_mismatch` and is recorded on
 the candidate arm; no request reaches an incompatible upstream. There is
 deliberately no translation between the Anthropic and OpenAI APIs. When the
-provider changes, the router removes credential headers and credential-named
+provider changes, the proxy removes credential headers and credential-named
 query parameters before forwarding, so a baseline provider key never reaches
 the candidate; configure `credential` on an authenticated candidate to inject
 its own key.
 
 ### Ollama
 
-The `ollama` provider above is the whole Ollama setup: run `ollama serve` and
-`ctrlrtn serve`, then configure the application's OpenAI-compatible client to
-use `http://localhost:4000/ollama` and call `/v1/chat/completions` as usual.
-Only Ollama's `/v1` endpoints are supported; the native `/api/chat` uses a
-different streaming and usage contract and is an intentional non-goal. For
-streaming requests, set `stream_options.include_usage` to `true` so Ollama
-emits token counts in the final SSE chunk and the router can record usage.
-For a one-provider setup, `CTRLRTN_OPENAI_UPSTREAM=http://localhost:11434`
-also works, but it replaces the unprefixed OpenAI destination rather than
-adding a second one.
+The `ollama` provider above is the whole Ollama setup; point the
+application's OpenAI-compatible client at `http://127.0.0.1:4000/ollama/v1`.
+[getting-started.md](getting-started.md) walks through it, including the
+`stream_options.include_usage` setting a streamed request needs.
 
 ## Model prices
 
 The bundled price table, `src/ctrlrtn/telemetry/prices.toml`, holds USD per
 million tokens (`input`, `output`, `cache_read`, `cache_write`) and each
-model's `max_output` cap. Prices are read once at startup. Point
-`CTRLRTN_PRICES` at your own TOML file to overlay the bundled table without
-editing the package:
+model's `max_output` cap for 15 models: 12 Anthropic Claude models and 3
+OpenAI models. The prices are approximate list prices; the file header states
+that the Anthropic rows were verified against the provider's published
+pricing in 2026-07, and each row's comment names any later check. A `ladder`
+table lists the cheaper same-family models `recommendations` proposes as
+candidates. Prices are read once at startup. Point `CTRLRTN_PRICES` at your
+own TOML file to overlay the bundled table without editing the package:
 
 ```toml
 [prices."gpt-4o-mini"]
@@ -298,9 +340,16 @@ header. A route clamps a larger recorded `max_tokens` down to the target
 model's `max_output`, so a switch to a smaller-cap model cannot fail the whole
 use-case.
 
+Token counts are not comparable across tokenizers. The header notes that
+`claude-fable-5`, `claude-sonnet-5`, and `claude-opus-4-7` and later use a
+tokenizer that produces about 30% more tokens for the same text than the
+`claude-sonnet-4` generation. Repricing recorded token counts at a model with
+a different tokenizer, as `campaign-report` does, under-counts the newer
+model's tokens by that margin.
+
 ## Git-backed routing state (`routing.yaml`)
 
-Gateway settings describe the deployment and provider credentials. Model
+Proxy settings describe the deployment and provider credentials. Model
 control state can separately live in a Git repository as `routing.yaml`; start
 from `examples/routing.yaml`:
 
@@ -344,23 +393,22 @@ workflow_routes:
 | --- | --- |
 | `version` | Must be `1`. |
 | `routes.<use-case>` | `model` (required), `provider`, `previous_model`, `note`. |
-| `experiments.<use-case>` | `id` (required, stable), `candidate_model` (required), `provider`, `split_pct` (1 to 99, default 50), `max_calls_per_task` (default 60), `max_cost_usd_per_task` (default 5.0), and the optional exact scope `workflow`, `workflow_version`, `step`. |
+| `experiments.<use-case>` | `id` (required, stable), `candidate_model` (required), `provider`, `split_pct` (1 to 99, default 50), `max_calls_per_task` (default 60), `max_cost_usd_per_task` (default 5.0), and the optional exact scope `workflow`, `workflow_version`, `step`. (recorded, not enforced)|
 | `workflows.<name>.<version>.steps.<step>` | `predecessors` (declared step names in the same version, never the step itself), `allows: {fan_out, retry}` (booleans), `condition` (an opaque display label). |
 | `workflow_routes.<name>.<version>` | `model`, `provider`, `note`, and `steps.<step>` with its own `model`, `provider`, `note`. |
 
 Unknown keys at any level fail validation. Experiment `id` is required and
 stable: changing any experiment field requires a new id, which preserves the
 stopped experiment as historical evidence and re-buckets tasks deliberately.
-Named providers must exist in the gateway's `providers` block.
+Named providers must exist in the proxy's `providers` block.
 
 `workflows` declares a descriptive, non-executable graph of stable step names,
 allowed predecessors, and `fan_out`/`retry` capabilities. Conditions are opaque
 labels, never evaluated code. A scoped experiment or a `workflow_routes` entry
-must reference a declared workflow, exact version, and declared step. At
-serving time the precedence is step route, workflow route, use-case route,
-then pass-through; a running use-case experiment continues to own its split.
-Partial, malformed, unknown-version, and inferred identities cannot authorize
-these rules.
+must reference a declared workflow, exact version, and declared step. The
+order in which these rules apply is in
+[Serving precedence](#serving-precedence). Partial, malformed,
+unknown-version, and inferred identities cannot authorize these rules.
 
 ```bash
 ctrlrtn routing-config validate routing.yaml
@@ -369,16 +417,20 @@ ctrlrtn routing-config activate routing.yaml --repo .
 ctrlrtn routing-config status
 ```
 
-`validate` checks schema, domain limits, and providers without writing. `diff`
-compares the file with live SQLite state. `activate` additionally requires the
-file to be inside the named Git repository, tracked, committed, and clean. It
-reconciles every persistent route and running experiment in one SQLite
-transaction, recording repository HEAD, relative path, file SHA-256, and
+`PATH` defaults to `routing.yaml` and `--repo` to the current directory.
+
+| Command | Reads | Writes | Requires |
+| --- | --- | --- | --- |
+| `validate [PATH]` | The YAML file and the `providers` block of the proxy settings | Nothing | A schema-valid document within domain limits whose named providers exist |
+| `diff [PATH]` | The YAML file and the live SQLite control state | Nothing | A schema-valid document |
+| `activate [PATH] --repo REPO` | The YAML file, its Git repository, and the live SQLite control state | Every route, workflow route, workflow definition, and running experiment, plus the revision record, in one transaction | The file inside the repository, tracked, committed, and clean; named providers exist; a new stable `id` for any changed experiment |
+| `status` | The live SQLite control state | Nothing | Nothing |
+
+Activation records repository HEAD, relative path, file SHA-256, and
 activation time. Any failure rolls the entire transaction back; unchanged
-objects retain their original activation timestamps. `status` shows the active
-revision and control-plane counts. Every routed trace records the winning rule
-and the activated Git revision; `ctrlrtn show` and the console's call detail
-expose that explanation.
+objects retain their original activation timestamps. Every routed trace
+records the winning rule and the activated Git revision; `ctrlrtn show` and
+the console's call detail expose that explanation.
 
 The file is authoritative: omission clears a route or stops a running
 experiment. Stopped experiments, traces, outcomes, durable jobs, and

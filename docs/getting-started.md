@@ -25,7 +25,10 @@ port: 4000
 log_requests: true
 ```
 
-[Configure](configure.md) lists every key.
+[Configuration](configure.md) lists every key.
+
+The proxy does not fail open. If it is down, the application's calls fail
+with a connection error until it is back; nothing bypasses to the provider.
 
 ## 2. Point the application at it
 
@@ -36,8 +39,13 @@ export ANTHROPIC_BASE_URL=http://127.0.0.1:4000
 export OPENAI_BASE_URL=http://127.0.0.1:4000/v1
 ```
 
-Requests to `/v1/messages` go to Anthropic and requests to
-`/v1/chat/completions` go to OpenAI; the proxy chooses the upstream by path.
+The proxy chooses the upstream by path. `/v1/messages` and `/v1/complete`
+go to Anthropic; `/v1/chat/completions`, `/v1/completions`, `/v1/responses`
+and `/v1/embeddings` go to OpenAI. Usage and cost are extracted for the
+messages and chat-completions endpoints; the others are forwarded and
+recorded with unknown cost. For a streamed OpenAI call, set
+`stream_options.include_usage` to `true`, or the final chunk carries no token
+counts and the call is recorded with unknown cost.
 The application keeps its own API key. The proxy forwards it on each call,
 redacts it from the recorded trace at capture time, and never stores it.
 
@@ -59,7 +67,8 @@ Send a request and check the recording:
 
 ```bash
 uv run ctrlrtn calls            # the most recent calls
-uv run ctrlrtn show <call-id>   # one call in full, credentials redacted
+uv run ctrlrtn show <call-id>   # one call in full; headers redacted,
+                                # bodies stored and shown verbatim
 ```
 
 ## 3. Name the work
@@ -69,8 +78,9 @@ application. Each is optional and each makes a different view possible.
 
 **`x-ctrlrtn-route`** names the role making the call, such as `editor` or
 `researcher`. Calls with the same route form one use-case, keyed
-`tag:editor`. Without it, calls are grouped by a fingerprint of the prompt,
-keyed `fp:...`, which works but is less stable and less readable. Use-cases
+`tag:editor`. Without it, calls are grouped by a fingerprint of the request's system
+prompt, tool schemas and response format, keyed `fp:...`, or shown as
+`(unkeyed)` when the request has none of those. Use-cases
 are what you evaluate and route, so choose names per role, not per call.
 
 **`x-ctrlrtn-task`** carries one id for every call of one job, such as an
@@ -92,7 +102,8 @@ curl http://127.0.0.1:4000/v1/messages \
   -d '{"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{"role":"user","content":"Hi"}]}'
 ```
 
-For Python applications the SDK sets all three and reports outcomes;
+For Python applications the SDK sets the task and route headers and reports
+outcomes; the session header is yours to add.
 [instrument a workflow](instrument-a-workflow.md) shows it. The proxy strips
 every `x-ctrlrtn-*` header before forwarding, so providers never see them.
 
@@ -123,6 +134,10 @@ uv run ctrlrtn propagation       # are tasks linking their sub-agent calls?
 uv run ctrlrtn recommendations   # where a cheaper model is worth a test
 ```
 
+`recommendations` names a use-case when the bundled price table knows a
+cheaper model of the same family and the projected saving is material; it is
+a pointer to what to test, not a verdict.
+
 `usecases` is the table to start from:
 
 ```text
@@ -134,12 +149,15 @@ tag:editor                   105     388905      41332     5220    $1.5688
 ```
 
 Costs come from a bundled price table keyed by model family. A model the
-table does not know is recorded with an unknown cost, never zero; point
-`CTRLRTN_PRICES` at your own TOML to add or override prices.
+table does not know is recorded with an unknown cost, never zero: `calls`
+shows `-` and `spend` counts unknown-priced calls, while per-use-case and
+per-task totals sum the known costs only. Point `CTRLRTN_PRICES` at your
+own TOML to add or override prices.
 
 `propagation` is the gate for everything task-level: it says whether most
-calls carry a task id and whether one id links several roles. Until it
-reports `PROPAGATING`, task costs and live A/B verdicts are not trustworthy.
+successful calls carry a task id and whether one id links several roles.
+Failed calls do not count. Until it reports `PROPAGATING`, task costs and
+live A/B verdicts are not trustworthy.
 
 The console shows the same data live, with traffic graphs and a call feed:
 
@@ -163,6 +181,11 @@ Payloads that a queued or running evaluation job still needs are protected
 until it finishes. Set `retention_days` in the configuration for an
 automatic policy. To reclaim disk after a prune, stop the gateway and run
 `prune --apply --compact`.
+
+## Upgrade
+
+With a checkout, `git pull && uv sync --extra tui` and restart `serve`.
+Schema changes are additive, so an existing database opens in place.
 
 ## Next
 

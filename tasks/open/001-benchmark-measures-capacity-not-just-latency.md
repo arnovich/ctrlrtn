@@ -9,13 +9,9 @@ labels: [benchmark, measurement, tooling]
 
 ## Context
 
-Schema version 2 of the harness fixed three defects that made the harness measure
-itself: no `TCP_NODELAY` on its listeners, every server sharing one interpreter,
-and `tracemalloc` inside the timed region. Review of that change confirmed the fixes but found that the corrected numbers are still soft,
-for reasons the harness now documents in `docs/router-operational-benchmark.md`
-under "Interpretation limits" but does not address.
-
-The findings, with what was measured:
+The benchmark's numbers are still soft, for reasons
+`docs/router-operational-benchmark.md` lists under "Interpretation limits"
+but does not address:
 
 - **The baseline is bounded by the load generator.** The single-threaded httpx
   client burns 0.97–0.98 of a core during every `direct` scenario, while the

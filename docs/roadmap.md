@@ -10,8 +10,8 @@ This page is the short list of directions; the task files are the plan.
   benchmark (task 001).
 - Type-check the CLI and console, the one package mypy does not cover yet
   (task 002).
-- Test the fail-open and verification paths that comments currently promise:
-  shadow drops, manifest verification, discovery-job guards (task 003).
+- Test the fail-open paths in the shadow mirror, manifest verification and
+  the discovery-job guards (task 003).
 - Enforce or drop the per-task cost ceiling on experiments (task 004).
 
 **Directions without a task yet**
