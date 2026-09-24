@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 VERSION = 1
 KIND = "offline_dataset_lineage_no_payloads"
@@ -111,14 +111,14 @@ def create_dataset_manifest(
             }
         )
 
-    timestamp = created_at or datetime.now(timezone.utc)
+    timestamp = created_at or datetime.now(UTC)
     if timestamp.tzinfo is None:
         raise DatasetManifestError("created_at must include a timezone")
     core = {
         "version": VERSION,
         "kind": KIND,
         "purpose": "local_model_experiment_lineage_only",
-        "created_at": timestamp.astimezone(timezone.utc).isoformat(),
+        "created_at": timestamp.astimezone(UTC).isoformat(),
         "use_case": use_case,
         "scope": (
             {

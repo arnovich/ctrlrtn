@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from ctrlrtn.analysis.report import render_trace
 from ctrlrtn.cli.render import (
@@ -42,7 +42,7 @@ class ReportingCommands:
     def _spend(self, args: argparse.Namespace) -> None:
         """Print recorded spend; this command never changes routing or traces."""
         today = (
-            datetime.now(timezone.utc)
+            datetime.now(UTC)
             .replace(hour=0, minute=0, second=0, microsecond=0)
             .timestamp()
         )

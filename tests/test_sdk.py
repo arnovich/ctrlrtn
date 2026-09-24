@@ -173,9 +173,11 @@ def test_edition_auto_reports_failure_on_exception(monkeypatch):
     monkeypatch.setattr(
         sdk, "report_outcome", lambda base, tid, **kw: calls.append((tid, kw))
     )
-    with pytest.raises(RuntimeError):
-        with sdk.edition(task_id="ed", report_to="http://gw"):
-            raise RuntimeError("boom")
+    with (
+        pytest.raises(RuntimeError),
+        sdk.edition(task_id="ed", report_to="http://gw"),
+    ):
+        raise RuntimeError("boom")
     assert calls == [("ed", {"success": False, "score": None})]
 
 
@@ -207,18 +209,22 @@ def test_report_is_best_effort(monkeypatch):
 
 
 def test_report_without_report_to_warns_but_does_not_raise(caplog):
-    with caplog.at_level("WARNING"):
-        with sdk.edition(task_id="ed") as run:  # no report_to
-            run.report(success=True)  # must not raise (nowhere to send)
+    with (
+        caplog.at_level("WARNING"),
+        sdk.edition(task_id="ed") as run,
+    ):  # no report_to
+        run.report(success=True)  # must not raise (nowhere to send)
     assert "report_to" in caplog.text
 
 
 def test_exception_without_report_to_is_silent(caplog):
     # An app that opted out of reporting shouldn't get a warning on every crash.
-    with caplog.at_level("WARNING"):
-        with pytest.raises(RuntimeError):
-            with sdk.edition(task_id="ed"):  # no report_to
-                raise RuntimeError("boom")
+    with (
+        caplog.at_level("WARNING"),
+        pytest.raises(RuntimeError),
+        sdk.edition(task_id="ed"),
+    ):  # no report_to
+        raise RuntimeError("boom")
     assert "report_to" not in caplog.text
 
 
@@ -240,11 +246,10 @@ def test_untasked_send_while_edition_active_warns(caplog):
     import threading
 
     captured: dict = {}
-    with caplog.at_level("WARNING"):
-        with sdk.edition(task_id="ed"):
-            t = threading.Thread(target=_send_untasked, args=(captured,))
-            t.start()
-            t.join()
+    with caplog.at_level("WARNING"), sdk.edition(task_id="ed"):
+        t = threading.Thread(target=_send_untasked, args=(captured,))
+        t.start()
+        t.join()
     assert captured["task"] is None  # went out un-tasked
     assert "BASELINE" in caplog.text
 

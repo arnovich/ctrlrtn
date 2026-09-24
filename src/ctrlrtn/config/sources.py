@@ -32,7 +32,7 @@ def _from_yaml() -> dict:
     if not path:
         return {}
     try:
-        with open(path, "r", encoding="utf-8") as handle:
+        with open(path, encoding="utf-8") as handle:
             data = yaml.safe_load(handle)
     except FileNotFoundError:
         # Only reachable for an explicit CTRLRTN_CONFIG (the default file

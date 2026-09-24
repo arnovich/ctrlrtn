@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from ctrlrtn.workflow.discovery import DiscoveredWorkflowFamily
@@ -58,9 +58,9 @@ def build_workflow_proposal(
     """Create a review artifact; it cannot be loaded as control configuration."""
     workflow = _identifier(workflow, "workflow")
     workflow_version = _identifier(workflow_version, "workflow version")
-    checked_at = created_at or datetime.now(timezone.utc)
+    checked_at = created_at or datetime.now(UTC)
     if checked_at.tzinfo is None:
-        checked_at = checked_at.replace(tzinfo=timezone.utc)
+        checked_at = checked_at.replace(tzinfo=UTC)
     used: set[str] = set()
     names = {node.label: _step_name(node.label, used) for node in family.nodes}
     predecessors: dict[str, set[str]] = {name: set() for name in names.values()}
@@ -84,7 +84,7 @@ def build_workflow_proposal(
         "version": VERSION,
         "kind": KIND,
         "authority": AUTHORITY,
-        "created_at": checked_at.astimezone(timezone.utc)
+        "created_at": checked_at.astimezone(UTC)
         .isoformat()
         .replace("+00:00", "Z"),
         "family": {

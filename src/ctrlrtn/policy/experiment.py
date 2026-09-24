@@ -110,7 +110,7 @@ class Experiment:
         workflow: str | None = None,
         workflow_version: str | None = None,
         step: str | None = None,
-    ) -> "Experiment":
+    ) -> Experiment:
         """Rebuild from already-persisted fields **without** re-validating.
 
         Stored rows passed validation at write time and are trusted, so a future
@@ -145,7 +145,7 @@ class Experiment:
             self.use_case_key, self.workflow, self.workflow_version, self.step
         )
 
-    def stopped(self) -> "Experiment":
+    def stopped(self) -> Experiment:
         """A copy marked stopped (the store persists the status flip)."""
         return replace(self, status=STOPPED)
 
@@ -204,14 +204,14 @@ def bucket(experiment_id: str, task_id: str) -> int:
     return int.from_bytes(hashlib.sha256(key).digest()[:8], "big") % 100
 
 
-def assign_arm(experiment: "Experiment", task_id: str) -> str:
+def assign_arm(experiment: Experiment, task_id: str) -> str:
     """``CANDIDATE`` for the candidate's traffic share, else ``BASELINE``."""
     below = bucket(experiment.experiment_id, task_id) < experiment.split_pct
     return CANDIDATE if below else BASELINE
 
 
 def decide(
-    experiment: "Experiment", task_id: str, requested_model: str
+    experiment: Experiment, task_id: str, requested_model: str
 ) -> ServeDecision:
     """Resolve one request against a RUNNING experiment: pick the arm and the
     model to serve. The requested model rides through unchanged on baseline.

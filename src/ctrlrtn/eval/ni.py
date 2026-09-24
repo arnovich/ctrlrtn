@@ -112,7 +112,7 @@ def _group_units(
     if clusters is None:
         return [[d] for d in diffs]
     grouped: dict = {}
-    for label, value in zip(clusters, diffs):
+    for label, value in zip(clusters, diffs, strict=True):
         grouped.setdefault(label, []).append(value)
     return list(grouped.values())
 

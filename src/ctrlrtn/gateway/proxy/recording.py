@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING
 
 import httpx
 
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 async def _record_stream(
     upstream_response: httpx.Response,
-    recorder: "Recorder",
+    recorder: Recorder,
     started: float,
     *,
     method: str,
@@ -35,7 +36,7 @@ async def _record_stream(
     provider_free: bool,
     serve: ServingDecision | None,
     budget_reservation_id: int | None,
-    shadow_pair: "ShadowPair | None",
+    shadow_pair: ShadowPair | None,
 ) -> AsyncIterator[bytes]:
     """Forward the upstream body to the client while teeing a copy, then
     enqueue the trace once the stream completes."""
@@ -91,7 +92,7 @@ async def _record_stream(
 
 
 async def _enqueue_trace(
-    recorder: "Recorder", trace: Trace, serve: ServingDecision | None
+    recorder: Recorder, trace: Trace, serve: ServingDecision | None
 ) -> None:
     """Use bounded backpressure for traces that cannot safely disappear.
 
@@ -107,7 +108,7 @@ async def _enqueue_trace(
 
 
 def _record_synthetic(
-    recorder: "Recorder",
+    recorder: Recorder,
     serve: ServingDecision | None,
     status: int,
     started: float,

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING
 
 import httpx
 from starlette.background import BackgroundTask
@@ -49,13 +50,13 @@ async def proxy_pass_through(
     upstream_api: str | None = None,
     upstream_provider: str | None = None,
     upstream_free: bool = False,
-    upstream_credential: "ProviderCredential | None" = None,
+    upstream_credential: ProviderCredential | None = None,
     resolve_provider: ProviderResolveFn | None = None,
-    recorder: "Recorder | None" = None,
+    recorder: Recorder | None = None,
     decide: DecideFn | None = None,
     fallback: FallbackFn | None = None,
-    budget_gate: "BudgetGate | None" = None,
-    shadow_manager: "ShadowManager | None" = None,
+    budget_gate: BudgetGate | None = None,
+    shadow_manager: ShadowManager | None = None,
 ) -> Response:
     """Forward ``request`` to the upstream provider and stream the response.
 
@@ -84,7 +85,7 @@ async def proxy_pass_through(
     request_body = await request.body()
 
     forward_body = request_body
-    serve: "ServingDecision | None" = None
+    serve: ServingDecision | None = None
     if decide is not None:
         try:
             # Pass the case-insensitive Headers (not the lowercased dict) so a
@@ -194,7 +195,7 @@ async def proxy_pass_through(
         )
         if budget.error_type == "ctrlrtn_budget_fallback_required":
             fallback_body: bytes | bytearray = bytes(forward_body)
-            fallback_serve: "ServingDecision | None" = None
+            fallback_serve: ServingDecision | None = None
             if fallback is not None and serve is None:
                 try:
                     fallback_body, fallback_serve = fallback(

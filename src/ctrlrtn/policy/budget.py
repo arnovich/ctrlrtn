@@ -9,9 +9,9 @@ from __future__ import annotations
 import json
 import math
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Mapping
+from datetime import UTC, datetime
 
 from ctrlrtn.identify.fingerprint import fingerprint
 from ctrlrtn.recorder.trace import Trace
@@ -89,7 +89,7 @@ class SpendSnapshot:
 
     @staticmethod
     def _day(ts: float) -> int:
-        return datetime.fromtimestamp(ts, timezone.utc).date().toordinal()
+        return datetime.fromtimestamp(ts, UTC).date().toordinal()
 
     def _rollover(self, now: float) -> None:
         day = self._day(now)
@@ -166,9 +166,7 @@ class SpendSnapshot:
 
 def utc_day_start(now: float | None = None) -> float:
     """Unix timestamp for midnight UTC on the current/requested day."""
-    moment = datetime.fromtimestamp(
-        time.time() if now is None else now, timezone.utc
-    )
+    moment = datetime.fromtimestamp(time.time() if now is None else now, UTC)
     return moment.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
 
 

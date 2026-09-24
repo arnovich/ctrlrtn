@@ -119,7 +119,9 @@ class OfflineExperimentScreen(KeyboardForm, ModalScreen[dict | None]):
         matches.set_class(bool(text), "shown")  # no blank row without a hint
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        value = lambda selector: self.query_one(selector, Input).value.strip()
+        def value(selector):
+            return self.query_one(selector, Input).value.strip()
+
         try:
             result = {
                 "use_case": value("#offline-use-case"),
@@ -202,7 +204,9 @@ class LiveExperimentScreen(KeyboardForm, ModalScreen[dict | None]):
             yield form_hint()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        value = lambda selector: self.query_one(selector, Input).value.strip()
+        def value(selector):
+            return self.query_one(selector, Input).value.strip()
+
         try:
             result = {
                 "use_case_key": value("#live-use-case"),
@@ -264,7 +268,9 @@ class ShadowExperimentScreen(KeyboardForm, ModalScreen[dict | None]):
             yield form_hint()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        value = lambda selector: self.query_one(selector, Input).value.strip()
+        def value(selector):
+            return self.query_one(selector, Input).value.strip()
+
         try:
             sample = int(value("#shadow-sample"))
         except ValueError:
@@ -322,7 +328,9 @@ class RouteScreen(KeyboardForm, ModalScreen[dict | None]):
             yield form_hint()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        value = lambda selector: self.query_one(selector, Input).value.strip()
+        def value(selector):
+            return self.query_one(selector, Input).value.strip()
+
         self.dismiss(
             {
                 "use_case_key": value("#route-use-case"),

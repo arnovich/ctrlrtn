@@ -319,12 +319,11 @@ def render_discovered_family_dag(
     visits: Counter[str] = Counter()
     edges: Counter[tuple[str, str]] = Counter()
     for path in projection.paths:
-        visits.update({label: path.tasks for label in path.labels})
+        visits.update(dict.fromkeys(path.labels, path.tasks))
         edges.update(
-            {
-                (source, target): path.tasks
-                for source, target in zip(path.labels, path.labels[1:])
-            }
+            dict.fromkeys(
+                zip(path.labels, path.labels[1:], strict=False), path.tasks
+            )
         )
 
     order: list[str] = []

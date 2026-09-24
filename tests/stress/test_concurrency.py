@@ -41,6 +41,15 @@ def _trace(index: int) -> Trace:
     )
 
 
+def _open_after_barrier(barrier, path, errors) -> None:
+    """Open and close one store once every thread has reached the barrier."""
+    try:
+        barrier.wait(timeout=5)
+        SqliteTraceStore(path).close()
+    except BaseException as exc:  # noqa: BLE001 - asserted by the caller
+        errors.append(exc)
+
+
 def test_eight_concurrent_cold_starts_converge_repeatedly(tmp_path):
     for attempt in range(10):
         path = tmp_path / f"cold-{attempt}.db"
@@ -50,16 +59,12 @@ def test_eight_concurrent_cold_starts_converge_repeatedly(tmp_path):
         seed.close()
         barrier = threading.Barrier(8)
         errors: list[BaseException] = []
-
-        def open_store() -> None:
-            try:
-                barrier.wait(timeout=5)
-                store = SqliteTraceStore(path)
-                store.close()
-            except BaseException as exc:  # noqa: BLE001 - asserted below
-                errors.append(exc)
-
-        threads = [threading.Thread(target=open_store) for _ in range(8)]
+        threads = [
+            threading.Thread(
+                target=_open_after_barrier, args=(barrier, path, errors)
+            )
+            for _ in range(8)
+        ]
         for thread in threads:
             thread.start()
         for thread in threads:

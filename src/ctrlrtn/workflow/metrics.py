@@ -100,7 +100,7 @@ def build_workflow_step_metrics(
                 "output": 0,
                 "latency": 0.0,
                 "durations": [],
-                "statuses": {status: 0 for status in TERMINAL_STATUSES},
+                "statuses": dict.fromkeys(TERMINAL_STATUSES, 0),
                 "active": 0,
                 "inconsistent": 0,
                 "reported": 0,

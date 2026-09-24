@@ -6,7 +6,7 @@ import contextlib
 import threading
 import time
 import uuid
-from typing import Iterator
+from collections.abc import Iterator
 
 from ctrlrtn.sdk.context import (
     _route,
@@ -65,7 +65,7 @@ class Edition:
         parent_step_run_id: str | None = None,
         dependencies: tuple[str, ...] | list[str] = (),
         attempt: int = 1,
-    ) -> "Step":
+    ) -> Step:
         if self.workflow is None or self.workflow_version is None:
             raise ValueError(
                 "edition() requires workflow and workflow_version before step()"
@@ -211,7 +211,7 @@ class Step:
         attempt_id: str | None = None,
         attempt: int = 1,
         effect: str = "unknown",
-    ) -> "ToolOperation":
+    ) -> ToolOperation:
         """Declare one explicit tool attempt inside this exact step run."""
         identity = ToolOperationIdentity(
             self.identity,
@@ -223,7 +223,7 @@ class Step:
         )
         return ToolOperation(identity, self._report_to)
 
-    def __enter__(self) -> "Step":
+    def __enter__(self) -> Step:
         self._token = _step_identity.set(self.identity)
         self._emit("started")
         return self
@@ -277,7 +277,7 @@ class ToolOperation:
                 "ctrlrtn: failed to report tool operation event", exc_info=True
             )
 
-    def __enter__(self) -> "ToolOperation":
+    def __enter__(self) -> ToolOperation:
         self._started = time.monotonic()
         self._emit("started")
         return self

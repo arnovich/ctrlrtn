@@ -32,7 +32,7 @@ the reused use-cases ``recommendations`` identifies is the planned refinement.
 from __future__ import annotations
 
 import json
-from typing import Mapping
+from collections.abc import Mapping
 
 ANTHROPIC_MESSAGES_PATH = "/v1/messages"
 _EPHEMERAL = {"type": "ephemeral"}
@@ -47,7 +47,7 @@ def cache_inject_decide(
     headers: Mapping[str, str],
     body: bytes,
     upstream_api: str | None = None,
-) -> "tuple[bytes, None]":
+) -> tuple[bytes, None]:
     """Adapt the cache injector to the proxy's ``decide`` hook.
 
     Cache injection never assigns an A/B arm, so the ServeDecision is always

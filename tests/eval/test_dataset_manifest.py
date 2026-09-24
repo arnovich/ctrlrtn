@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -16,7 +16,7 @@ from ctrlrtn.eval.dataset_manifest import (
 from ctrlrtn.recorder.sqlite.store import SqliteTraceStore
 from ctrlrtn.recorder.trace import Trace
 
-NOW = datetime(2026, 8, 2, tzinfo=timezone.utc)
+NOW = datetime(2026, 8, 2, tzinfo=UTC)
 
 
 def _rows() -> list[dict]:

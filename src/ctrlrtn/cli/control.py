@@ -12,7 +12,7 @@ import json
 import sqlite3
 import sys
 from collections.abc import Callable, Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import NoReturn
 
 from ctrlrtn.cli.render import (
@@ -77,17 +77,17 @@ class ControlCommands:
 
     def _experiment_start(self, args: argparse.Namespace) -> None:
         self._require_provider(args.provider)
-        fields = dict(
-            use_case_key=args.use_case,
-            candidate_model=args.candidate,
-            candidate_provider=args.provider,
-            split_pct=args.split,
-            max_calls_per_task=args.max_calls,
-            max_cost_usd_per_task=args.max_cost,
-            workflow=args.workflow,
-            workflow_version=args.workflow_version,
-            step=args.step,
-        )
+        fields = {
+            "use_case_key": args.use_case,
+            "candidate_model": args.candidate,
+            "candidate_provider": args.provider,
+            "split_pct": args.split,
+            "max_calls_per_task": args.max_calls,
+            "max_cost_usd_per_task": args.max_cost,
+            "workflow": args.workflow,
+            "workflow_version": args.workflow_version,
+            "step": args.step,
+        }
         if args.id:
             fields["experiment_id"] = args.id
         try:
@@ -361,7 +361,7 @@ class ControlCommands:
             print("No Git-backed routing config has been activated.")
         else:
             activated = datetime.fromtimestamp(
-                revision.activated_at, tz=timezone.utc
+                revision.activated_at, tz=UTC
             ).isoformat()
             print(f"revision:  {revision.revision}")
             print(f"source:    {revision.source_path}")

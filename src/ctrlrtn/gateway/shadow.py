@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import time
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 import httpx
 
@@ -93,14 +94,12 @@ class ShadowManager:
     async def aclose(self) -> None:
         if self._refresh_task is not None:
             self._refresh_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._refresh_task
-            except asyncio.CancelledError:
-                pass
             self._refresh_task = None
         try:
             await asyncio.wait_for(self._queue.join(), 10.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 "shadow shutdown: %d mirrors undrained", self._queue.qsize()
             )

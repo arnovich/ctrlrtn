@@ -617,7 +617,9 @@ async def test_send_failure_still_records_the_arm():
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://router"
         ) as client:
-            with pytest.raises(Exception):  # the send failure propagates
+            with pytest.raises(
+                httpx.ConnectError
+            ):  # the send failure propagates
                 await client.post(
                     "/v1/messages",
                     content=_BODY,

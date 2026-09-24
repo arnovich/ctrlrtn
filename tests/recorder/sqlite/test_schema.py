@@ -129,6 +129,15 @@ def test_a_partial_schema_is_never_left_durable(tmp_path, monkeypatch):
     assert _objects(survivor).get("table", set()) == set()
 
 
+def _open_after_barrier(barrier, path, errors, timeout) -> None:
+    """Open and close one store once every thread has reached the barrier."""
+    try:
+        barrier.wait(timeout=timeout)
+        SqliteTraceStore(str(path)).close()
+    except BaseException as exc:  # noqa: BLE001 - reported by the caller
+        errors.append(exc)
+
+
 def test_concurrent_cold_start_upgrades_one_database(tmp_path):
     """Two processes-worth of opens against one M0 file must both succeed.
 
@@ -144,16 +153,12 @@ def test_concurrent_cold_start_upgrades_one_database(tmp_path):
 
         errors: list[BaseException] = []
         barrier = threading.Barrier(4)
-
-        def open_store() -> None:
-            try:
-                barrier.wait(timeout=10)
-                store = SqliteTraceStore(str(path))
-                store.close()
-            except BaseException as exc:  # noqa: BLE001 - reported below
-                errors.append(exc)
-
-        threads = [threading.Thread(target=open_store) for _ in range(4)]
+        threads = [
+            threading.Thread(
+                target=_open_after_barrier, args=(barrier, path, errors, 10)
+            )
+            for _ in range(4)
+        ]
         for thread in threads:
             thread.start()
         for thread in threads:

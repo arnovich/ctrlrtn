@@ -169,7 +169,7 @@ def _where(clauses: list[str]) -> str:
     return f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
 
-def _row_to_route(row: tuple) -> "Route":
+def _row_to_route(row: tuple) -> Route:
     return Route(
         use_case_key=row[0],
         model=row[1],
