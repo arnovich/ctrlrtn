@@ -16,12 +16,18 @@ def _facade() -> ModuleType:
 
 
 def report_outcome(*args, **kwargs):
+    """Forward to ``ctrlrtn.sdk.report_outcome`` as currently bound on the
+    facade, so a replacement installed there is honoured."""
     return _facade().report_outcome(*args, **kwargs)
 
 
 def report_workflow_event(*args, **kwargs):
+    """Forward to ``ctrlrtn.sdk.report_workflow_event`` as currently bound on
+    the facade, so a replacement installed there is honoured."""
     return _facade().report_workflow_event(*args, **kwargs)
 
 
 def report_tool_operation_event(*args, **kwargs):
+    """Forward to ``ctrlrtn.sdk.report_tool_operation_event`` as currently
+    bound on the facade, so a replacement installed there is honoured."""
     return _facade().report_tool_operation_event(*args, **kwargs)

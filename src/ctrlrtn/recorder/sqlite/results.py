@@ -43,6 +43,12 @@ class DatabaseCompaction:
 
 @dataclass(frozen=True)
 class WorkflowDiscoveryInputDiagnostics:
+    """How a frozen discovery sample was drawn: the bounded cohort of
+    explicit-workflow tasks and unscoped traces that were available, how many
+    were selected, truncated or excluded by scope, and how many selected
+    traces were payload-pruned or unkeyable. Evidence for the discovery
+    report, never an input to serving."""
+
     available_explicit_tasks: int
     selected_explicit_tasks: int
     truncated_explicit_tasks: int

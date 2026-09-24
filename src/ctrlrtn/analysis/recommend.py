@@ -51,6 +51,10 @@ _ORDER = {
 
 @dataclass
 class Recommendation:
+    """One zero-eval hint for an operator, typed by ``kind``. Advisory only:
+    nothing acts on it automatically, and ``est_savings_usd`` is a modelled
+    ceiling from the price table, not a forecast."""
+
     kind: str  # focus | enable_caching | downgrade_candidate
     use_case: str
     summary: str

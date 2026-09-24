@@ -7,6 +7,14 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class WorkflowCatalogRow:
+    """One exact workflow version summarized across its recorded task runs.
+
+    Outcome counts are task-level ``success`` reports, so ``unreported``
+    means tasks with no outcome at all, not failures. ``active_routes`` and
+    ``active_experiments`` say how much live control currently targets this
+    version. Rows are read-only projections, never routing input.
+    """
+
     workflow: str
     version: str
     tasks: int

@@ -13,6 +13,11 @@ from ctrlrtn.workflow.identity import (
 
 @dataclass(frozen=True)
 class ExperimentScope:
+    """Where an experiment applies: a use-case key, optionally narrowed to
+    one workflow version or one exact step within it. Validated on creation;
+    ``key`` is the stable identity and ``matches_*`` decide whether a
+    request falls inside."""
+
     use_case_key: str
     workflow: str | None = None
     workflow_version: str | None = None

@@ -19,6 +19,11 @@ def _new_id() -> str:
 
 @dataclass(frozen=True)
 class ShadowExperiment:
+    """A shadow experiment record: which use-case (optionally one exact step)
+    is mirrored, to which candidate model, at what sample percentage.
+    Immutable; ``stopped()`` returns the stopped copy. A whole-workflow scope
+    is rejected because nothing could run the continuation."""
+
     use_case_key: str
     candidate_model: str
     sample_pct: int
@@ -74,6 +79,10 @@ def selected(experiment: ShadowExperiment, unit: str) -> bool:
 
 @dataclass(frozen=True)
 class ShadowStats:
+    """Durable attrition counters for one shadow experiment: mirrors
+    submitted, completed, failed upstream, and dropped before or after
+    sending."""
+
     shadow_id: str
     submitted: int = 0
     completed: int = 0

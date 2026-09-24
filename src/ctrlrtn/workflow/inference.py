@@ -11,6 +11,15 @@ ALGORITHM = "tool-id-link/v1"
 
 @dataclass(frozen=True)
 class InferredWorkflowEdge:
+    """One analysis-only data-flow edge reconstructed from tool-call IDs.
+
+    It records its source and target trace IDs, the ``tool-id-link/v1``
+    algorithm, a confidence, and whether explicit lifecycle facts later
+    ``confirmed``, ``contradicted`` or left it ``unverified``. Only the
+    SHA-256 digest of the tool ID is kept as evidence. Inferred edges are
+    forbidden as routing, experiment or execution-control inputs.
+    """
+
     edge_id: str
     task_id: str
     workflow: str
@@ -27,6 +36,13 @@ class InferredWorkflowEdge:
 
 @dataclass(frozen=True)
 class InferenceReport:
+    """Inferred edges plus their accuracy against explicit ground truth.
+
+    Precision and recall count only targets that have explicit lifecycle
+    facts; ``ambiguous_evidence`` counts consumed tool IDs skipped because
+    more than one producer matched.
+    """
+
     edges: tuple[InferredWorkflowEdge, ...]
     explicit_edges: int
     true_positive: int

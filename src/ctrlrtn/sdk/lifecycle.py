@@ -67,6 +67,13 @@ class Edition:
         dependencies: tuple[str, ...] | list[str] = (),
         attempt: int = 1,
     ) -> Step:
+        """Open one invocation of workflow step ``name`` as a ``Step`` context
+        manager; calls made inside it carry the full workflow identity. The
+        edition must have been opened with ``workflow`` and
+        ``workflow_version`` (``ValueError`` otherwise). ``step_run_id``
+        defaults to a fresh id and ``parent_step_run_id`` to the enclosing
+        step, if any. Step events are reported only when the edition has a
+        ``report_to``."""
         if self.workflow is None or self.workflow_version is None:
             raise ValueError(
                 "edition() requires workflow and workflow_version before step()"
@@ -90,6 +97,12 @@ class Edition:
     def report(
         self, *, success: bool | None = None, score: float | None = None
     ) -> None:
+        """Report the edition's outcome: ``success`` and/or ``score`` (at
+        least one is required). Best-effort — a transport failure is logged
+        and swallowed, and without a ``report_to`` the outcome is dropped with
+        a warning. Marks the edition reported, so an uncaught exception will
+        not auto-report a failure on top; on the gateway the latest report for
+        a task id wins."""
         if success is None and score is None:
             raise ValueError("provide success and/or score")
         self._reported = True
@@ -237,6 +250,12 @@ class Step:
         score: float | None = None,
         error_code: str | None = None,
     ) -> None:
+        """Emit the step run's terminal event explicitly, with an optional
+        outcome. ``status`` must be terminal (``completed``, ``failed``,
+        ``cancelled`` or ``skipped``) and a step run has exactly one terminal
+        event: a second call raises ``RuntimeError`` and ``__exit__`` then
+        emits nothing more. Without a call, leaving the block emits
+        ``completed``, or ``failed`` if an exception is propagating."""
         if self._terminal:
             raise RuntimeError("step already has a terminal event")
         if status not in {"completed", "failed", "cancelled", "skipped"}:
@@ -291,6 +310,12 @@ class ToolOperation:
         latency_ms: float | None = None,
         cost_usd: float | None = None,
     ) -> None:
+        """Emit the tool attempt's terminal event explicitly. ``status`` must
+        be ``completed``, ``failed`` or ``cancelled``, and an attempt has
+        exactly one terminal event (``RuntimeError`` on a second call).
+        ``latency_ms`` defaults to the time since ``__enter__``. Without a
+        call, leaving the block reports ``completed``, or ``failed`` with the
+        exception type as ``error_code`` if one is propagating."""
         if self._terminal:
             raise RuntimeError("tool attempt already has a terminal event")
         if status not in {"completed", "failed", "cancelled"}:
