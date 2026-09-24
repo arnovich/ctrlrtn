@@ -75,7 +75,8 @@ def register(sub, controls, evaluation) -> None:
     exp_status = exp_sub.add_parser(
         "status",
         help="tripwire verdict for an experiment (gross-regression check "
-        "with Manski bounds; exits 0 safe / 1 regression / 3 can't-conclude)",
+        "with Manski bounds; exits 0 safe / 1 regression / 3 can't-conclude / "
+        "4 no data)",
     )
     exp_status.add_argument("experiment_id", help="the experiment id")
     exp_status.add_argument(
