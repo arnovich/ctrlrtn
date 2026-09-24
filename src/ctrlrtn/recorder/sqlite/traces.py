@@ -8,7 +8,7 @@ from collections.abc import Callable
 from ctrlrtn.recorder.models import Outcome
 from ctrlrtn.recorder.trace import Trace
 
-from .connection import SqliteCapability
+from .capability import SqliteCapability
 from .queries import (
     _INSERT,
     _INSERT_OUTCOME,

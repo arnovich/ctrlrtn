@@ -7,7 +7,7 @@ import sqlite3
 from ctrlrtn.policy.fallback import ApprovedFallback
 from ctrlrtn.recorder.models import UNKEYED as _UNKEYED
 
-from ..connection import SqliteCapability
+from ..capability import SqliteCapability
 from ..queries import (
     _SELECT_FALLBACKS,
     _UPSERT_FALLBACK,

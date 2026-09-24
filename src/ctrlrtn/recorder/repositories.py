@@ -10,7 +10,7 @@ Expressing that as ``ServingRepository`` makes it a type error to call
 ``set_route`` from ``ExperimentRouter``, instead of a runtime failure against
 a read-only SQLite connection long after the code shipped.
 
-Each protocol is ``runtime_checkable`` so ``tests/test_repositories.py`` can
+Each protocol is ``runtime_checkable`` so ``tests/recorder/test_repositories.py`` can
 assert every adapter satisfies the contracts it claims, and the in-memory and
 SQLite stores cannot silently drift apart.
 """
@@ -140,10 +140,10 @@ class ReportingRepository(ExperimentReader, Protocol):
     contract names exactly those.
     """
 
-    def use_case_models(self) -> dict[str, str | None]:
+    def use_case_models(self) -> dict[str, str]:
         """The model most recently seen per use-case key (from its latest
-        call), ``None`` where it could not be extracted; keyed like
-        ``rankings``."""
+        call); use-cases whose model could not be extracted are omitted.
+        Keyed like ``rankings``."""
         ...
 
     def rankings(self, *, baseline_only: bool = False) -> list[UseCaseRanking]:

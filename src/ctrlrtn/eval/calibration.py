@@ -4,7 +4,7 @@ The shadow-replay judge (``judge.py``) is blinded and position-bias-cancelled,
 but a residual remains: it can re-identify an arm from output *style* and carry
 a differential bias no A/B swap removes. Before a judge's non-inferiority
 verdict is trusted, it helps to see whether it agrees with humans on the same
-pairings — the ``docs/evaluation.md`` §6/§9 calibration step.
+pairings — the calibration step in ``docs/evaluation.md``.
 
 This is a DIAGNOSTIC, not a gate. It does NOT wire into ``replay-eval``: nothing
 here refuses a verdict or de-biases the NI test — an operator reads the report
@@ -122,7 +122,7 @@ def calibrate(
     for item in labeled:
         try:
             score = judge_pairing(judge_fn, item.pairing, replicates=replicates)
-        except Exception as exc:  # noqa: BLE001 - one bad call, not the pass
+        except Exception as exc:
             # A malformed reply (ValueError), or the injected judge itself
             # raising (a transient HTTP error, etc.), skips just this pairing —
             # it must not abort scoring the rest (mirrors run_replay).

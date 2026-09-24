@@ -2,9 +2,9 @@
 
 One router endpoint can front several providers; the upstream is chosen per
 request by URL path, because the API shape is provider-specific
-(``/v1/messages`` is Anthropic, ``/v1/chat/completions`` is OpenAI). This
-removes the single-upstream limitation where an OpenAI-shaped call sent to an
-Anthropic-pointed router was blindly forwarded and returned 401.
+(``/v1/messages`` is Anthropic, ``/v1/chat/completions`` is OpenAI), so a
+router that fronts both providers sends each call to the one that speaks its
+shape.
 """
 
 from __future__ import annotations

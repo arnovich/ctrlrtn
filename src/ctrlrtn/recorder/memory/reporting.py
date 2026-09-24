@@ -70,7 +70,7 @@ class ReportingMemoryMixin(MemoryState):
         ]
         return sort_by_spend(rows)
 
-    def use_case_models(self) -> dict[str, str | None]:
+    def use_case_models(self) -> dict[str, str]:
         latest: dict[str, tuple[float, str]] = {}
         for trace in self.traces:  # insertion order == id order
             if trace.model is None:

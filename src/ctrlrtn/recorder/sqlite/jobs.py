@@ -8,7 +8,7 @@ import time
 
 from ctrlrtn.jobs import Job
 
-from .connection import SqliteCapability
+from .capability import SqliteCapability
 from .queries import _SELECT_JOBS, _row_to_job
 
 

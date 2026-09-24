@@ -45,7 +45,9 @@ class WorkflowDiscoveryScope:
     It bounds tasks by last-observed time, provider, served model,
     experiment and arm. A matching task contributes its whole trajectory
     rather than having non-matching calls cut from its graph; ``arm``
-    requires ``experiment_id``, and all-``None`` means all legacy traffic.
+    requires ``experiment_id``, and all-``None`` means every task. Legacy
+    traffic, here and elsewhere in discovery, means calls recorded without
+    workflow identity headers.
     """
 
     since: float | None = None

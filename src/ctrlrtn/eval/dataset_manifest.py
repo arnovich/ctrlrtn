@@ -1,4 +1,4 @@
-"""Inert dataset lineage manifests for future offline model experiments."""
+"""Inert dataset lineage manifests for held-out replay evaluation."""
 
 from __future__ import annotations
 

@@ -6,7 +6,8 @@ by task, serves the candidate to one arm, and exists to catch gross regression.
 It never certifies non-inferiority, which task-level A/B cannot do at realistic
 volumes; that verdict comes from paired offline replay (``docs/evaluation.md``).
 The model here is deliberately inert data:
-it carries the assignment parameters and the divergence ceilings; the serving
+it carries the assignment parameters, the enforced call ceiling and the
+recorded cost ceiling; the serving
 logic that reads it lives in the gateway, and persistence in the store.
 
 An experiment is **immutable once created**. Changing the split would re-bucket
@@ -31,17 +32,17 @@ BASELINE = "baseline"
 CANDIDATE = "candidate"
 
 # Per-(task, candidate arm) divergence backstops. Only max_calls_per_task is
-# ENFORCED today (in the serving hot path): once a candidate makes more than this
-# many calls within one task it is cut off with a counted failure — a coarse
-# loop/runaway backstop that also transitively bounds spend. Set it BELOW your
-# client's own max-turns limit, else a candidate that loops to the client's limit
-# stops calling before the ceiling fires; the real divergence signal is the
-# per-arm calls/task distribution at analysis time (slice 6), not this cap.
+# Enforced in the serving hot path: once a candidate makes more than this many
+# calls within one task it is cut off with a counted failure, a coarse
+# loop/runaway backstop that also bounds spend. Set it below the client's own
+# max-turns limit, or the client stops the loop before the ceiling fires; the
+# real divergence signal is the per-arm calls/task distribution at analysis
+# time, not this cap.
 #
-# max_cost_usd_per_task is NOT yet enforced (cost is only known post-response, in
-# enrichment; the sync pre-request hook can't price a call). It is persisted for
-# a later per-task spend guard. Global/per-use-case daily ceilings and the
-# startup kill switch are separate controls; neither makes this field enforceable.
+# max_cost_usd_per_task is informational: cost is only known after the
+# response, in enrichment, so the pre-request hook cannot price a call. It is
+# recorded with the experiment and shown beside the enforced ceiling. The daily
+# global and per-use-case budgets and the kill switch are the spend controls.
 DEFAULT_MAX_CALLS_PER_TASK = 60
 DEFAULT_MAX_COST_USD_PER_TASK = 5.0
 

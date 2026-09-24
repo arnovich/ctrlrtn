@@ -25,8 +25,8 @@ TTL* (the write costs ~1.25x; each later read ~0.1x — break-even is ~1.3 reads
 This flag is **global** across Anthropic traffic, so on one-shot or
 TTL-spaced-out use-cases it is a net loss. The ``recommendations`` command's
 ``caching_waste`` guardrail flags any use-case that writes to cache but never
-reads back, so the loss is visible rather than silent. Scoping injection to only
-the reused use-cases ``recommendations`` identifies is the planned refinement.
+reads back, so the loss is visible rather than silent; injection itself cannot
+be scoped per use-case.
 """
 
 from __future__ import annotations

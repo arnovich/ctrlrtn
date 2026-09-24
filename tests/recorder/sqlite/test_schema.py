@@ -134,7 +134,7 @@ def _open_after_barrier(barrier, path, errors, timeout) -> None:
     try:
         barrier.wait(timeout=timeout)
         SqliteTraceStore(str(path)).close()
-    except BaseException as exc:  # noqa: BLE001 - reported by the caller
+    except BaseException as exc:
         errors.append(exc)
 
 

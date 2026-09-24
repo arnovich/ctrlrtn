@@ -9,7 +9,7 @@ import time
 
 from ctrlrtn.recorder.redaction import redact_headers, redact_query
 
-from .connection import SqliteCapability
+from .capability import SqliteCapability
 from .results import DatabaseCompaction, TracePayloadPrune, WorkflowTaskErasure
 
 

@@ -51,7 +51,7 @@ def build_workflow_recommendations(
             row
         )
 
-    for _key, workflow_rows in by_workflow.items():
+    for workflow_rows in by_workflow.values():
         total_cost = sum(row.cost_usd for row in workflow_rows)
         for row in workflow_rows:
             if row.runs < _MIN_RUNS:

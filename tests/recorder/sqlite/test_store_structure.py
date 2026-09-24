@@ -99,3 +99,8 @@ def test_nested_sqlite_facades_do_not_own_behavior():
             for name, value in facade.__dict__.items()
             if callable(value) and not name.startswith("__")
         }
+
+
+def test_composed_store_implements_every_capability():
+    """A composition missing a mixin must fail at instantiation, not later."""
+    assert not SqliteTraceStore.__abstractmethods__

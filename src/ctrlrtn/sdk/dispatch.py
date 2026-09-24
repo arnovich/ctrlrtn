@@ -1,8 +1,8 @@
 """Late-bound reporting calls used by SDK lifecycle objects.
 
-Reporting functions have always been replaceable on ``ctrlrtn.sdk`` (for
-tests and application adapters). Lifecycle code calls through this seam so a
-replacement made on the public facade remains visible after decomposition.
+Applications and tests may replace the reporting functions on
+``ctrlrtn.sdk``. Lifecycle code calls through this seam so a replacement
+installed on the facade is the one that runs.
 """
 
 from __future__ import annotations
