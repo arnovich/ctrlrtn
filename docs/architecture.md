@@ -1,14 +1,15 @@
 # Architecture
 
-The proxy is one local process with two different halves:
+One local process with two halves:
 
-- The **data plane** forwards provider requests and streams responses. It does
-  only the work required to route, protect an experiment, and capture a trace.
-- The **control plane** reads recorded traces to report spend, evaluate models,
-  manage experiments, and install explicit routes.
+- The **data plane** forwards provider requests and streams responses. It
+  does only the work needed to route, protect an experiment, and capture a
+  trace.
+- The **control plane** reads recorded traces to report spend, evaluate
+  models, manage experiments, and install explicit routes.
 
-The project favors direct functions and immutable data over framework layers.
-SQLite, `httpx`, and Starlette are the main runtime building blocks.
+Direct functions and immutable data, not framework layers. SQLite, `httpx`,
+and Starlette are the runtime building blocks.
 
 ## Request flow
 
@@ -97,34 +98,37 @@ flowchart LR
     Telemetry --> Analysis
 ```
 
-Solid arrows are ordinary request, data, and control flow. The dashed paths
-are asynchronous snapshot refresh, off-response-path mirroring,
+Solid arrows are request, data, and control flow. Dashed paths are
+asynchronous: snapshot refresh, off-response-path mirroring,
 persisted-accounting observation, control-state reconciliation, and budget
-fallback control; none introduces a database read while deciding a request.
+fallback control. None introduces a database read while deciding a request.
 
-Note the direction of the storage edges: the request path depends on the
-repository contracts in `recorder/repositories.py`, never on the SQLite
-adapter, and nothing under `recorder/` depends on `gateway/`.
-`ServingRepository` has no mutators, so the request path cannot perform a
-control-plane write even by mistake.
+Storage edges point one way: the request path depends on the repository
+contracts in `recorder/repositories.py`, never on the SQLite adapter, and
+nothing under `recorder/` depends on `gateway/`. `ServingRepository` has no
+mutators, so the request path cannot perform a control-plane write.
 
-The order in which experiments, routes, fallbacks, and pass-through apply to
-a call is listed in [configure.md](configure.md#serving-precedence).
-Workflow and step routes match only a complete, validated workflow identity
+The order in which experiments, routes, fallbacks, and pass-through apply is
+in [configure.md](configure.md#serving-precedence). Workflow and step routes
+match only a complete, validated workflow identity
 ([workflow-identity.md](workflow-identity.md)).
 
-Cache-control injection composes with that decision and is gated by the
-resolved API identity, not guessed from the URL. The proxy records the
-client's original path and body plus the provider, its pricing policy, and the
-model actually served, so historical re-enrichment stays honest. A named
-mount affects transport only; the same body keeps the same use-case
-fingerprint across providers. A decision may name another configured
-provider. The proxy switches transport only when the candidate's API identity
-equals the baseline's, strips client credentials whenever the provider
-changes, and injects a provider-owned credential only while forwarding. An
-unknown provider or an API mismatch terminates locally with
-`ctrlrtn_provider_mismatch` and is recorded; there is no translation between
-APIs.
+Provider handling on that path:
+
+- Cache-control injection is gated by the resolved API identity, never
+  guessed from the URL.
+- Every trace records the client's original path and body plus the
+  provider, its pricing policy, and the model actually served, so historical
+  re-enrichment stays honest.
+- A named mount affects transport only; the same body keeps the same
+  use-case fingerprint across providers.
+- A decision may name another configured provider. Transport switches only
+  when the candidate's API identity equals the baseline's; client
+  credentials are stripped whenever the provider changes, and a
+  provider-owned credential is injected only while forwarding.
+- An unknown provider or an API mismatch terminates locally with
+  `ctrlrtn_provider_mismatch` and is recorded. There is no translation
+  between APIs.
 
 ## Code map
 
@@ -148,54 +152,48 @@ APIs.
 
 `recorder/repositories.py` names storage contracts by capability
 (`ServingRepository`, `ShadowRepository`, `ReportingRepository`,
-`TraceRepository`, `ExperimentRepository`), and `protocols.py` composes the
+`TraceRepository`, `ExperimentRepository`); `protocols.py` composes the
 whole-store contracts from them.
 
 The SQLite store, `recorder/sqlite/store.py`, is composed from capability
-mixins (traces, workflow, jobs, control, maintenance, reporting) over a typed
-base, `recorder/sqlite/capability.py`. The base declares the shared
-connection attributes and the abstract methods the mixins call on `self`;
-each abstract method is implemented by exactly one mixin, so a composition
+mixins (traces, workflow, jobs, control, maintenance, reporting) over a
+typed base, `recorder/sqlite/capability.py`, which declares the shared
+connection attributes and the abstract methods the mixins call on `self`.
+Each abstract method is implemented by exactly one mixin, so a composition
 that leaves one out fails at class creation and mypy reports it. The
-in-memory store, `recorder/memory_store.py`, mirrors that shape:
-`recorder/memory/core.py` declares the shared state and the mixins under
-`recorder/memory/` implement each capability. `recorder/sqlite/schema.py`
-owns tables, indexes, triggers, and in-place column upgrades; `queries.py`
-and `results.py` hold shared SQL and result values. Module boundaries never
-split a transaction: atomic multi-table operations run as one method on the
-shared connection.
+in-memory store, `recorder/memory_store.py`, mirrors that shape over
+`recorder/memory/core.py`. `recorder/sqlite/schema.py` owns tables, indexes,
+triggers, and in-place column upgrades; `queries.py` and `results.py` hold
+shared SQL and result values. Module boundaries never split a transaction:
+atomic multi-table operations run as one method on the shared connection.
 
 Domain decisions stay below the CLI adapters.
 
 ## Dependency rules
 
-1. The request path must not perform database or network control-plane
-   reads while deciding how to serve a request. Serving reads in-memory
-   snapshots.
+1. The request path performs no database or network control-plane reads
+   while deciding how to serve a request. Serving reads in-memory snapshots.
 2. Domain modules do not import the CLI, console, Starlette app, or SQLite.
 3. Code that only needs stored values or a persistence interface imports
    `recorder.models` or `recorder.repositories`, not the SQLite
-   implementation. Ask for the narrowest contract that fits:
-   `ServingRepository` declares no mutators, so a hot-path component cannot
-   perform a control-plane write.
+   implementation, and asks for the narrowest contract that fits.
 4. Package dependencies run one way: `gateway/` and `cli/` may depend on
    `policy/`, `recorder/`, `telemetry/`, and `workflow/`; none of those may
-   depend on `gateway/` or `cli/`. Storage never imports the HTTP edge. When
-   a helper is needed by both, it belongs to whichever side owns the
-   guarantee, which is why capture-time redaction lives under `recorder/`
-   and forward-time credential stripping under `gateway/`.
+   depend on `gateway/` or `cli/`. Storage never imports the HTTP edge. A
+   helper both sides need belongs to whichever side owns the guarantee:
+   capture-time redaction lives under `recorder/`, forward-time credential
+   stripping under `gateway/`.
 5. Provider HTTP calls used by evaluations stay in `eval/live.py`;
-   statistical functions accept injected callables and remain
+   statistical functions accept injected callables and stay
    offline-testable.
-6. Resources are owned explicitly. The application closes clients and stores
-   it creates and leaves injected resources to their caller.
+6. Resources are owned explicitly. The application closes clients and
+   stores it creates and leaves injected resources to their caller.
 7. Provider-specific request mutations are selected by the resolved API
-   identity. A coincidentally similar path is not sufficient.
+   identity, never by a similar-looking path.
 8. Provider pricing policy is captured on the trace at request time.
-   Historical re-enrichment must not depend on the proxy's current
-   configuration.
+   Historical re-enrichment must not depend on the current configuration.
 9. Cross-provider serving is allowed only between equal, explicit API
-   identities. Supporting different APIs requires a separately designed
+   identities. Supporting different APIs needs a separately designed
    translation boundary and is not inferred from model names.
 
 ## Persistence
@@ -204,19 +202,19 @@ SQLite is the durable source for traces, outcomes, workflow lifecycle and
 tool-operation events, inferred edges, experiments, routes, workflow routes
 and definitions, shadow experiments and their counters, approved fallbacks,
 durable jobs, discovery invalidations, and the active routing-config
-revision. One connection is protected by a lock, and blocking operations run
-outside the event loop. Schema changes are additive, so an existing database
-opens in place. Workflow identity is extracted off-path during enrichment
-into dedicated trace columns; a partial or malformed header set is stored as
-a diagnostic, not as identity. A successful fallback call carries a separate
-trace fact; it is a forwarded call, not a terminal rejection.
+revision. One connection is protected by a lock, and blocking operations
+run outside the event loop. Schema changes are additive, so an existing
+database opens in place. Workflow identity is extracted off-path during
+enrichment into dedicated trace columns; a partial or malformed header set
+is stored as a diagnostic, not as identity. A successful fallback call is a
+forwarded call with its own trace fact, not a terminal rejection.
 
 The console's monitoring connection opens the database with SQLite's
-read-only URI. It cannot create the file, run DDL, or take a write lock, and
-it still sees every WAL commit from the live proxy; a confirmed action opens
-a short-lived writer and leaves activation to the normal snapshot refresh.
-Every writable process holds a shared maintenance lock next to the database
-file, and `prune --compact` needs its exclusive form
+read-only URI: it cannot create the file, run DDL, or take a write lock,
+and it still sees every WAL commit from the live proxy. A confirmed action
+opens a short-lived writer and leaves activation to the normal snapshot
+refresh. Every writable process holds a shared maintenance lock next to the
+database file, and `prune --compact` needs its exclusive form
 ([deploy.md](deploy.md)).
 
 Git-backed control state is reconciled in one transaction that records
@@ -225,41 +223,43 @@ matches only explicit validated headers, records the winning rule and
 revision on every routed trace, and never consults observed or inferred
 projections.
 
-Everything `workflow/` derives is a projection recomputed from retained rows
-at query time, with two persisted exceptions: the inferred-edge table that
-`workflow infer` replaces, and the frozen inputs and checksummed results of
-discovery jobs in the job ledger. No data-plane module reads either.
-[workflow-discovery.md](workflow-discovery.md) describes what they hold and
-how pruning and erasure treat them.
+Everything `workflow/` derives is a projection recomputed from retained
+rows at query time, with two persisted exceptions: the inferred-edge table
+that `workflow infer` replaces, and the frozen inputs and checksummed
+results of discovery jobs in the job ledger. No data-plane module reads
+either. [workflow-discovery.md](workflow-discovery.md) describes what they
+hold and how pruning and erasure treat them.
 
 ### Budget admission
 
 Budget admission reads an in-memory snapshot: UTC-day global and use-case
-totals plus lifetime totals and unknown-cost state per session. SQLite seeds
-it at startup and the recorder updates it only after a trace is persisted, so
-no database I/O happens on the request path. Optional in-flight reservations
-are owned by the same gate and settled only after enriched persistence. A
-budget rejection is an ordinary non-blocking synthetic trace, inside or
-outside an experiment; when the recorder queue is saturated, dropped
-telemetry is preferred over a delayed client response.
+totals plus lifetime totals and unknown-cost state per session. SQLite
+seeds it at startup and the recorder updates it only after a trace is
+persisted, so no database I/O happens on the request path. Optional
+in-flight reservations are owned by the same gate and settled only after
+enriched persistence. A budget rejection is an ordinary non-blocking
+synthetic trace, inside or outside an experiment; when the recorder queue
+is saturated, dropped telemetry is preferred over a delayed client
+response.
 
 A budget fallback is a durable approval derived only from a `NON_INFERIOR`
 replay artifact. Admission emits a fallback action at the explicit lower
-use-case threshold; serving applies it only to the evaluated
-baseline model and never over an experiment or a route. The hard ceiling is
-checked again after the rewrite and remains a shutoff. The `budget` command
-and the console share one renderer and the same read-only queries; both
-report persisted accounting only, so process-local reservations stay outside
-that cross-process view.
+use-case threshold; serving applies it only to the evaluated baseline
+model and never over an experiment or a route. The hard ceiling is checked
+again after the rewrite and remains a shutoff. The `budget` command and the
+console share one renderer and the same read-only queries; both report
+persisted accounting only, so process-local reservations stay outside that
+cross-process view.
 
 ## Deliberate limits
 
-- The recommended deployment is one process on the same host as the client.
-- Live per-task counters and ceilings are process-local; durable measurement
-  comes from recorded traces.
-- Spend ceilings are eventually consistent and can overshoot by work already
-  in flight. Opt-in reservations close the same-process race but are not a
-  shared or exact provider billing ledger.
+- The recommended deployment is one process on the same host as the
+  client.
+- Live per-task counters and ceilings are process-local; durable
+  measurement comes from recorded traces.
+- Spend ceilings are eventually consistent and can overshoot by work
+  already in flight. Opt-in reservations close the same-process race but
+  are not a shared or exact provider billing ledger.
 - Session enforcement loads every persisted session ID into process memory
   and assumes IDs are unique and short-lived. It is not an unbounded
   multi-tenant ledger.

@@ -1,8 +1,7 @@
 # Deploying ctrlrtn
 
-The proxy is a single lightweight process (uvicorn + SQLite). Deploying it is
-mostly about *where it listens*. Its security model is: only things you trust
-can reach it.
+The proxy is a single process (uvicorn + SQLite). Deploying it is mostly
+about where it listens: only things you trust may reach it.
 
 ## The security model, first
 
@@ -47,9 +46,9 @@ private network plus a firewall when it must cross hosts.
 
 ## Topology A: same box as your app (recommended)
 
-Run the proxy next to the application it fronts, bound to `127.0.0.1`
-(the default). This is the strongest isolation available: the proxy has no
-network presence, and the app's API key never leaves the box.
+Run the proxy next to the application it fronts, bound to `127.0.0.1` (the
+default). The proxy has no network presence and the app's API key never
+leaves the box.
 
 ```bash
 # on the server, as root. Read it first; it is short.
@@ -57,17 +56,22 @@ git clone https://github.com/arnovich/ctrlrtn /tmp/ctrlrtn \
   && sudo /tmp/ctrlrtn/deploy/install.sh --ref v0.1.0   # or a later tag
 ```
 
-`deploy/install.sh` runs as root and is **idempotent**. It creates a
-`ctrlrtn` system user, installs `uv` from `astral.sh` if it is missing,
-checks out `/opt/ctrlrtn` at `--ref` (default `main`; pass a tag for a
-pinned deployment), and writes `/etc/ctrlrtn/config.yaml` and
-`/etc/ctrlrtn/env` once, never overwriting them. It then installs the
-sandboxed systemd unit `deploy/ctrlrtn.service`, replacing any local edits
-to the unit, with state in `/var/lib/ctrlrtn`, and verifies `/healthz`.
+`deploy/install.sh` runs as root and is idempotent:
+
+- creates a `ctrlrtn` system user and installs `uv` from `astral.sh` if
+  missing;
+- checks out `/opt/ctrlrtn` at `--ref` (default `main`; pass a tag for a
+  pinned deployment);
+- writes `/etc/ctrlrtn/config.yaml` and `/etc/ctrlrtn/env` once, never
+  overwriting them;
+- installs the sandboxed systemd unit `deploy/ctrlrtn.service`, replacing
+  any local edits to the unit, with state in `/var/lib/ctrlrtn`;
+- verifies `/healthz`.
+
 **Re-running it is the upgrade path.** Provider-owned credentials
-(`providers.<name>.credential.env`) go in `/etc/ctrlrtn/env` as
-`KEY=value` lines; the unit reads it as its `EnvironmentFile`, and it is
-`root:ctrlrtn` mode `0640`.
+(`providers.<name>.credential.env`) go in `/etc/ctrlrtn/env` as `KEY=value`
+lines; the unit reads it as its `EnvironmentFile`, and it is `root:ctrlrtn`
+mode `0640`.
 
 Then point the app at it (its systemd env file or `.env`):
 
@@ -100,9 +104,9 @@ docker compose up -d        # see compose.yaml
 ```
 
 Keep the port published on `127.0.0.1:4000:4000`. Docker's port publishing
-**bypasses ufw-style host firewalls**; a bare `4000:4000` silently exposes the
-proxy to the internet. Inside the container the proxy binds `0.0.0.0`; the
-published address decides reachability. Every `CTRLRTN_*` environment
+**bypasses ufw-style host firewalls**; a bare `4000:4000` silently exposes
+the proxy to the internet. Inside the container the proxy binds `0.0.0.0`;
+the published address decides reachability. Every `CTRLRTN_*` environment
 variable works in the container.
 
 ## Day-two operations
@@ -118,10 +122,10 @@ proxy's next snapshot refresh, normally within about 10 seconds.
 | Check health | `curl -sf http://127.0.0.1:4000/healthz` | Prints `ok`. The installer polls it for up to 30 seconds after a restart. |
 | Read the logs | `journalctl -u ctrlrtn -f` | One line per recorded call when `log_requests` is on. |
 | Watch it over SSH | `ssh -t HOST sudo -u ctrlrtn ctrlrtn console` | Add `--routing-config` and `--routing-repo` for the `g` preview-and-activate action; the service user needs read access to that Git checkout, and no network Git credentials are needed. Keys are in [console.md](console.md). |
-| Inspect spend | `ctrlrtn usecases`, `ctrlrtn spend`, `ctrlrtn budget` | All on-box; see [configure.md](configure.md) for what each reports. |
+| Inspect spend | `ctrlrtn usecases`, `ctrlrtn spend`, `ctrlrtn budget` | All on-box; [configure.md](configure.md) says what each reports. |
 | Back up | `sudo -u ctrlrtn sqlite3 /var/lib/ctrlrtn/router.db ".backup /var/lib/ctrlrtn/backup-$(date +%a).db"` | Cron it. The database holds your routes and experiments, not just recordings; losing it silently reverts every switch to pass-through. The content is sensitive. SQLite with WAL needs a local filesystem: never put the live database on a network mount. |
 | Upgrade | Re-run `deploy/install.sh` (the clone-and-run pair above) | It rebuilds the venv from scratch and waits up to 30 seconds for `/healthz`, so a re-run either upgrades the box or exits non-zero; it never leaves the checkout on the new sha with the old code serving. Restart is quick; in-flight LLM calls fail and clients retry. |
-| Prune | `ctrlrtn prune --older-than-days 30`, then add `--apply` | The default is a dry run; apply only after reviewing the count. Pruning clears query strings, headers, and bodies for selected traces in one transaction. Derived metrics stay, and payloads frozen by queued or running jobs are reported and skipped. A positive `retention_days` in the config applies the same job-aware prune before `serve` accepts traffic and fails startup if it cannot. |
+| Prune | `ctrlrtn prune --older-than-days 30`, then add `--apply` | Dry run by default; apply after reviewing the count. Pruning clears query strings, headers, and bodies for selected traces in one transaction. Derived metrics stay, and payloads frozen by queued or running jobs are reported and skipped. A positive `retention_days` in the config applies the same job-aware prune before `serve` accepts traffic and fails startup if it cannot. |
 | Compact | `ctrlrtn prune --older-than-days 30 --apply --compact` | Stop every proxy, worker, and mutating CLI on the database first. Compaction takes the exclusive maintenance lock, checkpoints the WAL, and runs `VACUUM`. It fails if another ctrlrtn writer is open or an external SQLite user keeps the checkpoint busy. The lock needs POSIX advisory locks; ordinary serving works without them, but compaction fails closed. |
 | Rotate the price table | `systemctl edit ctrlrtn` to add `Environment=CTRLRTN_PRICES=/etc/ctrlrtn/prices.toml`, then `systemctl restart ctrlrtn` | Prices are read once at startup. The file format is in [configure.md](configure.md). |
 
