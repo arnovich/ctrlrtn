@@ -175,7 +175,6 @@ class ConfigurationControlSqliteMixin(SqliteCapability):
                             desired.split_pct,
                             RUNNING,
                             desired.max_calls_per_task,
-                            desired.max_cost_usd_per_task,
                             desired.candidate_provider,
                             desired.workflow,
                             desired.workflow_version,

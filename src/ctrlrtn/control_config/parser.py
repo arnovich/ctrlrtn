@@ -13,7 +13,6 @@ from ctrlrtn.control_config.models import (
 )
 from ctrlrtn.policy.experiment import (
     DEFAULT_MAX_CALLS_PER_TASK,
-    DEFAULT_MAX_COST_USD_PER_TASK,
     Experiment,
 )
 from ctrlrtn.policy.route import Route, WorkflowRoute
@@ -123,7 +122,6 @@ def load_control_config(path: str) -> ControlConfig:
                 "provider",
                 "split_pct",
                 "max_calls_per_task",
-                "max_cost_usd_per_task",
                 "workflow",
                 "workflow_version",
                 "step",
@@ -148,10 +146,6 @@ def load_control_config(path: str) -> ControlConfig:
                     split_pct=fields.get("split_pct", 50),
                     max_calls_per_task=fields.get(
                         "max_calls_per_task", DEFAULT_MAX_CALLS_PER_TASK
-                    ),
-                    max_cost_usd_per_task=fields.get(
-                        "max_cost_usd_per_task",
-                        DEFAULT_MAX_COST_USD_PER_TASK,
                     ),
                     created_epoch=0.0,
                     workflow=fields.get("workflow"),

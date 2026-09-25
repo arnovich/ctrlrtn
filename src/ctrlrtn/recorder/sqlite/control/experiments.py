@@ -35,7 +35,6 @@ class ExperimentControlSqliteMixin(SqliteCapability):
                         experiment.split_pct,
                         experiment.status,
                         experiment.max_calls_per_task,
-                        experiment.max_cost_usd_per_task,
                         experiment.candidate_provider,
                         experiment.workflow,
                         experiment.workflow_version,

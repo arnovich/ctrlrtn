@@ -8,7 +8,6 @@ from ctrlrtn.eval.tripwire import (
 )
 from ctrlrtn.policy.experiment import (
     DEFAULT_MAX_CALLS_PER_TASK,
-    DEFAULT_MAX_COST_USD_PER_TASK,
 )
 
 
@@ -48,13 +47,6 @@ def register(sub, controls, evaluation) -> None:
         help="per-task candidate call ceiling before a counted-failure "
         f"cut-off; default {DEFAULT_MAX_CALLS_PER_TASK}. Set it BELOW your "
         "client's own max-turns.",
-    )
-    exp_start.add_argument(
-        "--max-cost",
-        type=float,
-        default=DEFAULT_MAX_COST_USD_PER_TASK,
-        dest="max_cost",
-        help="per-task $ ceiling recorded with the experiment (not enforced)",
     )
     exp_start.add_argument(
         "--id", default=None, help="experiment id (default: auto exp:<uuid>)"

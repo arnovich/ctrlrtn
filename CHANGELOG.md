@@ -8,6 +8,11 @@
   `Task`; `edition()` and `Edition` are gone. Nothing else about the SDK
   changed. The name now matches the `x-ctrlrtn-task` header and the unit the
   evaluation clusters on.
+- `experiment start --max-cost`, the `max_cost_usd_per_task` key of
+  `routing.yaml`, the console form field and the experiments table column are
+  removed; the value was recorded and never enforced. An existing database
+  drops the column when next opened. A `routing.yaml` that still carries the
+  key is rejected as an unknown key.
 
 ## 0.1.0 — 2026-09-24
 

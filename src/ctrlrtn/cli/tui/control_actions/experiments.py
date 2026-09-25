@@ -48,9 +48,7 @@ class LiveExperimentControlActions:
             f"candidate: {exp.candidate_model}"
             f"{f' via {exp.candidate_provider}' if exp.candidate_provider else ''}\n"
             f"traffic: {exp.split_pct}% candidate / {100 - exp.split_pct}% baseline\n"
-            f"candidate ceiling: {exp.max_calls_per_task} calls/task\n"
-            f"recorded cost ceiling: ${exp.max_cost_usd_per_task:g}/task "
-            "(not enforced)\n\n"
+            f"candidate ceiling: {exp.max_calls_per_task} calls/task\n\n"
             "Task assignment is sticky. The gateway applies this within ~10s."
         )
         self.push_screen(

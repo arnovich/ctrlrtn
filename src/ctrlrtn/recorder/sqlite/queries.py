@@ -39,9 +39,9 @@ INSERT INTO outcomes (ts, task_id, success, score) VALUES (?, ?, ?, ?)
 _INSERT_EXPERIMENT = """
 INSERT INTO experiments (
     experiment_id, ts, use_case_key, candidate_model, split_pct, status,
-    max_calls_per_task, max_cost_usd_per_task, candidate_provider,
+    max_calls_per_task, candidate_provider,
     workflow, workflow_version, step
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 _STOP_EXPERIMENT = """
@@ -51,7 +51,7 @@ WHERE experiment_id = ? AND status = ?
 
 _SELECT_EXPERIMENTS = """
 SELECT experiment_id, ts, use_case_key, candidate_model, split_pct, status,
-       max_calls_per_task, max_cost_usd_per_task, candidate_provider,
+       max_calls_per_task, candidate_provider,
        workflow, workflow_version, step
 FROM experiments
 """
@@ -204,7 +204,6 @@ def _same_experiment(left: Experiment, right: Experiment) -> bool:
         left.candidate_provider,
         left.split_pct,
         left.max_calls_per_task,
-        left.max_cost_usd_per_task,
         left.workflow,
         left.workflow_version,
         left.step,
@@ -215,7 +214,6 @@ def _same_experiment(left: Experiment, right: Experiment) -> bool:
         right.candidate_provider,
         right.split_pct,
         right.max_calls_per_task,
-        right.max_cost_usd_per_task,
         right.workflow,
         right.workflow_version,
         right.step,
@@ -274,11 +272,10 @@ def _row_to_experiment(row: tuple) -> Experiment:
         split_pct=row[4],
         status=row[5],
         max_calls_per_task=row[6],
-        max_cost_usd_per_task=row[7],
-        candidate_provider=row[8],
-        workflow=row[9],
-        workflow_version=row[10],
-        step=row[11],
+        candidate_provider=row[7],
+        workflow=row[8],
+        workflow_version=row[9],
+        step=row[10],
     )
 
 

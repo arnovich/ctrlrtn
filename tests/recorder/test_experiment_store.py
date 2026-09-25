@@ -159,7 +159,6 @@ def test_all_fields_round_trip_through_sqlite(tmp_path):
         experiment_id="exp:fixed01",
         created_epoch=1234.5,
         max_calls_per_task=42,
-        max_cost_usd_per_task=1.5,
         candidate_provider="ollama",
     )
     SqliteTraceStore(path).create_experiment(exp)
@@ -195,6 +194,7 @@ def test_provider_columns_migrate_into_existing_control_tables(tmp_path):
             row[1] for row in store._conn.execute("PRAGMA table_info(routes)")
         }
         assert "candidate_provider" in experiment_cols
+        assert "max_cost_usd_per_task" not in experiment_cols
         assert "provider" in route_cols
     finally:
         store.close()

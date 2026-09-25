@@ -368,7 +368,6 @@ experiments:
     provider: ollama
     split_pct: 25
     max_calls_per_task: 60
-    max_cost_usd_per_task: 5.0
 workflows:
   article-pipeline:
     git:abc123:
@@ -393,7 +392,7 @@ workflow_routes:
 | --- | --- |
 | `version` | Must be `1`. |
 | `routes.<use-case>` | `model` (required), `provider`, `previous_model`, `note`. |
-| `experiments.<use-case>` | `id` (required, stable), `candidate_model` (required), `provider`, `split_pct` (1 to 99, default 50), `max_calls_per_task` (default 60), `max_cost_usd_per_task` (default 5.0), and the optional exact scope `workflow`, `workflow_version`, `step`. (recorded, not enforced)|
+| `experiments.<use-case>` | `id` (required, stable), `candidate_model` (required), `provider`, `split_pct` (1 to 99, default 50), `max_calls_per_task` (default 60), and the optional exact scope `workflow`, `workflow_version`, `step`. |
 | `workflows.<name>.<version>.steps.<step>` | `predecessors` (declared step names in the same version, never the step itself), `allows: {fan_out, retry}` (booleans), `condition` (an opaque display label). |
 | `workflow_routes.<name>.<version>` | `model`, `provider`, `note`, and `steps.<step>` with its own `model`, `provider`, `note`. |
 
