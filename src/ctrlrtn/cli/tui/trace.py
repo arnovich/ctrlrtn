@@ -100,8 +100,8 @@ class RecordedTraceScreen(ModalScreen[int]):
             f"Model: {recorded(row.get('model'))}\n"
             f"Role: {recorded(row.get('use_case_key'))}\n"
             + (
-                f"Edition: {recorded(row['edition'])}\n"
-                if "edition" in row
+                f"Task: {recorded(row['task'])}\n"
+                if "task" in row
                 else f"Task: {recorded(row.get('task_id'))}\n"
             )
             + f"Input tokens: {recorded(row.get('input_tokens'))}\n"

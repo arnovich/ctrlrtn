@@ -1,4 +1,4 @@
-"""Edition, workflow-step, and tool-operation lifecycle context managers."""
+"""Task, workflow-step, and tool-operation lifecycle context managers."""
 
 from __future__ import annotations
 
@@ -28,20 +28,20 @@ from ctrlrtn.workflow.tool_operation import (
     ToolOperationIdentity,
 )
 
-# Count of editions live in THIS process, so the stamping hook can tell "no
-# task because we're legitimately outside any edition" from "no task because
-# this call is on a thread the edition context didn't reach" (a silent bug).
-_active_editions = 0
+# Count of tasks live in THIS process, so the stamping hook can tell "no
+# task because we're legitimately outside any task" from "no task because
+# this call is on a thread the task context didn't reach" (a silent bug).
+_active_tasks = 0
 _active_lock = threading.Lock()
 
 
-def _edition_active() -> bool:
+def _task_active() -> bool:
     with _active_lock:
-        return _active_editions > 0
+        return _active_tasks > 0
 
 
-class Edition:
-    """Handle for the running edition: its task id, and its one-shot outcome
+class Task:
+    """Handle for the running task: its task id, and its one-shot outcome
     report. Reporting is best-effort — a failed report is logged, never raised
     into the app (an eval signal must not break the run it measures)."""
 
@@ -69,14 +69,14 @@ class Edition:
     ) -> Step:
         """Open one invocation of workflow step ``name`` as a ``Step`` context
         manager; calls made inside it carry the full workflow identity. The
-        edition must have been opened with ``workflow`` and
+        task must have been opened with ``workflow`` and
         ``workflow_version`` (``ValueError`` otherwise). ``step_run_id``
         defaults to a fresh id and ``parent_step_run_id`` to the enclosing
-        step, if any. Step events are reported only when the edition has a
+        step, if any. Step events are reported only when the task has a
         ``report_to``."""
         if self.workflow is None or self.workflow_version is None:
             raise ValueError(
-                "edition() requires workflow and workflow_version before step()"
+                "task() requires workflow and workflow_version before step()"
             )
         current = _step_identity.get()
         parent = parent_step_run_id
@@ -97,10 +97,10 @@ class Edition:
     def report(
         self, *, success: bool | None = None, score: float | None = None
     ) -> None:
-        """Report the edition's outcome: ``success`` and/or ``score`` (at
+        """Report the task's outcome: ``success`` and/or ``score`` (at
         least one is required). Best-effort — a transport failure is logged
         and swallowed, and without a ``report_to`` the outcome is dropped with
-        a warning. Marks the edition reported, so an uncaught exception will
+        a warning. Marks the task reported, so an uncaught exception will
         not auto-report a failure on top; on the gateway the latest report for
         a task id wins."""
         if success is None and score is None:
@@ -108,7 +108,7 @@ class Edition:
         self._reported = True
         if not self._report_to:
             logger.warning(
-                "ctrlrtn: report() called for task %s but the edition has no "
+                "ctrlrtn: report() called for task %s but the task has no "
                 "report_to; the outcome was dropped (pass report_to=GATEWAY).",
                 self.task_id,
             )
@@ -120,7 +120,7 @@ class Edition:
                 success=success,
                 score=score,
             )
-        except Exception:  # an outcome report must never break the edition
+        except Exception:  # an outcome report must never break the task
             logger.warning(
                 "ctrlrtn: failed to report outcome for task %s",
                 self.task_id,
@@ -135,20 +135,20 @@ class Edition:
 
 
 @contextlib.contextmanager
-def edition(
+def task(
     task_id: str | None = None,
     *,
     default_route: str | None = None,
     report_to: str | None = None,
     workflow: str | None = None,
     workflow_version: str | None = None,
-) -> Iterator[Edition]:
-    """Open an edition: bind a task id (generated if not given) for every stamped
+) -> Iterator[Task]:
+    """Open a task: bind a task id (generated if not given) for every stamped
     call in this block. ``default_route`` sets ``x-ctrlrtn-route`` for the whole
-    edition (override per sub-agent with ``route(...)``). ``report_to`` (the
+    task (override per sub-agent with ``route(...)``). ``report_to`` (the
     gateway base URL) enables outcome reporting via the yielded handle; an
     uncaught exception auto-reports failure."""
-    global _active_editions
+    global _active_tasks
     tid = task_id or new_task_id()
     if (workflow is None) != (workflow_version is None):
         raise ValueError(
@@ -160,9 +160,9 @@ def edition(
             tid, workflow, workflow_version, "step", uuid.uuid4().hex
         )
         workflow_scope = (workflow, workflow_version)
-    handle = Edition(tid, report_to, workflow, workflow_version)
+    handle = Task(tid, report_to, workflow, workflow_version)
     with _active_lock:
-        _active_editions += 1
+        _active_tasks += 1
     task_token = _task.set(tid)
     route_token = _route.set(default_route)
     workflow_token = _workflow.set(workflow_scope)
@@ -177,7 +177,7 @@ def edition(
         _workflow.reset(workflow_token)
         _task.reset(task_token)
         with _active_lock:
-            _active_editions -= 1
+            _active_tasks -= 1
         handle._finalize(failed)
 
 

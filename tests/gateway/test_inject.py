@@ -294,7 +294,7 @@ async def test_proxy_records_the_serve_decision(streaming_upstream):
         return swapped, ServeDecision(
             experiment_id="exp:1",
             use_case_key="fp:editor",
-            task_id="edition-1",
+            task_id="task-1",
             arm="candidate",
             served_model="claude-haiku-4-5",
             original_model="claude-opus-4",
@@ -405,11 +405,11 @@ async def test_decide_reads_headers_case_insensitively(streaming_upstream):
                 "/v1/messages",
                 content=b"{}",
                 headers={
-                    "X-Ctrlrtn-Task": "edition-9",  # title-cased by the client
+                    "X-Ctrlrtn-Task": "task-9",  # title-cased by the client
                     "content-type": "application/json",
                 },
             )
-    assert seen["task"] == "edition-9"
+    assert seen["task"] == "task-9"
     assert seen["api"] is None
 
 

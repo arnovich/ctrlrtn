@@ -34,7 +34,7 @@ def test_enrich_captures_task_id_from_header():
         method="POST",
         path="/v1/messages",
         query="",
-        request_headers={"x-ctrlrtn-task": "edition-7"},
+        request_headers={"x-ctrlrtn-task": "task-7"},
         request_body=b'{"model":"claude-sonnet-4-5","system":"X"}',
         status_code=200,
         response_headers={},
@@ -42,7 +42,7 @@ def test_enrich_captures_task_id_from_header():
         latency_ms=1.0,
     )
     enrich_trace(trace)
-    assert trace.task_id == "edition-7"
+    assert trace.task_id == "task-7"
 
 
 def test_enrich_task_id_is_none_when_header_absent():
@@ -87,17 +87,17 @@ async def test_tasks_group_by_task_and_count_distinct_use_cases(make_store):
     store = make_store()
     try:
         # One task spanning two agent use-cases, plus an untagged call.
-        await store.save(_trace("edition-7", "fp:orchestrator", 0.80))
-        await store.save(_trace("edition-7", "fp:analyst", 0.10))
+        await store.save(_trace("task-7", "fp:orchestrator", 0.80))
+        await store.save(_trace("task-7", "fp:analyst", 0.10))
         await store.save(_trace(None, "fp:orchestrator", 0.05))
 
         rows = store.tasks()
         by_id = {r.task_id: r for r in rows}
-        assert by_id["edition-7"].calls == 2
-        assert by_id["edition-7"].use_cases == 2
-        assert abs(by_id["edition-7"].cost_usd - 0.90) < 1e-9
+        assert by_id["task-7"].calls == 2
+        assert by_id["task-7"].use_cases == 2
+        assert abs(by_id["task-7"].cost_usd - 0.90) < 1e-9
         assert "(untasked)" in by_id
-        assert rows[0].task_id == "edition-7"  # ordered by cost
+        assert rows[0].task_id == "task-7"  # ordered by cost
     finally:
         if isinstance(store, SqliteTraceStore):
             store.close()
@@ -110,10 +110,10 @@ async def test_tasks_group_by_task_and_count_distinct_use_cases(make_store):
 async def test_tasks_count_non_2xx_as_errors(make_store):
     store = make_store()
     try:
-        await store.save(_trace("edition-7", "fp:x", 0.10, status=200))
-        await store.save(_trace("edition-7", "fp:x", 0.00, status=500))
-        await store.save(_trace("edition-7", "fp:x", 0.00, status=429))
-        row = {r.task_id: r for r in store.tasks()}["edition-7"]
+        await store.save(_trace("task-7", "fp:x", 0.10, status=200))
+        await store.save(_trace("task-7", "fp:x", 0.00, status=500))
+        await store.save(_trace("task-7", "fp:x", 0.00, status=429))
+        row = {r.task_id: r for r in store.tasks()}["task-7"]
         assert row.calls == 3
         assert row.errors == 2  # the 500 and the 429, not the 200
     finally:
@@ -129,9 +129,9 @@ async def test_tasks_respects_limit(make_store):
     store = make_store()
     try:
         for i, cost in enumerate([0.30, 0.20, 0.10]):
-            await store.save(_trace(f"edition-{i}", "fp:x", cost))
+            await store.save(_trace(f"task-{i}", "fp:x", cost))
         rows = store.tasks(limit=2)
-        assert [r.task_id for r in rows] == ["edition-0", "edition-1"]
+        assert [r.task_id for r in rows] == ["task-0", "task-1"]
     finally:
         if isinstance(store, SqliteTraceStore):
             store.close()
@@ -140,7 +140,7 @@ async def test_tasks_respects_limit(make_store):
 async def test_task_id_persists_through_get():
     store = SqliteTraceStore(":memory:")
     try:
-        await store.save(_trace("edition-7", "fp:x", 0.1))
-        assert store.get(1)["task_id"] == "edition-7"
+        await store.save(_trace("task-7", "fp:x", 0.1))
+        assert store.get(1)["task_id"] == "task-7"
     finally:
         store.close()

@@ -24,7 +24,7 @@ provider never sees them.
 
 ## The SDK for Python applications
 
-The SDK ships with the package and depends only on `httpx`. An edition is
+The SDK ships with the package and depends only on `httpx`. A task is
 one job; every request made through an SDK-wrapped client inside the block
 carries its task id, and sub-agents in the same process and async context
 inherit it:
@@ -38,7 +38,7 @@ client = OpenAI(
     http_client=sdk.http_client(),
 )
 
-with sdk.edition(report_to="http://127.0.0.1:4000") as run:
+with sdk.task(report_to="http://127.0.0.1:4000") as run:
     with sdk.route("researcher"):
         notes = research(client)
     with sdk.route("editor"):
@@ -48,7 +48,7 @@ with sdk.edition(report_to="http://127.0.0.1:4000") as run:
 
 `sdk.route(...)` sets the use-case for the calls inside it, one per role.
 `run.report(...)` posts the outcome; if the block exits with an exception the
-edition reports failure by itself. Without `report_to` nothing is sent.
+task reports failure by itself. Without `report_to` nothing is sent.
 
 Provider SDKs built on `httpx2`, such as the Anthropic SDK from version 1,
 reject an `httpx.Client`. Give them their own client with the SDK's hooks:
@@ -71,7 +71,7 @@ headers = sdk.stamp({})          # task, route and step identity, if any
 
 Context does not cross threads or processes on its own. Wrap a callable with
 `sdk.bind(func)` before handing it to a thread pool. With `CTRLRTN_STRICT=1`
-an unbound request made while an edition is active raises instead of being
+an unbound request made while a task is active raises instead of being
 recorded as a stray call.
 
 ## Describe the workflow
@@ -79,11 +79,11 @@ recorded as a stray call.
 An agentic application is a graph of steps. Declaring that graph lets the
 proxy attribute cost, latency and outcomes to a stable step rather than to a
 prompt fingerprint, and lets experiments and routes target one step of one
-workflow version. Name the workflow and its version on the edition, and open
+workflow version. Name the workflow and its version on the task, and open
 each logical operation as a step:
 
 ```python
-with sdk.edition(
+with sdk.task(
     workflow="article-pipeline",
     workflow_version="git:8d23f1a",
     report_to="http://127.0.0.1:4000",
@@ -100,7 +100,7 @@ with sdk.edition(
 ```
 
 A step's outcome comes only from its own `report(...)`; it is not inherited
-from the edition's, and a step that leaves without one shows as having no
+from the task's, and a step that leaves without one shows as having no
 outcome in `workflow diagnostics`.
 
 The stable step key is `(workflow, workflow_version, step)`; each `step(...)`

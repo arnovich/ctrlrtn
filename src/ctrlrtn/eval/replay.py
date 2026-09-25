@@ -41,9 +41,7 @@ class ReplaySample:
     """One recorded call to replay."""
 
     request_body: bytes
-    cluster: object = (
-        None  # correlation group (edition id); None -> independent
-    )
+    cluster: object = None  # correlation group (task id); None -> independent
     task_hint: str = ""  # input description for the judge; derived if empty
 
 

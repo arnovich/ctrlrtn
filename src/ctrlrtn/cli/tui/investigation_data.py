@@ -65,7 +65,7 @@ class ReplayEvidence:
     pairs: tuple[dict, ...]
     costs: dict[str, dict]
     units: int
-    edition_labels: dict[str, str] = field(default_factory=dict)
+    task_labels: dict[str, str] = field(default_factory=dict)
     sample_unit: str = "turns"
     cost_label: str = "Replay response costs"
     score_scope: str = (
@@ -100,7 +100,7 @@ class ReplayEvidence:
                     {
                         "id": None,
                         "task_id": None,
-                        "edition": pair["result"]["edition"],
+                        "task": pair["result"]["task"],
                         "ts": None,
                         "use_case_key": self.role,
                         "model": record.get(

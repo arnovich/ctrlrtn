@@ -167,14 +167,14 @@ async def test_requests_for_use_case_filters_and_orders():
 
 
 async def test_requests_for_use_case_round_robins_across_tasks():
-    # The NI test clusters by task: 40 calls from 3 editions is 3 units and
+    # The NI test clusters by task: 40 calls from 3 tasks is 3 units and
     # underpowered. The sampler must spread the limit across tasks (newest of
-    # each first), not take the newest-N bunched into the last editions.
+    # each first), not take the newest-N bunched into the last tasks.
     store = SqliteTraceStore(":memory:")
     try:
-        for i in range(6):  # a chatty recent edition...
+        for i in range(6):  # a chatty recent task...
             await store.save(_req_trace("fp:x", 200, f"A{i}".encode(), "edA"))
-        for i in range(2):  # ...older, quieter editions
+        for i in range(2):  # ...older, quieter tasks
             await store.save(_req_trace("fp:x", 200, f"B{i}".encode(), "edB"))
         await store.save(_req_trace("fp:x", 200, b"C0", "edC"))
         await store.save(_req_trace("fp:x", 200, b"N0", None))  # untasked

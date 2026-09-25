@@ -83,7 +83,7 @@ def test_sdk_step_stamps_complete_identity_and_carrier(monkeypatch):
         return httpx.Response(200, json={})
 
     with (
-        sdk.edition(
+        sdk.task(
             task_id="task-1",
             workflow="article-pipeline",
             workflow_version="git:abc123",
@@ -115,7 +115,7 @@ def test_step_failure_and_explicit_terminal_do_not_double_report(monkeypatch):
     monkeypatch.setattr(
         sdk, "report_workflow_event", lambda base, event: events.append(event)
     )
-    with sdk.edition(
+    with sdk.task(
         task_id="task-1", workflow="wf", workflow_version="v1", report_to="gw"
     ) as run:
         with run.step("ok") as step:

@@ -149,7 +149,6 @@ CREATE TABLE IF NOT EXISTS experiments (
     split_pct INTEGER NOT NULL,
     status TEXT NOT NULL,
     max_calls_per_task INTEGER NOT NULL,
-    max_cost_usd_per_task REAL NOT NULL,
     candidate_provider TEXT,
     workflow TEXT,
     workflow_version TEXT,
@@ -392,6 +391,26 @@ def add_column(
             raise
 
 
+# Columns older databases carry that the code no longer reads or writes.
+# Dropping them keeps INSERTs that name every column valid on old files.
+_DROPPED_COLUMNS: tuple[tuple[str, str], ...] = (
+    # Recorded with each experiment and never enforced; removed in 0.2.
+    ("experiments", "max_cost_usd_per_task"),
+)
+
+
+def drop_column(connection: sqlite3.Connection, table: str, name: str) -> None:
+    """Drop ``name`` from ``table`` when an older database still carries it."""
+    if not has_column(connection, table, name):
+        return
+    try:
+        connection.execute(f"ALTER TABLE {table} DROP COLUMN {name}")
+    except sqlite3.OperationalError as exc:
+        # Another process upgrading the same file can drop it first.
+        if "no such column" not in str(exc).lower():
+            raise
+
+
 def migrate(connection: sqlite3.Connection) -> None:
     """Bring an existing database up to the current column set."""
     trace_columns = columns(connection, "traces")
@@ -399,6 +418,8 @@ def migrate(connection: sqlite3.Connection) -> None:
         add_column(connection, "traces", name, decl, existing=trace_columns)
     for table, name, decl in _ADDED_COLUMNS:
         add_column(connection, table, name, decl)
+    for table, name in _DROPPED_COLUMNS:
+        drop_column(connection, table, name)
 
 
 def initialize(connection: sqlite3.Connection) -> None:

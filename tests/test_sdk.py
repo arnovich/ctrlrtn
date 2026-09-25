@@ -23,9 +23,9 @@ def _capture_handler(captured: dict):
 # --- header stamping ------------------------------------------------------
 
 
-def test_http_client_stamps_task_and_route_inside_an_edition():
+def test_http_client_stamps_task_and_route_inside_a_task():
     captured: dict = {}
-    with sdk.edition(task_id="ed-1", default_route="editor"):
+    with sdk.task(task_id="ed-1", default_route="editor"):
         client = sdk.http_client(
             transport=httpx.MockTransport(_capture_handler(captured)),
             base_url="http://up",
@@ -36,7 +36,7 @@ def test_http_client_stamps_task_and_route_inside_an_edition():
     assert captured["route"] == "editor"
 
 
-def test_no_stamp_outside_an_edition():
+def test_no_stamp_outside_a_task():
     captured: dict = {}
     client = sdk.http_client(
         transport=httpx.MockTransport(_capture_handler(captured)),
@@ -47,9 +47,9 @@ def test_no_stamp_outside_an_edition():
     assert captured["task"] is None
 
 
-def test_route_block_overrides_the_edition_route():
+def test_route_block_overrides_the_task_route():
     captured: dict = {}
-    with sdk.edition(task_id="ed", default_route="orchestrator"):
+    with sdk.task(task_id="ed", default_route="orchestrator"):
         client = sdk.http_client(
             transport=httpx.MockTransport(_capture_handler(captured)),
             base_url="http://up",
@@ -57,13 +57,13 @@ def test_route_block_overrides_the_edition_route():
         with sdk.route("analyst"):
             client.post("/x", json={})
         client.close()
-    assert captured["task"] == "ed"  # same edition
+    assert captured["task"] == "ed"  # same task
     assert captured["route"] == "analyst"  # sub-agent route
 
 
 def test_generated_task_id_is_used_when_not_given():
     captured: dict = {}
-    with sdk.edition() as run:
+    with sdk.task() as run:
         client = sdk.http_client(
             transport=httpx.MockTransport(_capture_handler(captured)),
             base_url="http://up",
@@ -82,7 +82,7 @@ def test_stamp_explicit_threading():
 
 
 async def test_stamp_propagates_across_an_asyncio_task():
-    # A sub-agent spawned as a task within the edition inherits the context.
+    # A sub-agent spawned as a task within the task inherits the context.
     captured: dict = {}
 
     async def sub_agent():
@@ -93,7 +93,7 @@ async def test_stamp_propagates_across_an_asyncio_task():
         await client.post("/x", json={})
         await client.aclose()
 
-    with sdk.edition(task_id="ed-async"):
+    with sdk.task(task_id="ed-async"):
         await asyncio.create_task(sub_agent())
     assert captured["task"] == "ed-async"
 
@@ -128,7 +128,7 @@ def test_report_outcome_posts_the_right_payload():
     }
 
 
-def test_report_outcome_uses_current_edition_task_id():
+def test_report_outcome_uses_current_task_id():
     captured: dict = {}
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -136,7 +136,7 @@ def test_report_outcome_uses_current_edition_task_id():
         return httpx.Response(200, text="ok")
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
-    with sdk.edition(task_id="ed-ctx"):
+    with sdk.task(task_id="ed-ctx"):
         sdk.report_outcome("http://gw", success=False, client=client)
     client.close()
     assert captured["json"] == {"task_id": "ed-ctx", "success": False}
@@ -165,26 +165,26 @@ async def test_areport_outcome_posts():
     assert captured["json"] == {"task_id": "ed", "score": 7.5}
 
 
-# --- edition lifecycle ----------------------------------------------------
+# --- task lifecycle ----------------------------------------------------
 
 
-def test_edition_auto_reports_failure_on_exception(monkeypatch):
+def test_task_auto_reports_failure_on_exception(monkeypatch):
     calls: list = []
     monkeypatch.setattr(
         sdk, "report_outcome", lambda base, tid, **kw: calls.append((tid, kw))
     )
     with (
         pytest.raises(RuntimeError),
-        sdk.edition(task_id="ed", report_to="http://gw"),
+        sdk.task(task_id="ed", report_to="http://gw"),
     ):
         raise RuntimeError("boom")
     assert calls == [("ed", {"success": False, "score": None})]
 
 
-def test_edition_reports_nothing_on_clean_silent_exit(monkeypatch):
+def test_task_reports_nothing_on_clean_silent_exit(monkeypatch):
     calls: list = []
     monkeypatch.setattr(sdk, "report_outcome", lambda *a, **k: calls.append(1))
-    with sdk.edition(task_id="ed", report_to="http://gw"):
+    with sdk.task(task_id="ed", report_to="http://gw"):
         pass  # completed without crashing != succeeded
     assert calls == []
 
@@ -194,7 +194,7 @@ def test_explicit_report_suppresses_the_auto_failure(monkeypatch):
     monkeypatch.setattr(
         sdk, "report_outcome", lambda base, tid, **kw: calls.append(kw)
     )
-    with sdk.edition(task_id="ed", report_to="http://gw") as run:
+    with sdk.task(task_id="ed", report_to="http://gw") as run:
         run.report(success=True, score=0.8)
     assert calls == [{"success": True, "score": 0.8}]
 
@@ -204,14 +204,14 @@ def test_report_is_best_effort(monkeypatch):
         raise httpx.ConnectError("down")
 
     monkeypatch.setattr(sdk, "report_outcome", boom)
-    with sdk.edition(task_id="ed", report_to="http://gw") as run:
+    with sdk.task(task_id="ed", report_to="http://gw") as run:
         run.report(success=True)  # a failed report must not raise into the app
 
 
 def test_report_without_report_to_warns_but_does_not_raise(caplog):
     with (
         caplog.at_level("WARNING"),
-        sdk.edition(task_id="ed") as run,
+        sdk.task(task_id="ed") as run,
     ):  # no report_to
         run.report(success=True)  # must not raise (nowhere to send)
     assert "report_to" in caplog.text
@@ -222,7 +222,7 @@ def test_exception_without_report_to_is_silent(caplog):
     with (
         caplog.at_level("WARNING"),
         pytest.raises(RuntimeError),
-        sdk.edition(task_id="ed"),
+        sdk.task(task_id="ed"),
     ):  # no report_to
         raise RuntimeError("boom")
     assert "report_to" not in caplog.text
@@ -240,13 +240,13 @@ def _send_untasked(captured: dict):
     client.close()
 
 
-def test_untasked_send_while_edition_active_warns(caplog):
-    # Simulates a worker thread the contextvar didn't reach: the edition is
+def test_untasked_send_while_task_active_warns(caplog):
+    # Simulates a worker thread the contextvar didn't reach: the task is
     # "active" in the process but this call has no task bound.
     import threading
 
     captured: dict = {}
-    with caplog.at_level("WARNING"), sdk.edition(task_id="ed"):
+    with caplog.at_level("WARNING"), sdk.task(task_id="ed"):
         t = threading.Thread(target=_send_untasked, args=(captured,))
         t.start()
         t.join()
@@ -266,26 +266,26 @@ def test_strict_mode_raises_on_untasked_send(monkeypatch):
 
     import threading
 
-    with sdk.edition(task_id="ed"):
+    with sdk.task(task_id="ed"):
         t = threading.Thread(target=worker)
         t.start()
         t.join()
     assert errors and "no x-ctrlrtn-task" in str(errors[0])
 
 
-def test_untasked_send_outside_any_edition_is_silent(caplog):
+def test_untasked_send_outside_any_task_is_silent(caplog):
     captured: dict = {}
     with caplog.at_level("WARNING"):
-        _send_untasked(captured)  # no edition anywhere
+        _send_untasked(captured)  # no task anywhere
     assert captured["task"] is None
     assert "BASELINE" not in caplog.text
 
 
-def test_bind_carries_the_edition_across_a_thread():
+def test_bind_carries_the_task_across_a_thread():
     import threading
 
     captured: dict = {}
-    with sdk.edition(task_id="ed-bound"):
+    with sdk.task(task_id="ed-bound"):
         t = threading.Thread(target=sdk.bind(_send_untasked), args=(captured,))
         t.start()
         t.join()
@@ -329,7 +329,7 @@ def test_anthropic_sdk_stamps_through_the_passed_http_client():
             transport=sdk_httpx.MockTransport(handler),
         ),
     )
-    with sdk.edition(task_id="ed-anthropic"):
+    with sdk.task(task_id="ed-anthropic"):
         client.messages.create(
             model="claude-haiku-4-5",
             max_tokens=8,

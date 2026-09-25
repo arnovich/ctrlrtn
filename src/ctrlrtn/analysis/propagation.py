@@ -2,20 +2,20 @@
 
 Whole-task analysis — task-level live A/B, and clustering for paired
 replay — depends on the app stamping the *same* ``x-ctrlrtn-task``
-on every sub-agent HTTP call of one edition. If it doesn't, a "task" silently
+on every sub-agent HTTP call of one task. If it doesn't, a "task" silently
 misses calls and the experiment tests the fail-safe, not the candidate.
 
 This proves it from recorded traffic alone (no keys), over a **recent window**
 (so a verdict reflects what is happening now, not a latched fact from old
 history): are calls tagged, and does a single task_id actually link the multiple
-sub-agent use-cases of an edition. Pure logic here; the windowed/scoped store
+sub-agent use-cases of a task. Pure logic here; the windowed/scoped store
 query and the rendering live with their kin.
 
 A `use_case_key` is the gate's proxy for "sub-agent" — two agents sharing a
 fingerprint, or one emitting two, would mis-count; an unkeyed (`None`) call is
 the *absence* of a use-case, never a second one, so it is excluded from spans.
 This certifies that propagation *works*, NOT that every sub-agent of every
-edition is captured — that would need an operator-declared expected set,
+task is captured — that would need an operator-declared expected set,
 which the gate does not have.
 """
 
@@ -26,7 +26,7 @@ from dataclasses import dataclass
 # Below this tagged fraction, propagation is treated as absent rather than
 # partial — a handful of stray tags shouldn't read as "working".
 MIN_TAGGED_FRACTION = 0.5
-# Require several linked editions in the window, not one fluke, before calling
+# Require several linked tasks in the window, not one fluke, before calling
 # cross-agent propagation demonstrated.
 MIN_MULTI_AGENT_TASKS = 3
 

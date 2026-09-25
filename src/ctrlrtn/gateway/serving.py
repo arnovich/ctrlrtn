@@ -6,7 +6,7 @@ and correct. Cheap: the common case (nothing running) is an empty snapshot, a
 dict miss, and a pass-through — no DB read per request. Correct: it keys the
 experiment lookup on the SAME fingerprint the recorder will store (so the arm is
 attributed to exactly the recorded use-case), binds a whole task to one
-experiment (so an edition can't straddle two and become an uncontrolled 2x2
+experiment (so a task can't straddle two and become an uncontrolled 2x2
 factorial), and reports the arm only via the ServeDecision the proxy threads
 into the Trace — never as its own write.
 
@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 _TASK_HEADER = "x-ctrlrtn-task"
 _DEFAULT_REFRESH_SECONDS = 10.0
-# Bound the task binding table: editions are short-lived, so an LRU cap far
+# Bound the task binding table: tasks are short-lived, so an LRU cap far
 # above the in-flight set never evicts a live task while capping memory.
 _MAX_TASK_BINDINGS = 50_000
 # Status the client sees when a candidate arm breaches its per-task ceiling.
@@ -229,7 +229,7 @@ class ExperimentRouter:
             return body, None
         # One experiment per task: a task binds to the first experiment it hits;
         # a later call for a DIFFERENT experiment's use-case is left untouched so
-        # the edition never straddles two experiments.
+        # the task never straddles two experiments.
         existing = self._tasks.get(task_id)
         if (
             existing is not None

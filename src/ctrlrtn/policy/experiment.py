@@ -39,12 +39,10 @@ CANDIDATE = "candidate"
 # real divergence signal is the per-arm calls/task distribution at analysis
 # time, not this cap.
 #
-# max_cost_usd_per_task is informational: cost is only known after the
-# response, in enrichment, so the pre-request hook cannot price a call. It is
-# recorded with the experiment and shown beside the enforced ceiling. The daily
-# global and per-use-case budgets and the kill switch are the spend controls.
+# There is no per-task cost ceiling: cost is only known after the response, in
+# enrichment, so the pre-request hook cannot price a call. The daily global and
+# per-use-case budgets and the kill switch are the spend controls.
 DEFAULT_MAX_CALLS_PER_TASK = 60
-DEFAULT_MAX_COST_USD_PER_TASK = 5.0
 
 
 def _new_experiment_id() -> str:
@@ -62,7 +60,6 @@ class Experiment:
     status: str = RUNNING
     created_epoch: float = field(default_factory=time.time)
     max_calls_per_task: int = DEFAULT_MAX_CALLS_PER_TASK
-    max_cost_usd_per_task: float = DEFAULT_MAX_COST_USD_PER_TASK
     candidate_provider: str | None = None
     workflow: str | None = None
     workflow_version: str | None = None
@@ -90,8 +87,6 @@ class Experiment:
             raise ValueError(f"status must be one of {sorted(_STATUSES)}")
         if self.max_calls_per_task < 1:
             raise ValueError("max_calls_per_task must be >= 1")
-        if self.max_cost_usd_per_task < 0:
-            raise ValueError("max_cost_usd_per_task must be >= 0")
         # Normalize the timestamp so a store that round-trips through REAL and
         # one that keeps the object in memory agree on the type.
         object.__setattr__(self, "created_epoch", float(self.created_epoch))
@@ -107,7 +102,6 @@ class Experiment:
         status: str,
         created_epoch: float,
         max_calls_per_task: int,
-        max_cost_usd_per_task: float,
         candidate_provider: str | None = None,
         workflow: str | None = None,
         workflow_version: str | None = None,
@@ -128,7 +122,6 @@ class Experiment:
             "status": status,
             "created_epoch": created_epoch,
             "max_calls_per_task": max_calls_per_task,
-            "max_cost_usd_per_task": max_cost_usd_per_task,
             "candidate_provider": candidate_provider,
             "workflow": workflow,
             "workflow_version": workflow_version,

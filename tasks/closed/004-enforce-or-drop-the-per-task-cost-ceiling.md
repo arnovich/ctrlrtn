@@ -1,6 +1,6 @@
 ---
 title: Enforce or drop the per-task cost ceiling on experiments
-state: open
+state: closed
 priority: low
 labels: [experiments, budget, cli]
 ---
@@ -29,3 +29,11 @@ Either:
   and the help text no longer says "not enforced"; or
 - the option, the column and the display are removed, with a schema
   migration that tolerates existing databases.
+
+## Notes
+
+Closed 2026-09-25 by removal: the option, the `routing.yaml` key, the
+console field, the display lines and the `experiments` column are gone.
+`schema.migrate` drops the column from an existing database on open, and
+the historical-schema test checks that an old file converges on the fresh
+layout. The daily budgets and the kill switch remain the spend controls.

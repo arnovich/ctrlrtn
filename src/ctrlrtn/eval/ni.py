@@ -22,7 +22,7 @@ Two correctness points the design depends on:
   easily, i.e. a bad downgrade). ``test_ni`` includes a Monte-Carlo coverage
   check at the boundary as the empirical guard.
 * **Independence.** The bootstrap resamples *clusters*, not individual pairings.
-  Replayed inputs from the same edition/day are correlated; resampling them
+  Replayed inputs from the same task/day are correlated; resampling them
   independently understates variance (again anti-conservative). Pass ``clusters``
   (a label per diff); without it, each pairing is its own cluster and **the
   caller must guarantee independence**.
@@ -73,7 +73,7 @@ def paired_ni(
 ) -> NIResult:
     """Decide non-inferiority from per-pairing ``candidate - baseline`` diffs.
 
-    ``clusters`` gives a correlation-group label per diff (e.g. edition id);
+    ``clusters`` gives a correlation-group label per diff (e.g. task id);
     resampling is done over these. Omit only when pairings are independent.
     """
     if margin <= 0:

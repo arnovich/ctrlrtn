@@ -83,7 +83,6 @@ class ControlCommands:
             "candidate_provider": args.provider,
             "split_pct": args.split,
             "max_calls_per_task": args.max_calls,
-            "max_cost_usd_per_task": args.max_cost,
             "workflow": args.workflow,
             "workflow_version": args.workflow_version,
             "step": args.step,

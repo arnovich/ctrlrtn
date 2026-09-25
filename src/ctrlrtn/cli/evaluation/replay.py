@@ -141,7 +141,7 @@ class ReplayEvaluationCommands:
                     f"WARNING: these {count} inputs span only {plan.units} "
                     f"independent task(s); the NI test needs >= {MIN_NI_UNITS}, "
                     "so this batch WILL conclude UNDERPOWERED. Record more "
-                    "tasks (editions) before spending.",
+                    "tasks before spending.",
                     file=sys.stderr,
                 )
             if plan.untasked:

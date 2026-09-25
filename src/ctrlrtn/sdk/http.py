@@ -13,20 +13,20 @@ from ctrlrtn.sdk.context import (
     _task,
     logger,
 )
-from ctrlrtn.sdk.lifecycle import _edition_active
+from ctrlrtn.sdk.lifecycle import _task_active
 
 
 def _warn_or_raise_untasked() -> None:
-    """A ctrlrtn client is sending a request with no task bound. If an edition is
+    """A ctrlrtn client is sending a request with no task bound. If a task is
     live in this process, the call is almost certainly on a thread/subprocess the
     context didn't reach and will be misfiled as baseline — surface it loudly.
     """
-    if not _edition_active():
-        return  # legitimately outside any edition — nothing to stamp
+    if not _task_active():
+        return  # legitimately outside any task — nothing to stamp
     msg = (
         "ctrlrtn: an LLM request is going out with no x-ctrlrtn-task while an "
-        "edition is active in this process — it is on a thread/subprocess the "
-        "edition context did not reach and will be recorded as BASELINE, "
+        "task is active in this process — it is on a thread/subprocess the "
+        "task context did not reach and will be recorded as BASELINE, "
         "silently splitting the experiment. Wrap the callable with sdk.bind "
         "before crossing the boundary."
     )
@@ -61,7 +61,7 @@ def _with_hook(hooks: dict | None, hook) -> dict:
 
 
 def event_hooks(extra: dict | None = None) -> dict:
-    """Request hooks that stamp the current edition's headers, for a client
+    """Request hooks that stamp the current task's headers, for a client
     this module does not build itself.
 
     Provider SDKs built on ``httpx2`` (the Anthropic SDK from 1.0) reject an
@@ -82,7 +82,7 @@ def async_event_hooks(extra: dict | None = None) -> dict:
 
 
 def http_client(**kwargs) -> httpx.Client:
-    """A sync httpx client that stamps the current edition's headers on every
+    """A sync httpx client that stamps the current task's headers on every
     request. Pass it to your LLM SDK, e.g. ``OpenAI(http_client=...)``."""
     return httpx.Client(
         event_hooks=event_hooks(kwargs.pop("event_hooks", None)), **kwargs
@@ -90,7 +90,7 @@ def http_client(**kwargs) -> httpx.Client:
 
 
 def async_http_client(**kwargs) -> httpx.AsyncClient:
-    """An async httpx client that stamps the current edition's headers."""
+    """An async httpx client that stamps the current task's headers."""
     return httpx.AsyncClient(
         event_hooks=async_event_hooks(kwargs.pop("event_hooks", None)),
         **kwargs,

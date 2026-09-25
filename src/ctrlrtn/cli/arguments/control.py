@@ -8,7 +8,6 @@ from ctrlrtn.eval.tripwire import (
 )
 from ctrlrtn.policy.experiment import (
     DEFAULT_MAX_CALLS_PER_TASK,
-    DEFAULT_MAX_COST_USD_PER_TASK,
 )
 
 
@@ -50,13 +49,6 @@ def register(sub, controls, evaluation) -> None:
         "client's own max-turns.",
     )
     exp_start.add_argument(
-        "--max-cost",
-        type=float,
-        default=DEFAULT_MAX_COST_USD_PER_TASK,
-        dest="max_cost",
-        help="per-task $ ceiling recorded with the experiment (not enforced)",
-    )
-    exp_start.add_argument(
         "--id", default=None, help="experiment id (default: auto exp:<uuid>)"
     )
     exp_start.add_argument("--workflow", default=None)
@@ -85,7 +77,7 @@ def register(sub, controls, evaluation) -> None:
         default=45.0,
         dest="idle_minutes",
         help="a task with no new calls for this long is closed; default 45. "
-        "Raise it above your longest inter-call gap so a long edition isn't "
+        "Raise it above your longest inter-call gap so a long task isn't "
         "split or counted unreported early.",
     )
     exp_status.add_argument(

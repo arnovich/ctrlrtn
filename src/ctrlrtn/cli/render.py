@@ -286,9 +286,7 @@ def render_experiment_started(exp: Experiment) -> str:
         f"  candidate:  {exp.candidate_model}  "
         f"on {exp.candidate_provider or 'the baseline provider'}  "
         f"(serving {exp.split_pct}% of this use-case's tasks)\n"
-        f"  ceilings:   {exp.max_calls_per_task} calls/task "
-        f"(enforced), ${exp.max_cost_usd_per_task:g}/task (recorded, not "
-        "enforced)\n"
+        f"  ceiling:    {exp.max_calls_per_task} calls/task\n"
         "The gateway picks it up within ~10s. Stop it with:\n"
         f"  ctrlrtn experiment stop {exp.experiment_id}"
     )
@@ -380,7 +378,7 @@ def render_propagation(report: PropagationReport) -> str:
         lines.append(
             "  verdict: PROPAGATING — a shared x-ctrlrtn-task links multiple "
             "sub-agents across recent tasks (confirms propagation works, not "
-            "that every sub-agent of every edition is captured)."
+            "that every sub-agent of every task is captured)."
         )
     if report.focus_use_case:
         lines.append(

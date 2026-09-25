@@ -43,7 +43,6 @@ experiments:
     provider: ollama
     split_pct: 25
     max_calls_per_task: 30
-    max_cost_usd_per_task: 2.5
 workflow_routes:
   article-pipeline:
     git:abc123:
@@ -111,6 +110,11 @@ def test_load_control_config_validates_and_builds_domain_objects(tmp_path):
         (
             "version: 1\nexperiments:\n  tag:x:\n    id: exp:x\n",
             "candidate_model is required",
+        ),
+        (
+            "version: 1\nexperiments:\n  tag:x:\n    id: exp:x\n"
+            "    candidate_model: m\n    max_cost_usd_per_task: 2.5\n",
+            "unknown experiment 'tag:x' key.*max_cost_usd_per_task",
         ),
         (
             "version: 1\nworkflow_routes:\n  pipeline:\n    v1:\n      steps:\n"

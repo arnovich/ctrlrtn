@@ -16,7 +16,6 @@ from textual.widgets import (
 from ctrlrtn.eval.live import DEFAULT_JUDGE_MODEL
 from ctrlrtn.policy.experiment import (
     DEFAULT_MAX_CALLS_PER_TASK,
-    DEFAULT_MAX_COST_USD_PER_TASK,
 )
 
 from .base import (
@@ -179,18 +178,13 @@ class LiveExperimentScreen(KeyboardForm, ModalScreen[dict | None]):
             yield Input(placeholder="candidate model", id="live-candidate")
             yield Label("Named provider (optional)")
             yield Input(id="live-provider")
-            yield Label("Candidate split % · max calls/task · max cost/task")
+            yield Label("Candidate split % · max calls/task")
             with Horizontal():
                 yield Input("50", type="integer", id="live-split")
                 yield Input(
                     str(DEFAULT_MAX_CALLS_PER_TASK),
                     type="integer",
                     id="live-max-calls",
-                )
-                yield Input(
-                    str(DEFAULT_MAX_COST_USD_PER_TASK),
-                    type="number",
-                    id="live-max-cost",
                 )
             yield Label("Optional scope: workflow · version · optional step")
             with Horizontal():
@@ -214,14 +208,13 @@ class LiveExperimentScreen(KeyboardForm, ModalScreen[dict | None]):
                 "candidate_provider": value("#live-provider") or None,
                 "split_pct": int(value("#live-split")),
                 "max_calls_per_task": int(value("#live-max-calls")),
-                "max_cost_usd_per_task": float(value("#live-max-cost")),
                 "workflow": value("#live-workflow") or None,
                 "workflow_version": value("#live-workflow-version") or None,
                 "step": value("#live-step") or None,
             }
         except ValueError:
             self.notify(
-                "Split, max calls and max cost must be numbers.",
+                "Split and max calls must be numbers.",
                 severity="error",
             )
             return

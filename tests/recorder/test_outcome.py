@@ -50,11 +50,11 @@ def _close(store) -> None:
 async def test_outcome_joins_into_tasks(make_store):
     store = make_store()
     try:
-        await store.save(_trace("edition-7"))
+        await store.save(_trace("task-7"))
         await store.save_outcome(
-            Outcome(task_id="edition-7", success=True, score=0.9)
+            Outcome(task_id="task-7", success=True, score=0.9)
         )
-        row = {r.task_id: r for r in store.tasks()}["edition-7"]
+        row = {r.task_id: r for r in store.tasks()}["task-7"]
         assert row.success is True
         assert row.score == 0.9
     finally:
@@ -65,14 +65,14 @@ async def test_outcome_joins_into_tasks(make_store):
 async def test_latest_outcome_wins(make_store):
     store = make_store()
     try:
-        await store.save(_trace("edition-7"))
+        await store.save(_trace("task-7"))
         await store.save_outcome(
-            Outcome(task_id="edition-7", success=False, score=0.2)
+            Outcome(task_id="task-7", success=False, score=0.2)
         )
         await store.save_outcome(
-            Outcome(task_id="edition-7", success=True, score=0.9)
+            Outcome(task_id="task-7", success=True, score=0.9)
         )
-        row = {r.task_id: r for r in store.tasks()}["edition-7"]
+        row = {r.task_id: r for r in store.tasks()}["task-7"]
         assert row.success is True  # the later-arriving outcome
         assert row.score == 0.9
     finally:
@@ -85,14 +85,14 @@ async def test_later_failure_supersedes_earlier_success(make_store):
     # a later failure must win over an earlier success, not be masked by it.
     store = make_store()
     try:
-        await store.save(_trace("edition-7"))
+        await store.save(_trace("task-7"))
         await store.save_outcome(
-            Outcome(task_id="edition-7", success=True, score=0.9)
+            Outcome(task_id="task-7", success=True, score=0.9)
         )
         await store.save_outcome(
-            Outcome(task_id="edition-7", success=False, score=0.1)
+            Outcome(task_id="task-7", success=False, score=0.1)
         )
-        row = {r.task_id: r for r in store.tasks()}["edition-7"]
+        row = {r.task_id: r for r in store.tasks()}["task-7"]
         assert row.success is False
         assert row.score == 0.1
     finally:
@@ -120,9 +120,9 @@ async def test_success_false_survives_the_join(make_store):
     # outcome" (None) — the join stores/reads 0 vs NULL distinctly.
     store = make_store()
     try:
-        await store.save(_trace("edition-7"))
-        await store.save_outcome(Outcome(task_id="edition-7", success=False))
-        row = {r.task_id: r for r in store.tasks()}["edition-7"]
+        await store.save(_trace("task-7"))
+        await store.save_outcome(Outcome(task_id="task-7", success=False))
+        row = {r.task_id: r for r in store.tasks()}["task-7"]
         assert row.success is False
         assert row.score is None
     finally:
@@ -133,11 +133,11 @@ async def test_success_false_survives_the_join(make_store):
 async def test_task_without_outcome_is_none(make_store):
     store = make_store()
     try:
-        await store.save(_trace("edition-7"))
+        await store.save(_trace("task-7"))
         await store.save(_trace(None))  # untagged
         by_id = {r.task_id: r for r in store.tasks()}
-        assert by_id["edition-7"].success is None
-        assert by_id["edition-7"].score is None
+        assert by_id["task-7"].success is None
+        assert by_id["task-7"].score is None
         assert by_id["(untasked)"].success is None
     finally:
         _close(store)
@@ -158,14 +158,14 @@ def _client(app):
 
 async def test_endpoint_records_and_joins():
     store = InMemoryTraceStore()
-    await store.save(_trace("edition-7"))
+    await store.save(_trace("task-7"))
     async with _client(_app_with_store(store)) as client:
         resp = await client.post(
             "/ctrlrtn/outcome",
-            json={"task_id": "edition-7", "success": True, "score": 0.9},
+            json={"task_id": "task-7", "success": True, "score": 0.9},
         )
     assert resp.status_code == 200
-    row = {r.task_id: r for r in store.tasks()}["edition-7"]
+    row = {r.task_id: r for r in store.tasks()}["task-7"]
     assert row.success is True
     assert row.score == 0.9
 
@@ -296,7 +296,7 @@ def test_render_tasks_shows_outcome_column():
 
     rows = [
         TaskSummary(
-            task_id="edition-7",
+            task_id="task-7",
             calls=3,
             cost_usd=0.9,
             input_tokens=300,

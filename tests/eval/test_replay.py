@@ -277,7 +277,7 @@ def test_progress_callback_runs_after_every_input_including_blank():
 
 
 def test_clusters_are_threaded_into_the_ni_test():
-    # 24 pairings in 4 editions -> the NI test sees 4 units, underpowered.
+    # 24 pairings in 4 tasks -> the NI test sees 4 units, underpowered.
     def replay_fn(body, model):
         return "GOOD answer"
 
@@ -372,8 +372,8 @@ def test_too_many_failures_refuses_to_conclude():
 
 
 def test_mixed_clusters_keep_none_as_singletons():
-    # 18 grouped (3 editions x 6) + 12 independent (None). None must NOT fuse
-    # into one unit: expect 3 edition units + 12 singletons = 15.
+    # 18 grouped (3 tasks x 6) + 12 independent (None). None must NOT fuse
+    # into one unit: expect 3 task units + 12 singletons = 15.
     def replay_fn(body, model):
         return "GOOD answer"
 

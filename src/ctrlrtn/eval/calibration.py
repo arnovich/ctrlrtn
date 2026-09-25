@@ -26,7 +26,7 @@ judge uses, it runs the judge via the very same ``judge_pairing`` the eval uses
 * **correlation** — Spearman, reported as a diagnostic only (not gated).
 
 Scope/known limits (advisory, so surfaced not silently assumed): labelled pairs
-are treated as i.i.d. — edition clustering (which ``ni.py`` corrects for) is not
+are treated as i.i.d. — task clustering (which ``ni.py`` corrects for) is not
 modelled, so with correlated labels the effective N is smaller than ``n``. The
 judge call is injected (``JudgeFn``) so the module is pure and headless-testable.
 """

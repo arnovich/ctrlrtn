@@ -38,7 +38,6 @@ def canonical_document(config: ControlConfig) -> str:
             "candidate_model": exp.candidate_model,
             "split_pct": exp.split_pct,
             "max_calls_per_task": exp.max_calls_per_task,
-            "max_cost_usd_per_task": exp.max_cost_usd_per_task,
         }
         if exp.candidate_provider is not None:
             fields["provider"] = exp.candidate_provider
