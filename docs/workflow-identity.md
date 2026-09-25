@@ -1,14 +1,10 @@
 # Workflow identity and propagation contract
 
-This page is the header and event contract that the SDK and the proxy
-implement. It makes workflow identity explicit, so recorded calls can be
-grouped, attributed, and routed at step scope without inferring control facts
-from prompt text. The application stays the orchestrator: the proxy observes
-declared identity and lifecycle events, and it never schedules, merges,
-skips, retries, or parallelizes work.
-
-What the proxy derives from that record afterwards, such as inferred edges,
-discovered families, diagrams, and recommendations, is in
+The header and event contract the SDK and the proxy implement, so recorded
+calls can be grouped, attributed and routed at step scope. The application
+stays the orchestrator: the proxy observes declared identity and lifecycle
+events and never schedules, merges, skips, retries or parallelizes work.
+What it derives afterwards is in
 [workflow-discovery.md](workflow-discovery.md).
 
 ## Identity model
@@ -24,21 +20,22 @@ discovered families, diagrams, and recommendations, is in
 | `dependency_step_run_ids` | Invocations whose results this run consumes | Zero or more runs in the same task |
 | `attempt` | Retry or loop attempt of this logical invocation | Integer, starting at 1 |
 
-The stable step key is `(workflow, workflow_version, step)`. The execution
+The stable step key is `(workflow, workflow_version, step)`; the execution
 key is `(task_id, step_run_id)`. Neither `task_id` nor `step_run_id` is a
 routing target.
 
-One step run may contain several provider calls; they share the identity
-and stay separate calls. A retry or loop iteration is a new step run with the
-same `step` and a higher `attempt`. Fan-out uses one run ID per child, and a
-join lists every dependency run, so concurrency is declared, not guessed from
-timestamps. `parent_step_run_id` means "created or controlled by" and does
-not replace data dependencies. Cross-task relationships cannot be expressed.
+- One step run may contain several provider calls; they share the identity
+  and stay separate calls.
+- A retry or loop iteration is a new step run with the same `step` and a
+  higher `attempt`.
+- Fan-out uses one run ID per child; a join lists every dependency run.
+- `parent_step_run_id` means "created or controlled by" and does not
+  replace data dependencies.
+- Cross-task relationships cannot be expressed.
 
 ## Wire contract
 
-An instrumented request carries these headers. Names are matched without
-regard to case.
+Header names are matched without regard to case.
 
 | Header | Field | Required |
 | --- | --- | --- |
@@ -51,10 +48,10 @@ regard to case.
 | `x-ctrlrtn-step-dependencies` | `dependency_step_run_ids` | no; comma-separated |
 | `x-ctrlrtn-step-attempt` | `attempt` | no; default `1` |
 
-Workflow identity is all or nothing. The five required headers must appear
-together; any workflow header without all five is a partial identity. A
-request that carries only `x-ctrlrtn-task` is a task-scoped call without
-workflow identity, which is valid.
+Workflow identity is all or nothing: the five required headers appear
+together, and any workflow header without all five is a partial identity.
+A request carrying only `x-ctrlrtn-task` is a valid task-scoped call
+without workflow identity.
 
 | Rule | Limit |
 | --- | --- |
@@ -64,16 +61,16 @@ workflow identity, which is valid.
 | Attempt | An integer of 1 or more |
 | Complete header set | At most 4096 bytes of names plus values |
 
-A partial or invalid identity never breaks proxying: the proxy forwards the
-request, records no workflow columns, and stores the validation error on the
-trace as a diagnostic that `ctrlrtn workflow diagnostics` counts. The proxy
-never derives a step identity from a request body. It records the normalized
-header values in dedicated trace columns and removes every `x-ctrlrtn-*`
-header before contacting a provider. The headers are assertions by the
-calling application, not authentication; the same-host deployment and the
-Host check in [deploy.md](deploy.md) are the trust boundary. Identifiers
-must not carry secrets, user text, prompt excerpts, credentials, or personal
-data.
+A partial or invalid identity never breaks proxying: the request is
+forwarded, no workflow columns are recorded, and the validation error is
+stored on the trace as a diagnostic that `ctrlrtn workflow diagnostics`
+counts. The proxy never derives a step identity from a request body. It
+records the normalized header values in dedicated trace columns and removes
+every `x-ctrlrtn-*` header before contacting a provider. The headers are
+assertions by the calling application, not authentication; the same-host
+deployment and the Host check in [deploy.md](deploy.md) are the trust
+boundary. Identifiers must not carry secrets, user text, prompt excerpts,
+credentials or personal data.
 
 ## SDK contract
 
@@ -103,35 +100,36 @@ shows both.
 | --- | --- |
 | `sdk.task(task_id=None, *, default_route, report_to, workflow, workflow_version)` | Binds the task ID (generated when absent), the default route, and the workflow. `workflow` and `workflow_version` are given together or not at all. |
 | `run.step(name, *, step_run_id, parent_step_run_id, dependencies, attempt)` | Opens one step run. `step_run_id` is generated unless supplied for distributed propagation; `parent_step_run_id` defaults to the enclosing step. The identity is validated here, so a bad identifier raises `WorkflowIdentityError` before any request is sent. |
-| `step.report(status="completed", success, score, error_code)` | Emits the terminal event explicitly. `status` must be terminal, and a second call raises `RuntimeError`. |
+| `step.report(status="completed", success, score, error_code)` | Emits the terminal event explicitly. `status` must be terminal; a second call raises `RuntimeError`. |
 | `step.tool(operation, *, operation_id, attempt_id, attempt, effect)` | Declares one tool attempt inside the step run; see below. |
 | `sdk.bind(func)` | Copies the complete context into a callable for a thread or an executor. |
-| `sdk.export_carrier()` and `sdk.import_carrier(carrier)` | Serialize the active step identity for a subprocess or another service, and adopt it there after validation. Python context copying is not a cross-process protocol. |
+| `sdk.export_carrier()` and `sdk.import_carrier(carrier)` | Serialize the active step identity for a subprocess or another service, and adopt it there after validation. |
 | `sdk.stamp(headers, *, task_id, route, workflow_identity)` | Adds the headers for a client that is not httpx. A supplied identity whose `task_id` differs from the bound task raises `ValueError`. |
 
-Every request made through a stamped client inside a step carries the full
-identity. Context variables reach async child tasks automatically; threads
-and subprocesses start empty, so use `bind` or a carrier, and open a distinct
-`step()` in each concurrent child so run IDs are not shared. Entering a step
-emits `started`; leaving it emits `completed`, or `failed` when an exception
-is propagating, unless `report()` already sent the terminal event. Events are
-sent only when the task has `report_to`, and a delivery failure is logged
-as a warning, never raised into the application. With `CTRLRTN_STRICT=1`, a
-request that leaves a ctrlrtn client with no task bound while a task is
-active raises instead of being logged.
+- Every request through a stamped client inside a step carries the full
+  identity.
+- Context variables reach async child tasks automatically; threads and
+  subprocesses start empty, so use `bind` or a carrier, and open a distinct
+  `step()` in each concurrent child so run IDs are not shared.
+- Entering a step emits `started`; leaving it emits `completed`, or `failed`
+  when an exception is propagating, unless `report()` already sent the
+  terminal event.
+- Events are sent only when the task has `report_to`; a delivery failure is
+  logged as a warning, never raised into the application.
+- With `CTRLRTN_STRICT=1`, a request that leaves a ctrlrtn client with no
+  task bound while a task is active raises instead of being logged.
 
 ## Lifecycle events
 
-Traces prove that a provider call happened, not when a step began or whether
-a step without a model call finished, so the proxy accepts lifecycle events
-at `POST /ctrlrtn/workflow-events`. The endpoint has the same trust boundary
-as `/ctrlrtn/outcome`: a Host check, a required `application/json` content
-type, and no authentication. It answers 503 when recording is disabled and
-400 for a malformed event. An event is a JSON object with `event_id`, `ts`,
-`status`, the complete identity carrier (`task_id`, `workflow`,
-`workflow_version`, `step`, `step_run_id`, `parent_step_run_id`,
+Lifecycle events cover what traces cannot: when a step began, and steps
+without a model call. They go to `POST /ctrlrtn/workflow-events`, which has
+the same trust boundary as `/ctrlrtn/outcome`: a Host check, a required
+`application/json` content type, no authentication. It answers 503 when
+recording is disabled and 400 for a malformed event. An event is a JSON object
+with `event_id`, `ts`, `status`, the complete identity carrier (`task_id`,
+`workflow`, `workflow_version`, `step`, `step_run_id`, `parent_step_run_id`,
 `dependency_step_run_ids`, `attempt`), and the optional outcome fields
-`success`, `score`, and `error_code`. Unknown fields are rejected.
+`success`, `score` and `error_code`. Unknown fields are rejected.
 
 | Status | Terminal | Meaning |
 | --- | --- | --- |
@@ -141,14 +139,16 @@ type, and no authentication. It answers 503 when recording is disabled and
 | `cancelled` | yes | The run was cancelled. |
 | `skipped` | yes | The step did not run; no provider call is expected. |
 
-`event_id` is unique, so a retried delivery is idempotent. Events are
-append-only facts and never rewrite trace identity. A trace received before
-its `started` event is valid, because delivery can reorder. Outcome fields
-are valid only on a terminal event: `success` is a boolean, `score` a finite
-number, and `error_code` a bounded code in the identifier grammar. Repeated
-identical events are harmless. Two different terminal statuses on one run
-mark it `inconsistent`; reports exclude such runs from success and score
-statistics and `ctrlrtn workflow diagnostics` counts them.
+- `event_id` is unique, so a retried delivery is idempotent; repeated
+  identical events are harmless.
+- Events are append-only facts and never rewrite trace identity. A trace
+  received before its `started` event is valid.
+- Outcome fields are valid only on a terminal event: `success` is a boolean,
+  `score` a finite number, `error_code` a bounded code in the identifier
+  grammar.
+- Two different terminal statuses on one run mark it `inconsistent`; reports
+  exclude such runs from success and score statistics and
+  `ctrlrtn workflow diagnostics` counts them.
 
 ## Tool-operation events
 
@@ -167,21 +167,20 @@ The proxy never infers `effect` from a tool name or a provider schema;
 missing knowledge stays `unknown`. Provider tool-call IDs are not part of
 this identity and remain inference evidence only. Events go to
 `POST /ctrlrtn/tool-operation-events` under the same trust boundary as
-lifecycle events. A status is `started`, `completed`, `failed`, or
+lifecycle events. A status is `started`, `completed`, `failed` or
 `cancelled`. A terminal event must state `success` explicitly and may carry
-`error_code`, `latency_ms`, and `cost_usd`; a `started` event may carry none
+`error_code`, `latency_ms` and `cost_usd`; a `started` event may carry none
 of them. In the SDK, `step.tool(...)` opens a context manager that emits
 `started`; `report(status, success, error_code, latency_ms, cost_usd)` sends
 the terminal event once, `latency_ms` defaults to the time since entry, and
 leaving the block without a report sends `completed`, or `failed` with the
-exception type as `error_code`. These are explicit application facts and
-never authorize batching, fusion, retry collapse, or any execution change.
+exception type as `error_code`. These are application facts and never
+authorize batching, fusion, retry collapse or any execution change.
 
 ## Routing precedence for declared workflows
 
-The proxy applies one chain to every call; it is listed in
-[configure.md](configure.md#serving-precedence). For a declared workflow the
-relevant rules are:
+The full chain is in [configure.md](configure.md#serving-precedence). For a
+declared workflow the relevant rules are:
 
 | Rule | Matches |
 | --- | --- |
@@ -189,16 +188,19 @@ relevant rules are:
 | Workflow route | The exact `(workflow, workflow_version)` of a complete, valid identity |
 | Scoped experiment | A running experiment on the use-case whose declared scope matches the identity |
 
-A running experiment on a use-case owns its traffic, and a route on the same
-use-case stays dormant until it stops. A partial, malformed, or
-unknown-version identity matches no workflow rule and falls back to use-case
-behaviour; it never approximately matches another version. Every routed
-trace records the rule scope (`workflow_step`, `workflow`, or `use_case`),
-the rule key, and the activated configuration revision. Rules match declared
-keys in the Git-backed `routing.yaml` ([configure.md](configure.md)), never
-inferred edges, display labels, or observed graphs. Offline replay, online
-shadow, and live split experiments select one stable step with `--workflow`,
-`--workflow-version`, and `--step` together. Their evidence stays
-step-scoped: a candidate that continues a baseline-generated history is not
-evidence of end-to-end workflow equivalence, and a step-scoped experiment's
-status reads explicit step lifecycle outcomes, never the task outcome.
+- A running experiment on a use-case owns its traffic; a route on the same
+  use-case stays dormant until it stops.
+- A partial, malformed or unknown-version identity matches no workflow rule
+  and falls back to use-case behaviour; it never approximately matches
+  another version.
+- Every routed trace records the rule scope (`workflow_step`, `workflow` or
+  `use_case`), the rule key and the activated configuration revision.
+- Rules match declared keys in the Git-backed `routing.yaml`
+  ([configure.md](configure.md)), never inferred edges, display labels or
+  observed graphs.
+- Offline replay, online shadow and live split experiments select one
+  stable step with `--workflow`, `--workflow-version` and `--step` together.
+  Their evidence stays step-scoped: a candidate that continues a
+  baseline-generated history is not evidence of end-to-end workflow
+  equivalence, and a step-scoped experiment's status reads explicit step
+  lifecycle outcomes, never the task outcome.

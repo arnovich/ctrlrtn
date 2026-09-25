@@ -1,16 +1,15 @@
 # Instrument a workflow: the SDK, task identity and step-level evidence
 
-The proxy works on plain HTTP headers, so any client in any language can
-be instrumented. The Python SDK, `ctrlrtn.sdk`, sets those headers for you,
-reports outcomes, and can describe an agentic workflow step by step so that
-evidence and routing can be scoped to a single step.
+Any client in any language can be instrumented with plain HTTP headers. The
+Python SDK, `ctrlrtn.sdk`, sets them, reports outcomes, and can describe a
+workflow step by step so evidence and routing can be scoped to one step.
 
 ## Headers by hand
 
-Three headers do most of the work; [getting started](getting-started.md)
-introduces them. `x-ctrlrtn-task` is one id per job, `x-ctrlrtn-route` is
-the role, `x-ctrlrtn-session` is a spend boundary. Any client that can add
-request headers can send them. When a job ends, POST its result:
+`x-ctrlrtn-task` is one id per job, `x-ctrlrtn-route` is the role, and
+`x-ctrlrtn-session` is a spend boundary; [Getting started](getting-started.md)
+introduces them. Any client that can add request headers can send them. When
+a job ends, POST its result:
 
 ```json
 POST /ctrlrtn/outcome
@@ -24,10 +23,9 @@ provider never sees them.
 
 ## The SDK for Python applications
 
-The SDK ships with the package and depends only on `httpx`. A task is
-one job; every request made through an SDK-wrapped client inside the block
-carries its task id, and sub-agents in the same process and async context
-inherit it:
+The SDK ships with the package and depends only on `httpx`. A task is one
+job: every request through an SDK-wrapped client inside the block carries
+its id, and sub-agents in the same process and async context inherit it:
 
 ```python
 from openai import OpenAI
@@ -76,11 +74,10 @@ recorded as a stray call.
 
 ## Describe the workflow
 
-An agentic application is a graph of steps. Declaring that graph lets the
-proxy attribute cost, latency and outcomes to a stable step rather than to a
-prompt fingerprint, and lets experiments and routes target one step of one
-workflow version. Name the workflow and its version on the task, and open
-each logical operation as a step:
+Declaring the steps attributes cost, latency and outcomes to a stable step
+instead of a prompt fingerprint, and lets experiments and routes target one
+step of one workflow version. Name the workflow and version on the task and
+open each operation as a step:
 
 ```python
 with sdk.task(
@@ -99,22 +96,21 @@ with sdk.task(
         draft.report(success=bool(text))
 ```
 
-A step's outcome comes only from its own `report(...)`; it is not inherited
-from the task's, and a step that leaves without one shows as having no
-outcome in `workflow diagnostics`.
-
-The stable step key is `(workflow, workflow_version, step)`; each `step(...)`
-call is one run of it with a fresh run id. Retries and loop iterations are
-new runs with a higher `attempt`. `dependencies` lists the runs whose
-results a step consumes, and `parent_step_run_id` defaults to the enclosing
-step, so fan-out and joins are represented without guessing from
-timestamps. A tool block declares one tool attempt with its side-effect
-class, so a replay can tell which operations were safe to repeat.
-
-Every step emits lifecycle events, `started` and then exactly one of
-`completed`, `failed`, `cancelled` or `skipped`, to `/ctrlrtn/workflow-events`.
-Event delivery is best effort: a failure is logged and never changes what
-the application does.
+- A step's outcome comes only from its own `report(...)`; it is not
+  inherited from the task's. A step that leaves without one shows as having
+  no outcome in `workflow diagnostics`.
+- The stable step key is `(workflow, workflow_version, step)`; each
+  `step(...)` call is one run of it with a fresh run id. Retries and loop
+  iterations are new runs with a higher `attempt`.
+- `dependencies` lists the runs whose results a step consumes, and
+  `parent_step_run_id` defaults to the enclosing step, so fan-out and joins
+  are represented without guessing from timestamps.
+- A tool block declares one tool attempt with its side-effect class, so a
+  replay can tell which operations were safe to repeat.
+- Every step emits lifecycle events, `started` and then exactly one of
+  `completed`, `failed`, `cancelled` or `skipped`, to
+  `/ctrlrtn/workflow-events`. Delivery is best effort: a failure is logged
+  and never changes what the application does.
 
 A subprocess or remote worker continues a step under the same identity
 through a carrier:
@@ -128,14 +124,14 @@ with sdk.import_carrier(carrier), sdk.route("researcher"):   # in the worker
 The carrier holds the task and step identity, not the route, so the worker
 sets its own role.
 
-[Workflow identity](workflow-identity.md) is the full contract and
-[Workflow discovery and analysis](workflow-discovery.md) covers every
-`workflow` command: the header
+[Workflow identity](workflow-identity.md) is the full contract: the header
 names, the identifier grammar, size limits and what the proxy records.
+[Workflow discovery and analysis](workflow-discovery.md) covers every
+`workflow` command.
 
 ## What instrumentation unlocks
 
-Per task, the proxy can now show the graph it observed and the cost of each
+Per task, the proxy can show the graph it observed and the cost of each
 step:
 
 ```bash
@@ -166,10 +162,9 @@ routes.
 
 ## Without instrumentation
 
-Traffic recorded before any workflow identity existed, called legacy traffic
-in the discovery commands, can still be explored. `workflow discover`
-clusters recurring task shapes into families from role and tool patterns
-alone, and `workflow identify` writes a proposal for naming one family as a
-workflow. Both are analysis only: a discovered family has no routing
-authority until an application declares the workflow and sends its
-identity.
+Traffic recorded without workflow identity, legacy traffic in the discovery
+commands, can still be explored: `workflow discover` clusters recurring task
+shapes into families from role and tool patterns alone, and
+`workflow identify` writes a proposal for naming one family as a workflow.
+Both are analysis only; a discovered family has no routing authority until
+an application declares the workflow and sends its identity.

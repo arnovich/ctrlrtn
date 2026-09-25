@@ -1,8 +1,7 @@
 # Getting started: route a call and read the numbers
 
-This page takes an application from its first proxied call to a per-role
-cost picture. It assumes the proxy is installed as in the README and that the
-application uses the Anthropic or OpenAI API, directly or through a framework.
+Assumes the proxy is installed as in the README and the application speaks
+the Anthropic or OpenAI API, directly or through a framework.
 
 ## 1. Start the proxy
 
@@ -11,11 +10,11 @@ uv run ctrlrtn serve --log-requests
 ```
 
 It listens on `http://127.0.0.1:4000` and records to `ctrlrtn.db` in the
-current directory. Both are settings; `serve` and every other command read
-the same configuration, so if they run from different directories give
-`db_path` an absolute value. Settings come from a YAML file named by
-`CTRLRTN_CONFIG` (default `./ctrlrtn.yaml`) or from `CTRLRTN_*` environment
-variables, and environment wins over file:
+current directory. Every command reads the same configuration, so give
+`db_path` an absolute value if `serve` and the CLI run from different
+directories. Settings come from the YAML file named by `CTRLRTN_CONFIG`
+(default `./ctrlrtn.yaml`) or from `CTRLRTN_*` environment variables;
+environment wins:
 
 ```yaml
 # ctrlrtn.yaml
@@ -39,18 +38,18 @@ export ANTHROPIC_BASE_URL=http://127.0.0.1:4000
 export OPENAI_BASE_URL=http://127.0.0.1:4000/v1
 ```
 
-The proxy chooses the upstream by path. `/v1/messages` and `/v1/complete`
-go to Anthropic; `/v1/chat/completions`, `/v1/completions`, `/v1/responses`
-and `/v1/embeddings` go to OpenAI. Usage and cost are extracted for the
-messages and chat-completions endpoints; the others are forwarded and
-recorded with unknown cost. For a streamed OpenAI call, set
-`stream_options.include_usage` to `true`, or the final chunk carries no token
-counts and the call is recorded with unknown cost.
-The application keeps its own API key. The proxy forwards it on each call,
-redacts it from the recorded trace at capture time, and never stores it.
+- Upstream is chosen by path: `/v1/messages` and `/v1/complete` go to
+  Anthropic; `/v1/chat/completions`, `/v1/completions`, `/v1/responses` and
+  `/v1/embeddings` go to OpenAI.
+- Usage and cost are extracted for the messages and chat-completions
+  endpoints; the others are forwarded and recorded with unknown cost.
+- A streamed OpenAI call needs `stream_options.include_usage` set to `true`,
+  or the final chunk carries no token counts and the cost is unknown.
+- The application keeps its own API key. The proxy forwards it on each call,
+  redacts it from the recorded trace at capture time, and never stores it.
 
-A local model server that speaks the OpenAI API can be added as a named
-provider, mounted under its own prefix:
+A local model server that speaks the OpenAI API can be a named provider,
+mounted under its own prefix:
 
 ```yaml
 providers:
@@ -73,23 +72,18 @@ uv run ctrlrtn show <call-id>   # one call in full; headers redacted,
 
 ## 3. Name the work
 
-Three request headers turn a list of calls into a picture of the
-application. Each is optional and each makes a different view possible.
+Three optional request headers turn a list of calls into a picture of the
+application:
 
-**`x-ctrlrtn-route`** names the role making the call, such as `editor` or
-`researcher`. Calls with the same route form one use-case, keyed
-`tag:editor`. Without it, calls are grouped by a fingerprint of the request's system
-prompt, tool schemas and response format, keyed `fp:...`, or shown as
-`(unkeyed)` when the request has none of those. Use-cases
-are what you evaluate and route, so choose names per role, not per call.
+| Header | Meaning |
+| --- | --- |
+| `x-ctrlrtn-route` | The role making the call, such as `editor`. Same route, same use-case, keyed `tag:editor`. Name roles, not calls: use-cases are what you evaluate and route. |
+| `x-ctrlrtn-task` | One id shared by every call of one job, such as an agent run or a batch item. It prices the whole task and pairs a reported outcome with the calls that produced it. A reused id merges two jobs. |
+| `x-ctrlrtn-session` | A spend boundary you define, such as a customer or a nightly batch. Budgets can cap a session's lifetime spend. |
 
-**`x-ctrlrtn-task`** carries one id for every call of one job, such as an
-agent run or a batch item. It lets the proxy join a job's calls into a
-task, price the whole task, and later pair an outcome you report with the
-calls that produced it. Use a fresh id per job; a reused id merges two jobs.
-
-**`x-ctrlrtn-session`** marks a spend boundary you define, such as a customer
-or a nightly batch. Budgets can cap a session's lifetime spend.
+Without a route header, calls are grouped by a fingerprint of the request's
+system prompt, tool schemas and response format, keyed `fp:...`, or shown as
+`(unkeyed)` when the request has none of those.
 
 Set them by hand for any HTTP client:
 
@@ -102,16 +96,15 @@ curl http://127.0.0.1:4000/v1/messages \
   -d '{"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{"role":"user","content":"Hi"}]}'
 ```
 
-For Python applications the SDK sets the task and route headers and reports
-outcomes; the session header is yours to add.
-[Instrument a workflow](instrument-a-workflow.md) shows it. The proxy strips
-every `x-ctrlrtn-*` header before forwarding, so providers never see them.
+For Python the SDK sets the task and route headers and reports outcomes;
+the session header is yours to add. See
+[Instrument a workflow](instrument-a-workflow.md). The proxy strips every
+`x-ctrlrtn-*` header before forwarding, so providers never see them.
 
 ## 4. Report outcomes
 
-When a job finishes, tell the proxy how it went. A live A/B experiment uses
-these reports to judge the candidate, and the task views show them beside
-cost:
+When a job finishes, report how it went. Live A/B verdicts rest on these
+reports, and the task views show them beside cost:
 
 ```bash
 curl -X POST http://127.0.0.1:4000/ctrlrtn/outcome \
@@ -119,7 +112,7 @@ curl -X POST http://127.0.0.1:4000/ctrlrtn/outcome \
   -d '{"task_id": "run-2026-09-24-001", "success": true, "score": 0.9}'
 ```
 
-`success` is the application's own verdict; `score` is optional and on any
+`success` is the application's own verdict; `score` is optional, on any
 scale you choose. The endpoint is part of the unauthenticated control plane,
 which is why the proxy binds to localhost by default.
 
@@ -135,8 +128,8 @@ uv run ctrlrtn recommendations   # where a cheaper model is worth a test
 ```
 
 `recommendations` names a use-case when the bundled price table knows a
-cheaper model of the same family and the projected saving is material; it is
-a pointer to what to test, not a verdict.
+cheaper model of the same family and the projected saving is material: a
+pointer to what to test, not a verdict.
 
 `usecases` is the table to start from:
 
@@ -148,16 +141,15 @@ tag:technical_analyst        231     411020      92118     3105    $1.6712
 tag:editor                   105     388905      41332     5220    $1.5688
 ```
 
-Costs come from a bundled price table keyed by model family. A model the
-table does not know is recorded with an unknown cost, never zero: `calls`
-shows `-` and `spend` counts unknown-priced calls, while per-use-case and
-per-task totals sum the known costs only. Point `CTRLRTN_PRICES` at your
-own TOML to add or override prices.
-
-`propagation` is the gate for everything task-level: it says whether most
-successful calls carry a task id and whether one id links several roles.
-Failed calls do not count. Until it reports `PROPAGATING`, task costs and
-live A/B verdicts are not trustworthy.
+- Costs come from a bundled price table keyed by model family. A model the
+  table does not know is recorded with an unknown cost, never zero: `calls`
+  shows `-`, `spend` counts unknown-priced calls, and per-use-case and
+  per-task totals sum the known costs only. Point `CTRLRTN_PRICES` at your
+  own TOML to add or override prices.
+- `propagation` is the gate for everything task-level: it says whether most
+  successful calls carry a task id and whether one id links several roles.
+  Failed calls do not count. Until it reports `PROPAGATING`, task costs and
+  live A/B verdicts are not trustworthy.
 
 The console shows the same data live, with traffic graphs and a call feed:
 
@@ -168,24 +160,23 @@ uv run ctrlrtn console
 
 ## 6. Keep the recording bounded
 
-Recorded bodies are the evidence every evaluation runs on, and they grow.
-`prune` clears request and response payloads older than a cutoff while
-keeping every derived number; it is a dry run unless you pass `--apply`:
+Recorded bodies grow. `prune` clears request and response payloads older
+than a cutoff and keeps every derived number; it is a dry run without
+`--apply`:
 
 ```bash
 uv run ctrlrtn prune --older-than-days 30
 uv run ctrlrtn prune --older-than-days 30 --apply
 ```
 
-Payloads that a queued or running evaluation job still needs are protected
-until it finishes. Set `retention_days` in the configuration for an
-automatic policy. To reclaim disk after a prune, stop the gateway and run
-`prune --apply --compact`.
+Payloads a queued or running evaluation job still needs are protected until
+it finishes. `retention_days` in the configuration makes this automatic. To
+reclaim disk afterwards, stop the gateway and run `prune --apply --compact`.
 
 ## Upgrade
 
-With a checkout, `git pull && uv sync --extra tui` and restart `serve`.
-Schema changes are additive, so an existing database opens in place.
+With a checkout, `git pull && uv sync --extra tui` and restart `serve`. An
+existing database is upgraded in place when next opened.
 
 ## Next
 

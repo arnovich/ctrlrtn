@@ -1,8 +1,8 @@
 # Configuration
 
-Scalar settings come from a **YAML file** or an **environment variable**, so
-the same image runs locally, on a server, or in a container. Named providers
-and budgets are structured, YAML-only blocks. Later layers override earlier ones:
+Scalar settings come from a YAML file or an environment variable. Named
+providers and budgets are YAML-only blocks. Later layers override earlier
+ones:
 
 ```
 defaults  <  YAML config file  <  environment variables  <  CLI flags
@@ -10,8 +10,8 @@ defaults  <  YAML config file  <  environment variables  <  CLI flags
 
 The YAML file is optional (`CTRLRTN_CONFIG`, else `./ctrlrtn.yaml`). `serve`
 and the CLI read the same config. Relative paths resolve against each
-process's working directory, so if you run them from different directories use
-an **absolute** `db_path`, or they silently open different databases.
+process's working directory, so give `db_path` an absolute value when they
+run from different directories, or they silently open different databases.
 
 ```yaml
 # ctrlrtn.yaml
@@ -48,7 +48,7 @@ retention_days: 30  # optional; omit for manual-only retention
 | (none) | `CTRLRTN_CONFIG` | Path to the YAML config file (else `./ctrlrtn.yaml`). |
 | (none) | `CTRLRTN_PRICES` | Path to a TOML file overlaying the model price table; see below. |
 
-An unknown key or a wrong type fails startup with an error that names the key
+An unknown key or a wrong type fails startup with an error naming the key
 and its source.
 
 ## Attribution headers
@@ -61,28 +61,28 @@ Clients attach up to three independent identities to a provider request:
 | `x-ctrlrtn-task` | Groups the calls of one end-to-end task, for evaluation and app-reported outcomes. |
 | `x-ctrlrtn-session` | Groups calls under an operator-defined cost boundary. |
 
-Instrumented workflows add the complete step identity defined in
+Instrumented workflows add the step identity defined in
 [workflow-identity.md](workflow-identity.md);
-[instrument-a-workflow.md](instrument-a-workflow.md) shows the SDK. The proxy
-removes every `x-ctrlrtn-*` header before a request, baseline or shadow, is
-sent to a provider. These headers are attribution hints among cooperating
-applications, not authentication or access control: a caller can forge or
-rotate a session ID, so a session ceiling prevents accidental overspend by a
-cooperating client and is not a tenant quota.
+[instrument-a-workflow.md](instrument-a-workflow.md) shows the SDK. The
+proxy removes every `x-ctrlrtn-*` header before a request, baseline or
+shadow, reaches a provider. The headers are attribution hints among
+cooperating applications, not authentication: a caller can forge or rotate
+a session ID, so a session ceiling prevents accidental overspend and is not
+a tenant quota.
 
 ## Serving precedence
 
-The proxy applies this chain to every call, in order, from an in-memory
-snapshot that refreshes about every 10 seconds. The first rule that applies
-decides the served model; the rest are not consulted.
+The first rule that applies decides the served model. Rules are checked in
+this order, from an in-memory snapshot that refreshes about every 10
+seconds.
 
 1. **Running experiment.** Applies when the use-case key has a running
-   experiment whose scope matches the request's validated workflow identity.
-   The experiment then owns the call: with `x-ctrlrtn-task` the task binds to
-   the first experiment it hits and is assigned an arm; without a task header,
-   or when the task is already bound to another experiment, the call passes
-   through unchanged and no route is consulted. A route on the same use-case
-   stays dormant until the experiment stops.
+   experiment whose scope matches the request's validated workflow
+   identity. With `x-ctrlrtn-task` the task binds to the first experiment it
+   hits and is assigned an arm; without a task header, or when the task is
+   already bound to another experiment, the call passes through unchanged
+   and no route is consulted. A route on the same use-case stays dormant
+   until the experiment stops.
 2. **Step route.** Applies when no experiment took the call and the request
    carries a complete, valid workflow identity that exactly matches a
    `workflow_routes` entry for `(workflow, workflow_version, step)`.
@@ -91,23 +91,23 @@ decides the served model; the rest are not consulted.
 4. **Use-case route.** Applies when a `route` exists for the use-case key.
 5. **Approved budget fallback.** Applies only when none of the rules above
    fired, the use-case's `fallback_at_usd` threshold is reached, an approved
-   fallback exists for the use-case, and the request's model is the evaluated
-   baseline. A running experiment or a route on the use-case is never
-   overridden.
+   fallback exists for the use-case, and the request's model is the
+   evaluated baseline. A running experiment or a route is never overridden.
 6. **Pass-through.** The body is forwarded unchanged.
 
 A partial, malformed, or unknown-version workflow identity matches no
 workflow rule and falls back to the use-case rules. A route or fallback
-leaves the body alone when the requested model already equals its target, and
-clamps `max_tokens` down to the target model's `max_output`. Every routed
-trace records the rule scope (`workflow_step`, `workflow`, or `use_case`), the
-rule key, and the activated Git revision. Cache-control injection composes
-with the decision and is gated by the upstream API identity.
+leaves the body alone when the requested model already equals its target,
+and clamps `max_tokens` down to the target model's `max_output`. Every
+routed trace records the rule scope (`workflow_step`, `workflow`, or
+`use_case`), the rule key, and the activated Git revision. Cache-control
+injection composes with the decision and is gated by the upstream API
+identity.
 
 ## Spend ceilings (`budgets`)
 
-Budgets are optional. A hard ceiling always blocks; a use-case can also have an
-earlier, evidence-gated fallback threshold:
+Budgets are optional. A hard ceiling always blocks; a use-case can also have
+an earlier, evidence-gated fallback threshold:
 
 ```yaml
 budgets:
@@ -131,10 +131,10 @@ budgets:
 | `reserve_in_flight` | Boolean, default `false`. Count admitted but unsettled requests against every matching ceiling. Requires at least one ceiling. |
 
 Amounts must be finite and non-negative. `global` accepts only `daily_usd`,
-`session` only `limit_usd`, and any other key fails startup.
+`session` only `limit_usd`; any other key fails startup.
 
-A rejection happens locally, before any provider is contacted, and the
-response names the scope, recorded spend, and limit where they apply:
+A rejection happens locally, before any provider is contacted, and names
+the scope, recorded spend, and limit where they apply:
 
 | Error `type` | HTTP | When |
 | --- | --- | --- |
@@ -150,9 +150,9 @@ declaration.
 
 ### Evidence-approved fallbacks
 
-`fallback_at_usd` lets the proxy move a use-case to a cheaper candidate before
-the hard ceiling closes it. The switch needs a durable approval, consumed from
-the machine-readable artifact of a non-inferiority evaluation:
+`fallback_at_usd` moves a use-case to a cheaper candidate before the hard
+ceiling closes it. The switch needs a durable approval, taken from the JSON
+artifact of a non-inferiority evaluation:
 
 ```bash
 ctrlrtn replay-eval tag:editor claude-haiku-4-5 --yes --json editor-replay.json
@@ -161,33 +161,34 @@ ctrlrtn fallback list
 ctrlrtn fallback clear tag:editor
 ```
 
-`fallback approve` accepts only an exact `NON_INFERIOR` verdict and stores the
-artifact's use-case, baseline, candidate, and creation time. The request must
-still use that evaluated baseline; stale evidence for a changed baseline does
-not apply, and model names are never used to guess. `--provider NAME` binds
-the candidate to a named provider, but the proxy permits the switch only when
-its API identity matches the current upstream. A running experiment or route
-comes first ([Serving precedence](#serving-precedence)). Step-scoped replay
-artifacts are rejected. Without an
-applicable approval the threshold fails closed with
-`ctrlrtn_budget_fallback_unavailable`; the hard `daily_usd` still returns
-`ctrlrtn_budget_exceeded`.
+- `fallback approve` accepts only an exact `NON_INFERIOR` verdict and stores
+  the artifact's use-case, baseline, candidate, and creation time.
+- The request must still use the evaluated baseline. Stale evidence for a
+  changed baseline does not apply, and model names are never used to guess.
+- `--provider NAME` binds the candidate to a named provider; the switch is
+  permitted only when its API identity matches the current upstream.
+- A running experiment or route comes first
+  ([Serving precedence](#serving-precedence)).
+- Step-scoped replay artifacts are rejected.
+- Without an applicable approval the threshold fails closed with
+  `ctrlrtn_budget_fallback_unavailable`; the hard `daily_usd` still returns
+  `ctrlrtn_budget_exceeded`.
 
 ### What a budget guarantees
 
-A budget blocks the next matching request once persisted known spend reaches
-the ceiling. By default accounting is eventually consistent: cost is known only
-after a response is recorded, so calls already in flight can overshoot the
-configured amount. `reserve_in_flight: true` closes that same-process race by
+A budget blocks the next matching request once persisted known spend
+reaches the ceiling. Accounting is eventually consistent by default: cost is
+known only after a response is recorded, so calls already in flight can
+overshoot. `reserve_in_flight: true` closes that same-process race by
 holding a conservative estimate from admission until the enriched trace is
 persisted (request bytes plus a protocol allowance at the model's highest
 input or cache rate, plus the output bound at the output rate; a rejection's
-`spent_usd` then includes estimates still in flight). Reservations are still
-not a provider billing ledger: proprietary tokenization, provider-added tokens,
-partial responses, and billing after a connection failure can differ from the
+`spent_usd` then includes estimates still in flight). Reservations are not
+a provider billing ledger: tokenization, provider-added tokens, partial
+responses, and billing after a connection failure can differ from the
 estimate, multiple proxy processes do not share reservations, and a failed
 persistence keeps the reservation held until restart. A budget is a local
-safeguard against runaway spend, not an exact cap on the provider invoice.
+safeguard against runaway spend, not an exact cap on the invoice.
 
 ### Inspecting spend
 
@@ -197,24 +198,24 @@ ctrlrtn sessions    # calls, use-cases, errors, tokens and known spend per sessi
 ctrlrtn budget      # kill switch, ceilings, remaining spend, blocked calls
 ```
 
-`sessions` shows known remaining spend when a session ceiling is configured; a
-session with any unknown-cost call shows `N/A`, and missing values group as
-`(unsessioned)`. `budget` also lists each configured fallback threshold and
-the evidence-approved fallback calls recorded today. Both run in a separate
-process and report persisted accounting only; the live proxy's process-local
-reservations are not included. The console renders the same budget status
-above its traffic graphs ([console.md](console.md)). Recording is
-non-blocking, so a saturated recorder queue can drop telemetry rather than
-delay a client response.
+`sessions` shows known remaining spend when a session ceiling is configured;
+a session with any unknown-cost call shows `N/A`, and missing values group
+as `(unsessioned)`. `budget` also lists each configured fallback threshold
+and today's evidence-approved fallback calls. Both report persisted
+accounting only; the live proxy's process-local reservations are not
+included. The console shows the same budget status above its graphs
+([console.md](console.md)). Recording is non-blocking: a saturated recorder
+queue drops telemetry rather than delay a client response.
 
-`kill_switch: true` is the independent emergency stop. It is fixed at startup
-and blocks all provider traffic locally; changing it requires a restart.
+`kill_switch: true` is the independent emergency stop. It is fixed at
+startup, blocks all provider traffic locally, and changing it needs a
+restart.
 
 ## Named providers
 
-Use a named provider when two upstreams expose the same API paths. Each name is
-mounted at `/<name>` by default; the proxy strips that prefix before
-forwarding the request:
+Use a named provider when two upstreams expose the same API paths. Each
+name is mounted at `/<name>` by default, and the proxy strips that prefix
+before forwarding:
 
 ```yaml
 providers:
@@ -236,28 +237,26 @@ providers:
 | `free` | no | `true` declares zero marginal token cost. Default `false`. |
 | `credential` | no | Provider-owned credential read from the environment; see below. |
 
-Point an OpenAI-compatible client at `http://127.0.0.1:4000/ollama/v1`. Its
+Point an OpenAI-compatible client at `http://127.0.0.1:4000/ollama/v1`; its
 request to `/ollama/v1/chat/completions` reaches Ollama as
-`/v1/chat/completions`.
-Named providers augment the built-in unprefixed OpenAI and Anthropic routes, so
-the ordinary `/v1/...` endpoints continue to reach their default providers.
+`/v1/chat/completions`. The unprefixed `/v1/...` routes still reach the
+built-in OpenAI and Anthropic providers.
 
-`api` keeps provider-specific behavior correctly scoped: Anthropic
-cache-control injection is never applied to an OpenAI-compatible upstream, and
-an Ollama model is recorded at `$0` even if its model name also exists on a
-paid provider. The proxy records the provider name and `free` policy with
-every trace, so a later configuration change cannot rewrite the historical
-pricing context. Token counts and latency are still recorded for free calls;
-`free` changes only their calculated cost.
+`api` scopes provider-specific behaviour: Anthropic cache-control injection
+is never applied to an OpenAI-compatible upstream, and an Ollama model is
+recorded at `$0` even if its name also exists on a paid provider. The
+provider name and `free` policy are recorded with every trace, so a later
+configuration change cannot rewrite historical pricing. Token counts and
+latency are still recorded for free calls.
 
-`providers` cannot be combined with `upstream`, which forces every request to
-one destination. `openai_upstream` and `anthropic_upstream` replace the default
-destination of the unprefixed routes instead of adding a second one.
+`providers` cannot be combined with `upstream`, which forces every request
+to one destination. `openai_upstream` and `anthropic_upstream` replace the
+default destination of the unprefixed routes rather than adding one.
 
 ### Provider-owned credentials
 
 An authenticated named provider can read its own secret from the process
-environment. The secret is not stored in YAML, SQLite, traces, or CLI output:
+environment. It is never stored in YAML, SQLite, traces, or CLI output:
 
 ```yaml
 providers:
@@ -270,12 +269,12 @@ providers:
       prefix: "Bearer "       # default
 ```
 
-The configured environment variable must be set when the proxy starts; under
-the systemd unit, `/etc/ctrlrtn/env` is the place for it. On a request to
-this provider (including a cross-provider candidate), client credential
-headers and credential-named query parameters are removed and the
-provider-owned credential is injected. A provider without `credential` keeps
-ordinary client-credential pass-through; local Ollama needs none.
+The variable must be set when the proxy starts; under the systemd unit it
+goes in `/etc/ctrlrtn/env`. On a request to this provider, including a
+cross-provider candidate, client credential headers and credential-named
+query parameters are removed and the provider-owned credential is injected.
+A provider without `credential` keeps ordinary client-credential
+pass-through; local Ollama needs none.
 
 A provider-owned credential means the proxy spends the operator's key for
 any client that can reach the port; nothing authenticates the client. Such
@@ -293,38 +292,36 @@ ctrlrtn experiment start tag:editor qwen2.5:0.5b --provider ollama --split 50
 ctrlrtn route set tag:editor qwen2.5:0.5b --provider ollama
 ```
 
-On an experiment's baseline arm, the original provider and body pass through.
-On its candidate arm, the proxy swaps the model and sends the same
-provider-facing path to the named provider. `route adopt` preserves the
-provider tested by the experiment.
+On the baseline arm the original provider and body pass through. On the
+candidate arm the proxy swaps the model and sends the same provider-facing
+path to the named provider. `route adopt` preserves the tested provider.
 
-The baseline and candidate must declare the same `api`. A missing provider or
-API mismatch fails locally with `ctrlrtn_provider_mismatch` and is recorded on
-the candidate arm; no request reaches an incompatible upstream. There is
-deliberately no translation between the Anthropic and OpenAI APIs. When the
-provider changes, the proxy removes credential headers and credential-named
-query parameters before forwarding, so a baseline provider key never reaches
-the candidate; configure `credential` on an authenticated candidate to inject
-its own key.
+Baseline and candidate must declare the same `api`. A missing provider or
+API mismatch fails locally with `ctrlrtn_provider_mismatch`, recorded on the
+candidate arm; no request reaches an incompatible upstream. There is no
+translation between the Anthropic and OpenAI APIs. When the provider
+changes, credential headers and credential-named query parameters are
+removed before forwarding, so a baseline key never reaches the candidate;
+configure `credential` on an authenticated candidate.
 
 ### Ollama
 
-The `ollama` provider above is the whole Ollama setup; point the
-application's OpenAI-compatible client at `http://127.0.0.1:4000/ollama/v1`.
+The `ollama` provider above is the whole setup; point the application's
+OpenAI-compatible client at `http://127.0.0.1:4000/ollama/v1`.
 [getting-started.md](getting-started.md) walks through it, including the
 `stream_options.include_usage` setting a streamed request needs.
 
 ## Model prices
 
-The bundled price table, `src/ctrlrtn/telemetry/prices.toml`, holds USD per
-million tokens (`input`, `output`, `cache_read`, `cache_write`) and each
-model's `max_output` cap for 15 models: 12 Anthropic Claude models and 3
-OpenAI models. The prices are approximate list prices; the file header states
-that the Anthropic rows were verified against the provider's published
-pricing in 2026-07, and each row's comment names any later check. A `ladder`
-table lists the cheaper same-family models `recommendations` proposes as
-candidates. Prices are read once at startup. Point `CTRLRTN_PRICES` at your
-own TOML file to overlay the bundled table without editing the package:
+The bundled table, `src/ctrlrtn/telemetry/prices.toml`, holds USD per
+million tokens (`input`, `output`, `cache_read`, `cache_write`) and the
+`max_output` cap for 15 models: 12 Anthropic Claude models and 3 OpenAI
+models. Prices are approximate list prices; the file header states that the
+Anthropic rows were verified against published pricing in 2026-07, and each
+row's comment names any later check. A `ladder` table lists the cheaper
+same-family models `recommendations` proposes. Prices are read once at
+startup. Point `CTRLRTN_PRICES` at your own TOML to overlay the bundled
+table:
 
 ```toml
 [prices."gpt-4o-mini"]
@@ -332,25 +329,22 @@ input = 0.15
 output = 0.60
 ```
 
-An override merges per field, so setting only `input` keeps a model's other
-fields. Models are matched by the longest family prefix ending on a delimiter,
-so a version-suffixed id resolves to its family; add a version-specific row only
-when its price differs. A model id containing a dot must be quoted in the table
-header. A route clamps a larger recorded `max_tokens` down to the target
-model's `max_output`, so a switch to a smaller-cap model cannot fail the whole
-use-case.
+An override merges per field. Models match by the longest family prefix
+ending on a delimiter, so a version-suffixed id resolves to its family; add
+a version-specific row only when its price differs. Quote a model id that
+contains a dot. A route clamps a larger recorded `max_tokens` down to the
+target model's `max_output`, so a switch to a smaller-cap model cannot fail
+the whole use-case.
 
 Token counts are not comparable across tokenizers. The header notes that
-`claude-fable-5`, `claude-sonnet-5`, and `claude-opus-4-7` and later use a
-tokenizer that produces about 30% more tokens for the same text than the
-`claude-sonnet-4` generation. Repricing recorded token counts at a model with
-a different tokenizer, as `campaign-report` does, under-counts the newer
-model's tokens by that margin.
+`claude-fable-5`, `claude-sonnet-5`, and `claude-opus-4-7` and later produce
+about 30% more tokens for the same text than the `claude-sonnet-4`
+generation, so repricing recorded counts at such a model, as
+`campaign-report` does, under-counts its tokens by that margin.
 
 ## Git-backed routing state (`routing.yaml`)
 
-Proxy settings describe the deployment and provider credentials. Model
-control state can separately live in a Git repository as `routing.yaml`; start
+Model control state can live in a Git repository as `routing.yaml`; start
 from `examples/routing.yaml`:
 
 ```yaml
@@ -396,18 +390,18 @@ workflow_routes:
 | `workflows.<name>.<version>.steps.<step>` | `predecessors` (declared step names in the same version, never the step itself), `allows: {fan_out, retry}` (booleans), `condition` (an opaque display label). |
 | `workflow_routes.<name>.<version>` | `model`, `provider`, `note`, and `steps.<step>` with its own `model`, `provider`, `note`. |
 
-Unknown keys at any level fail validation. Experiment `id` is required and
-stable: changing any experiment field requires a new id, which preserves the
-stopped experiment as historical evidence and re-buckets tasks deliberately.
-Named providers must exist in the proxy's `providers` block.
+Unknown keys at any level fail validation. An experiment `id` is required
+and stable: changing any experiment field needs a new id, which keeps the
+stopped experiment as evidence and re-buckets tasks deliberately. Named
+providers must exist in the proxy's `providers` block.
 
-`workflows` declares a descriptive, non-executable graph of stable step names,
-allowed predecessors, and `fan_out`/`retry` capabilities. Conditions are opaque
-labels, never evaluated code. A scoped experiment or a `workflow_routes` entry
-must reference a declared workflow, exact version, and declared step. The
-order in which these rules apply is in
-[Serving precedence](#serving-precedence). Partial, malformed,
-unknown-version, and inferred identities cannot authorize these rules.
+`workflows` declares a descriptive, non-executable graph: stable step
+names, allowed predecessors, and `fan_out`/`retry` capabilities. Conditions
+are opaque labels, never evaluated code. A scoped experiment or a
+`workflow_routes` entry must reference a declared workflow, exact version,
+and declared step; partial, malformed, unknown-version, and inferred
+identities cannot authorize these rules. The order the rules apply in is
+[Serving precedence](#serving-precedence).
 
 ```bash
 ctrlrtn routing-config validate routing.yaml
@@ -426,18 +420,18 @@ ctrlrtn routing-config status
 | `status` | The live SQLite control state | Nothing | Nothing |
 
 Activation records repository HEAD, relative path, file SHA-256, and
-activation time. Any failure rolls the entire transaction back; unchanged
-objects retain their original activation timestamps. Every routed trace
-records the winning rule and the activated Git revision; `ctrlrtn show` and
-the console's call detail expose that explanation.
+activation time. Any failure rolls the whole transaction back, and
+unchanged objects keep their original activation timestamps. Every routed
+trace records the winning rule and the activated Git revision; `ctrlrtn
+show` and the console's call detail expose that explanation.
 
 The file is authoritative: omission clears a route or stops a running
 experiment. Stopped experiments, traces, outcomes, durable jobs, and
 measurements are never deleted. Manual `route` or `experiment` commands can
-intentionally diverge from the recorded revision; `routing-config diff` exposes
-that drift and a later activation restores the declaration. Keep credential
+diverge from the recorded revision; `routing-config diff` exposes that
+drift and a later activation restores the declaration. Keep credential
 values, raw traces, outputs, databases, and exported evidence outside this
 repository. Activation performs no network access and never changes the
-working tree; Git fetch, pull, push, and conflict resolution stay with the
+working tree; fetch, pull, push, and conflict resolution stay with the
 operator. The console activates the same file with `g` after a diff and a
 confirmation ([console.md](console.md)).
