@@ -2,45 +2,45 @@
   "comparisons": [
     {
       "mode": "router_unrecorded",
-      "p50_overhead_ms": 0.882,
-      "p95_overhead_ms": 2.799,
+      "p50_overhead_ms": 1.346,
+      "p95_overhead_ms": 1.292,
       "path": "small",
-      "throughput_ratio": 0.7313
+      "throughput_ratio": 0.6238
     },
     {
       "mode": "router_recorded",
-      "p50_overhead_ms": 2.117,
-      "p95_overhead_ms": 3.098,
+      "p50_overhead_ms": 1.595,
+      "p95_overhead_ms": 1.861,
       "path": "small",
-      "throughput_ratio": 0.6584
+      "throughput_ratio": 0.5373
     },
     {
       "mode": "router_unrecorded",
-      "p50_overhead_ms": 5.437,
-      "p95_overhead_ms": 12.085,
+      "p50_overhead_ms": 1.894,
+      "p95_overhead_ms": 2.286,
       "path": "large",
-      "throughput_ratio": 0.5831
+      "throughput_ratio": 0.7443
     },
     {
       "mode": "router_recorded",
-      "p50_overhead_ms": 14.574,
-      "p95_overhead_ms": 16.887,
+      "p50_overhead_ms": 6.39,
+      "p95_overhead_ms": 7.139,
       "path": "large",
-      "throughput_ratio": 0.3576
+      "throughput_ratio": 0.4687
     },
     {
       "mode": "router_unrecorded",
-      "p50_overhead_ms": 8.9,
-      "p95_overhead_ms": 16.99,
+      "p50_overhead_ms": 3.383,
+      "p95_overhead_ms": 1.61,
       "path": "stream",
-      "throughput_ratio": 0.5282
+      "throughput_ratio": 0.6888
     },
     {
       "mode": "router_recorded",
-      "p50_overhead_ms": 23.196,
-      "p95_overhead_ms": 29.232,
+      "p50_overhead_ms": 8.702,
+      "p95_overhead_ms": 6.126,
       "path": "stream",
-      "throughput_ratio": 0.3083
+      "throughput_ratio": 0.4499
     }
   ],
   "config": {
@@ -58,11 +58,11 @@
     "machine": "x86_64",
     "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
     "python": "3.12.13",
-    "router_revision": "8de64258daf22ee7d0cdaaec480300345d99ef3a",
+    "router_revision": "9897bf1c4410b998bd311162a1f30742e90a6047",
     "server_peak_rss_bytes": {
-      "router_recorded": 70385664,
-      "router_unrecorded": 51269632,
-      "upstream": 46256128
+      "router_recorded": 67313664,
+      "router_unrecorded": 50782208,
+      "upstream": 45797376
     },
     "worktree_clean": true
   },
@@ -78,119 +78,119 @@
   "measurements": [
     {
       "completed_requests": 30,
-      "elapsed_seconds": 0.019515,
+      "elapsed_seconds": 0.009959,
       "errors": 0,
       "mode": "direct",
-      "p50_ms": 2.999,
-      "p95_ms": 6.445,
-      "p99_ms": 6.697,
+      "p50_ms": 1.149,
+      "p95_ms": 3.83,
+      "p99_ms": 3.838,
       "path": "small",
       "response_bytes": 1024,
-      "throughput_rps": 1537.303,
+      "throughput_rps": 3012.313,
       "total_response_bytes": 30720
     },
     {
       "completed_requests": 30,
-      "elapsed_seconds": 0.026684,
+      "elapsed_seconds": 0.015966,
       "errors": 0,
       "mode": "router_unrecorded",
-      "p50_ms": 3.881,
-      "p95_ms": 9.244,
-      "p99_ms": 16.459,
+      "p50_ms": 2.495,
+      "p95_ms": 5.122,
+      "p99_ms": 5.571,
       "path": "small",
       "response_bytes": 1024,
-      "throughput_rps": 1124.249,
+      "throughput_rps": 1879.007,
       "total_response_bytes": 30720
     },
     {
       "completed_requests": 30,
-      "elapsed_seconds": 0.029639,
+      "elapsed_seconds": 0.018536,
       "errors": 0,
       "mode": "router_recorded",
-      "p50_ms": 5.116,
-      "p95_ms": 9.543,
-      "p99_ms": 9.609,
+      "p50_ms": 2.744,
+      "p95_ms": 5.691,
+      "p99_ms": 7.019,
       "path": "small",
       "response_bytes": 1024,
-      "throughput_rps": 1012.175,
+      "throughput_rps": 1618.463,
       "total_response_bytes": 30720
     },
     {
       "completed_requests": 30,
-      "elapsed_seconds": 0.041573,
+      "elapsed_seconds": 0.0282,
       "errors": 0,
       "mode": "direct",
-      "p50_ms": 7.775,
-      "p95_ms": 10.164,
-      "p99_ms": 10.314,
+      "p50_ms": 5.096,
+      "p95_ms": 7.534,
+      "p99_ms": 8.423,
       "path": "large",
       "response_bytes": 1048576,
-      "throughput_rps": 721.616,
+      "throughput_rps": 1063.829,
       "total_response_bytes": 31457280
     },
     {
       "completed_requests": 30,
-      "elapsed_seconds": 0.071292,
+      "elapsed_seconds": 0.037886,
       "errors": 0,
       "mode": "router_unrecorded",
-      "p50_ms": 13.212,
-      "p95_ms": 22.249,
-      "p99_ms": 23.148,
+      "p50_ms": 6.99,
+      "p95_ms": 9.82,
+      "p99_ms": 10.106,
       "path": "large",
       "response_bytes": 1048576,
-      "throughput_rps": 420.806,
+      "throughput_rps": 791.849,
       "total_response_bytes": 31457280
     },
     {
       "completed_requests": 30,
-      "elapsed_seconds": 0.116253,
+      "elapsed_seconds": 0.06017,
       "errors": 0,
       "mode": "router_recorded",
-      "p50_ms": 22.349,
-      "p95_ms": 27.051,
-      "p99_ms": 28.232,
+      "p50_ms": 11.486,
+      "p95_ms": 14.673,
+      "p99_ms": 15.292,
       "path": "large",
       "response_bytes": 1048576,
-      "throughput_rps": 258.059,
+      "throughput_rps": 498.584,
       "total_response_bytes": 31457280
     },
     {
       "completed_requests": 30,
-      "elapsed_seconds": 0.053615,
+      "elapsed_seconds": 0.033124,
       "errors": 0,
       "mode": "direct",
-      "p50_ms": 10.139,
-      "p95_ms": 13.487,
-      "p99_ms": 14.585,
+      "p50_ms": 5.935,
+      "p95_ms": 9.668,
+      "p99_ms": 9.84,
       "path": "stream",
       "response_bytes": 1048576,
-      "throughput_rps": 559.54,
+      "throughput_rps": 905.691,
       "total_response_bytes": 31457280
     },
     {
       "completed_requests": 30,
-      "elapsed_seconds": 0.101509,
+      "elapsed_seconds": 0.048092,
       "errors": 0,
       "mode": "router_unrecorded",
-      "p50_ms": 19.039,
-      "p95_ms": 30.477,
-      "p99_ms": 31.897,
+      "p50_ms": 9.318,
+      "p95_ms": 11.278,
+      "p99_ms": 12.219,
       "path": "stream",
       "response_bytes": 1048576,
-      "throughput_rps": 295.541,
+      "throughput_rps": 623.801,
       "total_response_bytes": 31457280
     },
     {
       "completed_requests": 30,
-      "elapsed_seconds": 0.173928,
+      "elapsed_seconds": 0.07362,
       "errors": 0,
       "mode": "router_recorded",
-      "p50_ms": 33.335,
-      "p95_ms": 42.719,
-      "p99_ms": 45.509,
+      "p50_ms": 14.637,
+      "p95_ms": 15.794,
+      "p99_ms": 16.962,
       "path": "stream",
       "response_bytes": 1048576,
-      "throughput_rps": 172.485,
+      "throughput_rps": 407.5,
       "total_response_bytes": 31457280
     }
   ],
@@ -209,5 +209,5 @@
     "upstream_error_passthrough": true
   },
   "schema_version": 2,
-  "started_at": "2026-09-18T14:22:58.726051+00:00"
+  "started_at": "2026-09-24T15:45:18.633215+00:00"
 }

@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import os
+import sqlite3
+import sys
 from collections.abc import Callable
 from datetime import UTC, datetime
 
@@ -32,8 +35,23 @@ class ReportingCommands:
         self._database_path = database_path
         self._load_settings = load_runtime_settings
 
+    def _read_store(self, path: str | None = None) -> SqliteTraceStore:
+        """Open the recording read-only; a missing file is an error, never a
+        fresh empty database in whatever directory this ran from."""
+        path = path or self._database_path()
+        try:
+            return SqliteTraceStore(path, read_only=True)
+        except sqlite3.OperationalError as exc:
+            print(
+                f"no database at {os.path.abspath(path)} ({exc}); start the "
+                "gateway with `ctrlrtn serve` first, or point CTRLRTN_DB at "
+                "its recording",
+                file=sys.stderr,
+            )
+            raise SystemExit(2) from None
+
     def _usecases(self, args: argparse.Namespace) -> None:
-        store = SqliteTraceStore(self._database_path())
+        store = self._read_store()
         try:
             print(render_rankings(store.rankings()))
         finally:
@@ -46,7 +64,7 @@ class ReportingCommands:
             .replace(hour=0, minute=0, second=0, microsecond=0)
             .timestamp()
         )
-        store = SqliteTraceStore(self._database_path(), read_only=True)
+        store = self._read_store()
         try:
             total = store.spend_since(0.0)
             daily = store.spend_since(today)
@@ -64,7 +82,7 @@ class ReportingCommands:
         """Print configured safeguards beside today's recorded accounting."""
         settings = self._load_settings()
         today = utc_day_start()
-        store = SqliteTraceStore(settings.db_path, read_only=True)
+        store = self._read_store(settings.db_path)
         try:
             total, by_use_case = store.spend_breakdown_since(today)
             unknown = store.unpriced_calls_since(today)
@@ -85,14 +103,14 @@ class ReportingCommands:
         )
 
     def _calls(self, args: argparse.Namespace) -> None:
-        store = SqliteTraceStore(self._database_path())
+        store = self._read_store()
         try:
             print(render_calls(store.recent(args.limit)))
         finally:
             store.close()
 
     def _tasks(self, args: argparse.Namespace) -> None:
-        store = SqliteTraceStore(self._database_path())
+        store = self._read_store()
         try:
             print(render_tasks(store.tasks(args.limit), args.limit))
         finally:
@@ -100,7 +118,7 @@ class ReportingCommands:
 
     def _sessions(self, args: argparse.Namespace) -> None:
         settings = self._load_settings()
-        store = SqliteTraceStore(settings.db_path)
+        store = self._read_store(settings.db_path)
         try:
             print(
                 render_sessions(
@@ -115,7 +133,7 @@ class ReportingCommands:
             store.close()
 
     def _show(self, args: argparse.Namespace) -> None:
-        store = SqliteTraceStore(self._database_path())
+        store = self._read_store()
         try:
             trace = store.get(args.id)
             print(

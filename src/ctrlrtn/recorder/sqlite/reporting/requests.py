@@ -109,7 +109,8 @@ class RequestReportingSqliteMixin(SqliteCapability):
                 _REQUESTS_FOR_USE_CASE.format(scope=clause), tuple(params)
             ).fetchall()
         return [
-            {"id": r[0], "request_body": r[1], "task_id": r[2]} for r in rows
+            {"id": r[0], "request_body": r[1], "task_id": r[2], "path": r[3]}
+            for r in rows
         ]
 
     def requests_by_ids(self, trace_ids: list[int]) -> list[dict]:
@@ -122,7 +123,8 @@ class RequestReportingSqliteMixin(SqliteCapability):
         with self._lock:
             for trace_id in trace_ids:
                 row = self._conn.execute(
-                    "SELECT id, request_body, task_id FROM traces WHERE id = ?",
+                    "SELECT id, request_body, task_id, path "
+                    "FROM traces WHERE id = ?",
                     (trace_id,),
                 ).fetchone()
                 if row is None:
@@ -134,7 +136,12 @@ class RequestReportingSqliteMixin(SqliteCapability):
                         f"replay input trace {trace_id} payload was pruned"
                     )
                 rows.append(
-                    {"id": row[0], "request_body": row[1], "task_id": row[2]}
+                    {
+                        "id": row[0],
+                        "request_body": row[1],
+                        "task_id": row[2],
+                        "path": row[3],
+                    }
                 )
         return rows
 
@@ -159,7 +166,7 @@ class RequestReportingSqliteMixin(SqliteCapability):
         with self._lock:
             for item in selected:
                 row = self._conn.execute(
-                    "SELECT id, task_id, request_body, response_body "
+                    "SELECT id, task_id, request_body, response_body, path "
                     "FROM traces WHERE id = ?",
                     (item["id"],),
                 ).fetchone()
@@ -171,6 +178,7 @@ class RequestReportingSqliteMixin(SqliteCapability):
                         "task_id": row[1],
                         "request_body": row[2],
                         "response_body": row[3],
+                        "path": row[4],
                     }
                 )
         return rows
@@ -181,7 +189,7 @@ class RequestReportingSqliteMixin(SqliteCapability):
         with self._lock:
             for trace_id in trace_ids:
                 row = self._conn.execute(
-                    "SELECT id, task_id, request_body, response_body "
+                    "SELECT id, task_id, request_body, response_body, path "
                     "FROM traces WHERE id = ?",
                     (trace_id,),
                 ).fetchone()
@@ -192,6 +200,7 @@ class RequestReportingSqliteMixin(SqliteCapability):
                             "task_id": row[1],
                             "request_body": row[2],
                             "response_body": row[3],
+                            "path": row[4],
                         }
                     )
         return rows

@@ -65,13 +65,11 @@ cache_read = 1.50
 cache_write = 18.75
 max_output = 32000
 
-# Introductory pricing through 2026-08-31; becomes 3.0 / 15.0 (cache read
-# 0.30, write 3.75) from 2026-09-01 — update this row then.
 [prices.claude-sonnet-5]
-input = 2.0
-output = 10.0
-cache_read = 0.20
-cache_write = 2.50
+input = 3.0
+output = 15.0
+cache_read = 0.30
+cache_write = 3.75
 max_output = 128000
 
 [prices.claude-sonnet-4-6]

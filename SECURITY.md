@@ -8,7 +8,7 @@ unauthenticated by design and assumes localhost / a trusted private network).
 
 ## Supported versions
 
-`main`, until the first tagged release.
+The latest 0.x release and `main`.
 
 ## Reporting a vulnerability
 

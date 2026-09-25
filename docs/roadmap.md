@@ -13,6 +13,7 @@ This page is the short list of directions; the task files are the plan.
 - Test the fail-open paths in the shadow mirror, manifest verification and
   the discovery-job guards (task 003).
 - Enforce or drop the per-task cost ceiling on experiments (task 004).
+- Mark unknown-priced calls in per-use-case and per-task totals (task 005).
 
 **Directions without a task yet**
 

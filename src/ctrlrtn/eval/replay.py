@@ -330,3 +330,23 @@ def extract_input_summary(
         return text
     half = max_chars // 2
     return text[:half] + "\n…\n" + text[-half:]
+
+
+REPLAYABLE_PATH = "/v1/messages"
+
+
+def require_replayable(rows: list[dict], use_case: str) -> None:
+    """Refuse recorded calls the replay cannot reproduce.
+
+    The replay speaks the Anthropic Messages API. A call recorded on any other
+    path (OpenAI chat, a mounted provider) would be re-sent as something it
+    never was and judged against an answer it never gave.
+    """
+    foreign = sorted(
+        {row["path"] for row in rows if row["path"] != REPLAYABLE_PATH}
+    )
+    if foreign:
+        raise ValueError(
+            "offline replay speaks the Anthropic Messages API only; use-case "
+            f"{use_case!r} has recorded calls on {', '.join(foreign)}"
+        )

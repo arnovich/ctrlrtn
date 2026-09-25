@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
+import sys
 from collections.abc import Callable
 from typing import Any, NoReturn
 
 import uvicorn
 
+from ctrlrtn import __version__
 from ctrlrtn.analysis.report import _fmt_cost
 from ctrlrtn.config import Settings, load_settings
 from ctrlrtn.gateway.app import create_app
@@ -140,6 +143,12 @@ class RuntimeCommands:
             }
         )
         numeric_level = self._configure_logging(settings.log_level)
+        print(
+            f"ctrlrtn {__version__}: listening on {settings.host}:{settings.port}, "
+            f"recording to {os.path.abspath(settings.db_path)}",
+            file=sys.stderr,
+            flush=True,
+        )
         uvicorn.run(
             self._build_app(settings=settings),
             host=settings.host,
