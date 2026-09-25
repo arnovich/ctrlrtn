@@ -6,6 +6,11 @@ served, workflows, tasks, and a `tail -f` call feed, with traffic graphs and a
 detail pane. It monitors over a read-only connection and runs control actions
 only after a confirmation preview.
 
+![The console over a synthetic recording: a running live A/B on the editor with its verdict in the detail pane](console.png)
+
+The picture is rendered from a synthetic recording by
+`scripts/console_screenshot.py`, so nothing in it is real traffic.
+
 ## Install and launch
 
 The console needs the `tui` extra (Textual):

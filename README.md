@@ -70,6 +70,8 @@ uv run ctrlrtn recommendations   # where a cheaper model is worth testing
 uv run ctrlrtn console           # live view of all of it
 ```
 
+![The console: experiments, use-cases, models and tasks on the left, live graphs and the selected experiment's verdict on the right](https://raw.githubusercontent.com/arnovich/ctrlrtn/main/docs/console.png)
+
 `recommendations` names a use-case only when the bundled price table knows a
 cheaper model of the same family.
 [Getting started](https://github.com/arnovich/ctrlrtn/blob/main/docs/getting-started.md)
