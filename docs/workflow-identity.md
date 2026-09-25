@@ -80,7 +80,7 @@ data.
 ```python
 from ctrlrtn import sdk
 
-with sdk.edition(
+with sdk.task(
     workflow="article-pipeline",
     workflow_version="git:8d23f1a",
     report_to=PROXY_URL,
@@ -101,7 +101,7 @@ shows both.
 
 | Call | Rule |
 | --- | --- |
-| `sdk.edition(task_id=None, *, default_route, report_to, workflow, workflow_version)` | Binds the task ID (generated when absent), the default route, and the workflow. `workflow` and `workflow_version` are given together or not at all. |
+| `sdk.task(task_id=None, *, default_route, report_to, workflow, workflow_version)` | Binds the task ID (generated when absent), the default route, and the workflow. `workflow` and `workflow_version` are given together or not at all. |
 | `run.step(name, *, step_run_id, parent_step_run_id, dependencies, attempt)` | Opens one step run. `step_run_id` is generated unless supplied for distributed propagation; `parent_step_run_id` defaults to the enclosing step. The identity is validated here, so a bad identifier raises `WorkflowIdentityError` before any request is sent. |
 | `step.report(status="completed", success, score, error_code)` | Emits the terminal event explicitly. `status` must be terminal, and a second call raises `RuntimeError`. |
 | `step.tool(operation, *, operation_id, attempt_id, attempt, effect)` | Declares one tool attempt inside the step run; see below. |
@@ -115,9 +115,9 @@ and subprocesses start empty, so use `bind` or a carrier, and open a distinct
 `step()` in each concurrent child so run IDs are not shared. Entering a step
 emits `started`; leaving it emits `completed`, or `failed` when an exception
 is propagating, unless `report()` already sent the terminal event. Events are
-sent only when the edition has `report_to`, and a delivery failure is logged
+sent only when the task has `report_to`, and a delivery failure is logged
 as a warning, never raised into the application. With `CTRLRTN_STRICT=1`, a
-request that leaves a ctrlrtn client with no task bound while an edition is
+request that leaves a ctrlrtn client with no task bound while a task is
 active raises instead of being logged.
 
 ## Lifecycle events

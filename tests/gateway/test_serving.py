@@ -30,7 +30,7 @@ _PATH = "/v1/messages"
 _BODY = b'{"model": "claude-opus-4", "messages": []}'
 
 
-def _headers(task="edition-1", route="editor"):
+def _headers(task="task-1", route="editor"):
     h = {}
     if task is not None:
         h["x-ctrlrtn-task"] = task
@@ -41,7 +41,7 @@ def _headers(task="edition-1", route="editor"):
 
 def _task_for_arm(exp: Experiment, arm: str) -> str:
     for i in range(2000):
-        task = f"edition-{i}"
+        task = f"task-{i}"
         if assign_arm(exp, task) == arm:
             return task
     raise AssertionError(f"no task hit arm {arm}")

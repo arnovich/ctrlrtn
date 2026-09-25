@@ -343,7 +343,7 @@ class InvestigationScreen(ModalScreen[None]):
             table = self.query_one("#comparison-pairs", DataTable)
             table.add_columns(
                 "Stage",
-                "Edition",
+                "Task",
                 "Δ score",
             )
             self._render_comparison()
@@ -370,8 +370,8 @@ class InvestigationScreen(ModalScreen[None]):
                 table.add_row(
                     *cells(
                         result["phase"].capitalize(),
-                        comparison.edition_labels.get(
-                            result["edition"], result["edition"]
+                        comparison.task_labels.get(
+                            result["task"], result["task"]
                         ),
                         (
                             f"{result['diff']:+.2f}"
@@ -383,7 +383,7 @@ class InvestigationScreen(ModalScreen[None]):
                 )
             table.move_cursor(row=self._comparison_row)
         self.query_one("#comparison-decision", Static).update(
-            f"{comparison.title} | {comparison.verdict} · {comparison.units} editions"
+            f"{comparison.title} | {comparison.verdict} · {comparison.units} tasks"
         )
         boundary = comparison.boundary
         if len(self.comparisons) > 1:
@@ -418,11 +418,9 @@ class InvestigationScreen(ModalScreen[None]):
                 self.query_one("#" + identifier, Static).update("")
             return
         result = comparison.pairs[self._comparison_row]["result"]
-        edition = comparison.edition_labels.get(
-            result["edition"], result["edition"]
-        )
+        task = comparison.task_labels.get(result["task"], result["task"])
         self.query_one("#timeline-heading", Static).update(
-            f"{label(edition)} · {label(result['phase']).capitalize()} · {comparison.view_label}"
+            f"{label(task)} · {label(result['phase']).capitalize()} · {comparison.view_label}"
         )
         for arm in ("baseline", "candidate"):
             self.query_one("#timeline-" + arm, Static).update(
@@ -440,7 +438,7 @@ class InvestigationScreen(ModalScreen[None]):
         )
 
     def _switch_comparison(self, index: int) -> None:
-        """Carry the edition and stage across boundaries when available."""
+        """Carry the task and stage across boundaries when available."""
         current = self.active_comparison
         selected = (
             current.pairs[self._comparison_row]["result"]
@@ -453,14 +451,14 @@ class InvestigationScreen(ModalScreen[None]):
             (
                 i
                 for i, pair in enumerate(pairs)
-                if pair["result"]["edition"] == selected.get("edition")
+                if pair["result"]["task"] == selected.get("task")
                 and pair["result"]["phase"] == selected.get("phase")
             ),
             next(
                 (
                     i
                     for i, pair in enumerate(pairs)
-                    if pair["result"]["edition"] == selected.get("edition")
+                    if pair["result"]["task"] == selected.get("task")
                 ),
                 0,
             ),
@@ -476,14 +474,12 @@ class InvestigationScreen(ModalScreen[None]):
         comparison = self.active_comparison
         if comparison and comparison.pairs:
             result = comparison.pairs[self._comparison_row]["result"]
-            edition = comparison.edition_labels.get(
-                result["edition"], result["edition"]
-            )
+            task = comparison.task_labels.get(result["task"], result["task"])
             rows = comparison.trace_rows(self._comparison_row)
             if rows:
                 self.app.push_screen(
                     InvestigationCallsScreen(
-                        f"{comparison.view_label} / {label(edition)} / {label(result['phase'])}",
+                        f"{comparison.view_label} / {label(task)} / {label(result['phase'])}",
                         rows,
                     )
                 )
@@ -550,7 +546,7 @@ class InvestigationScreen(ModalScreen[None]):
         )
         comparison = self.context.comparison
         self.query_one("#overview-decision", Static).update(
-            f"{comparison.decision}\n{comparison.verdict}: {len(comparison.pairs)} {comparison.sample_unit} from {comparison.units} independent editions.\n{comparison.limitation}"
+            f"{comparison.decision}\n{comparison.verdict}: {len(comparison.pairs)} {comparison.sample_unit} from {comparison.units} independent tasks.\n{comparison.limitation}"
             if comparison
             else "Start with a costly role, then inspect its tasks and calls.\n"
             "No model comparison is attached. Spend and completion alone do not establish quality or savings."

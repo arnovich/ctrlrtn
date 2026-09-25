@@ -18,8 +18,8 @@ _TASK_HEADER = "x-ctrlrtn-task"
 _ROUTE_HEADER = "x-ctrlrtn-route"
 _STRICT_ENV = "CTRLRTN_STRICT"
 
-# Edition id (per run) and use-case route (per sub-agent). Separate because one
-# edition's calls share a task id but may span several use-cases.
+# Task id (per run) and use-case route (per sub-agent). Separate because one
+# task's calls share a task id but may span several use-cases.
 _task: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "ctrlrtn_task", default=None
 )
@@ -44,30 +44,30 @@ def _strict() -> bool:
 
 
 def new_task_id() -> str:
-    """A fresh globally-unique edition id. Use unique ids per edition — a reused
+    """A fresh globally-unique task id. Use unique ids per task — a reused
     id merges two runs into one task and corrupts assignment/analysis. (Reuse
     rejection is the gateway's job; this only *generates* unique defaults.)"""
     return uuid.uuid4().hex
 
 
 def current_task_id() -> str | None:
-    """The task id of the active edition, or ``None`` outside one (including
-    on a thread or subprocess the edition context did not reach)."""
+    """The task id of the active task, or ``None`` outside one (including
+    on a thread or subprocess the task context did not reach)."""
     return _task.get()
 
 
 def current_route() -> str | None:
     """The use-case route in effect here: the innermost ``route(...)``, else
-    the edition's ``default_route``, else ``None`` (the gateway then keys the
+    the task's ``default_route``, else ``None`` (the gateway then keys the
     use-case by request fingerprint)."""
     return _route.get()
 
 
 def bind(func: Callable) -> Callable:
-    """Wrap ``func`` so it runs in a COPY of the current edition context, taken
+    """Wrap ``func`` so it runs in a COPY of the current task context, taken
     now. Pass the result across a thread/process boundary so stamping survives
     it: ``executor.submit(sdk.bind(work), arg)``. Call ``bind`` inside the
-    ``edition(...)`` block so it captures the live task id."""
+    ``task(...)`` block so it captures the live task id."""
     ctx = contextvars.copy_context()
 
     @functools.wraps(func)
@@ -85,7 +85,7 @@ def stamp(
     workflow_identity: WorkflowIdentity | Mapping | None = None,
 ) -> dict[str, str]:
     """Add the ctrlrtn headers to ``headers`` from the given values or the current
-    edition context. Mutates and returns ``headers`` (the explicit-threading path
+    task context. Mutates and returns ``headers`` (the explicit-threading path
     for calls that don't go through a ctrlrtn httpx client)."""
     tid = task_id or _task.get()
     if tid:
@@ -120,7 +120,7 @@ def route(name: str) -> Iterator[None]:
 def export_carrier() -> dict:
     """The active workflow step's identity as a JSON-safe dict, to hand to a
     subprocess or remote worker that will ``import_carrier`` it. Requires an
-    open ``Edition.step(...)`` block; raises ``ValueError`` outside one."""
+    open ``Task.step(...)`` block; raises ``ValueError`` outside one."""
     identity = _step_identity.get()
     if identity is None:
         raise ValueError("no active workflow step to export")

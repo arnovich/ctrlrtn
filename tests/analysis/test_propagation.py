@@ -20,7 +20,7 @@ def _row(task_id, use_case_key, calls):
     return {"task_id": task_id, "use_case_key": use_case_key, "calls": calls}
 
 
-def _editions(n, agents=("fp:orch", "fp:analyst", "fp:editor")):
+def _tasks(n, agents=("fp:orch", "fp:analyst", "fp:editor")):
     """n tasks, each linking the same set of sub-agents under one task id."""
     return [_row(f"ed{i}", a, 1) for i in range(n) for a in agents]
 
@@ -39,21 +39,21 @@ def test_unkeyed_call_is_not_a_second_subagent():
 
 
 def test_one_linked_task_is_not_enough():
-    report = build_propagation_report(_editions(1))
+    report = build_propagation_report(_tasks(1))
     assert report.multi_agent_tasks == 1
     assert not report.propagated  # needs MIN_MULTI_AGENT_TASKS
     assert "NO CROSS-AGENT LINK" in render_propagation(report)
 
 
 def test_enough_linked_tasks_propagate():
-    report = build_propagation_report(_editions(MIN_MULTI_AGENT_TASKS))
+    report = build_propagation_report(_tasks(MIN_MULTI_AGENT_TASKS))
     assert report.multi_agent_tasks == MIN_MULTI_AGENT_TASKS
     assert report.propagated
     assert "PROPAGATING" in render_propagation(report)
 
 
 def test_mostly_untagged_is_not_propagating():
-    rows = _editions(MIN_MULTI_AGENT_TASKS) + [_row(None, "fp:editor", 50)]
+    rows = _tasks(MIN_MULTI_AGENT_TASKS) + [_row(None, "fp:editor", 50)]
     report = build_propagation_report(rows)
     assert report.tasked_fraction < 0.5
     assert not report.propagated
@@ -90,7 +90,7 @@ def test_focus_present_but_never_linked():
 
 
 def test_focus_absent_from_tagged_tasks():
-    rows = _editions(1, agents=("fp:orch", "fp:analyst"))
+    rows = _tasks(1, agents=("fp:orch", "fp:analyst"))
     report = build_propagation_report(rows, focus_use_case="fp:editor")
     assert report.focus_task_count == 0
     assert "in NO tagged task" in render_propagation(report)

@@ -7,7 +7,7 @@ GROSSLY worse than the incumbent?" — stop and investigate — not "is it withi
 5pp?" (the replay non-inferiority path does that). So it is deliberately coarse
 and conservative:
 
-  - Each closed task is one unit; the arm is the whole edition's served arm
+  - Each closed task is one unit; the arm is the whole task's served arm
     (mixed-arm or cross-experiment tasks are *contaminated* and excluded).
   - A task's outcome is a binary success/failure from the app's reported outcome
     (`/ctrlrtn/outcome`), a divergence-ceiling terminal (always a failure), or an
@@ -30,7 +30,7 @@ and conservative:
 Caveats a caller must respect: the Wilson interval is fixed-n, so repeated
 `experiment status` peeking is not fully Type-I corrected — treat NO_GROSS as a
 screen, not a certificate (run `replay-eval` for a real margin). Tasks are
-treated iid; same-day editions share inputs, so a tighter run should cluster by
+treated iid; same-day tasks share inputs, so a tighter run should cluster by
 day. The margin is ABSOLUTE (a 20pp gap); at a low base rate that permits a
 large *relative* rise. All of this is pure and time-injected — fully headless.
 """
@@ -82,7 +82,7 @@ def _wilson(k: int, n: int, z: float) -> tuple[float, float]:
 
 @dataclass(frozen=True)
 class TaskRecord:
-    """One edition's contribution to the tripwire: which arm served it, its
+    """One task's contribution to the tripwire: which arm served it, its
     call count and cost, and its closed/outcome status."""
 
     task_id: str
@@ -299,11 +299,11 @@ def _warnings(baseline: ArmStats, candidate: ArmStats) -> list[str]:
             f">= 2x baseline ({baseline.median_calls:g}) — possible divergence."
         )
     # Ceiling-dominated candidate failures often mean the cap is set too low for
-    # legitimately long editions, not that the model is bad.
+    # legitimately long tasks, not that the model is bad.
     if candidate.failure and candidate.ceiling / candidate.failure > 0.5:
         warnings.append(
             f"{candidate.ceiling}/{candidate.failure} candidate failures are "
-            "divergence-ceiling cut-offs — raise --max-calls if editions "
+            "divergence-ceiling cut-offs — raise --max-calls if tasks "
             "legitimately exceed it, or this GROSS may be a cap artifact."
         )
     # Still-open candidate tasks are excluded from the verdict; a looping

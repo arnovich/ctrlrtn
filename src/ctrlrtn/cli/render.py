@@ -380,7 +380,7 @@ def render_propagation(report: PropagationReport) -> str:
         lines.append(
             "  verdict: PROPAGATING — a shared x-ctrlrtn-task links multiple "
             "sub-agents across recent tasks (confirms propagation works, not "
-            "that every sub-agent of every edition is captured)."
+            "that every sub-agent of every task is captured)."
         )
     if report.focus_use_case:
         lines.append(

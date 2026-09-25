@@ -113,7 +113,7 @@ def test_assign_arm_boundary_is_strict_less_than():
 def test_split_monotonicity_flips_once_in_the_right_direction():
     # For a fixed task (fixed bucket b), raising split 1->99 flips the arm from
     # baseline to candidate exactly once (at split = b+1), never back.
-    task = "edition-77"
+    task = "task-77"
     arms = [assign_arm(_exp(s), task) for s in range(1, 100)]  # split 1..99
     transitions = [i for i in range(1, len(arms)) if arms[i] != arms[i - 1]]
     assert len(transitions) <= 1  # never oscillates
@@ -124,7 +124,7 @@ def test_split_monotonicity_flips_once_in_the_right_direction():
 
 def test_a_task_binds_to_one_arm_across_calls():
     exp = _exp(50)
-    task = "edition-42"
+    task = "task-42"
     arms = {assign_arm(exp, task) for _ in range(20)}
     assert len(arms) == 1  # stateless => same arm every time
 

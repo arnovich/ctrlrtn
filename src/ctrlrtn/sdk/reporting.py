@@ -29,7 +29,7 @@ def _resolve_task_id(task_id: str | None) -> str:
     tid = task_id or _task.get()
     if not tid:
         raise ValueError(
-            "no task_id — call inside edition() or pass task_id explicitly"
+            "no task_id — call inside task() or pass task_id explicitly"
         )
     return tid
 
@@ -42,9 +42,9 @@ def report_outcome(
     score: float | None = None,
     client: httpx.Client | None = None,
 ) -> None:
-    """POST an edition's result to ``{base_url}/ctrlrtn/outcome``. ``task_id``
-    defaults to the current edition. Raises on a transport/HTTP error (the
-    ``Edition.report`` path swallows and logs; a direct caller may want to know).
+    """POST a task's result to ``{base_url}/ctrlrtn/outcome``. ``task_id``
+    defaults to the current task. Raises on a transport/HTTP error (the
+    ``Task.report`` path swallows and logs; a direct caller may want to know).
     """
     tid = _resolve_task_id(task_id)
     url = base_url.rstrip("/") + _OUTCOME_PATH

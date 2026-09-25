@@ -85,7 +85,7 @@ def register(sub, controls, evaluation) -> None:
         default=45.0,
         dest="idle_minutes",
         help="a task with no new calls for this long is closed; default 45. "
-        "Raise it above your longest inter-call gap so a long edition isn't "
+        "Raise it above your longest inter-call gap so a long task isn't "
         "split or counted unreported early.",
     )
     exp_status.add_argument(
