@@ -29,7 +29,7 @@ for i in $(seq 1 "$N"); do
   echo "=== edition ${i}/${N} ($(date +%H:%M:%S)) ==="
   (
     cd "$HUGIN_DIR"
-    export HUGIN_GIMLE_ROUTER=1 ANTHROPIC_BASE_URL="$ROUTER_URL"
+    export HUGIN_CTRLRTN=1 ANTHROPIC_BASE_URL="$ROUTER_URL"
     if [ "$#" -gt 0 ]; then
       uv run hugin app "$APP" -- "$@"
     else
