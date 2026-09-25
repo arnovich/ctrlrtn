@@ -1,6 +1,6 @@
 ---
 title: Move CI back to GitHub-hosted runners before the repository goes public
-state: open
+state: closed
 priority: high
 labels: [ci, security, release]
 ---
@@ -22,3 +22,11 @@ workflow code from forks, so this must not survive the switch to public.
 - The self-hosted runner registration for this repository is removed.
 - One CI run on hosted runners is green for the commit that makes the
   repository public.
+
+## Notes
+
+Closed 2026-09-25. PR #6 put every `runs-on` on `ubuntu-latest` with
+10/20/10-minute timeouts; the runner registration was deleted from the
+repository and the runner removed on its host; the repository went public
+the same day and run 36113802848 on `main` was green on hosted runners
+(quality and package in 13 s, the test matrix in about two minutes).
