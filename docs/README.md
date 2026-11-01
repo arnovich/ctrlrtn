@@ -34,7 +34,7 @@ order a new user needs them.
 
 ## Planning
 
-- [Roadmap](roadmap.md), and the task files under [`tasks/open`](../tasks/open/).
+- [Roadmap](roadmap.md), and the task files under [`tasks/open`](https://github.com/arnovich/ctrlrtn/tree/taskvalet/tasks/tasks/open).
 
 ## Generated
 

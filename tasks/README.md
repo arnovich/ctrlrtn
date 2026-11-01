@@ -1,7 +1,18 @@
 # Tasks
 
-Planned work lives here as one markdown file per task, so a contributor can
-see what is queued without leaving the repository.
+Planned work is one markdown file per task, so a contributor can see what is
+queued without leaving the repository.
+
+The current task files live on the
+[`taskvalet/tasks`](https://github.com/arnovich/ctrlrtn/tree/taskvalet/tasks/tasks)
+branch, not on `main`. The maintainer's task board commits there: it creates
+tasks, records claims, plans and conversations, and moves files between folders.
+`main` requires passing checks, so task updates stay off it. The copy under
+`tasks/` on `main` is a snapshot from when the board took over and is not kept
+up to date.
+
+Do not edit task files by hand or move them between folders in a pull request.
+To propose work or comment on a task, open a GitHub issue.
 
 ```
 tasks/
@@ -35,5 +46,6 @@ What done looks like, stated so someone else could check whether it happened.
 ```
 
 `state` is `open`, `ongoing` or `closed` and mirrors the folder. `priority` is
-`high`, `medium` or `low`; default to `medium`. Larger discussions belong in
-GitHub Issues; a task file is the agreed plan, not the debate.
+`high`, `medium` or `low`; default to `medium`. The board may add `## Plan`,
+`## Attempts` and a final `## Conversation` section. Larger discussions belong
+in GitHub Issues; a task file is the agreed plan, not the debate.
