@@ -1,7 +1,9 @@
 # Roadmap
 
-Planned work is tracked as task files under [`tasks/open/`](../tasks/open/),
-one per concern, each with the context behind it and a checkable outcome.
+Planned work is tracked as task files under
+[`tasks/open/`](https://github.com/arnovich/ctrlrtn/tree/taskvalet/tasks/tasks/open)
+on the `taskvalet/tasks` branch, one per concern, each with the context behind
+it and a checkable outcome.
 This page is the short list of directions; the task files are the plan.
 
 **Ready to pick up**
